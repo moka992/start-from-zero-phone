@@ -29,8 +29,8 @@
         <label>企业成立区域（系统随机）
           <select id="region"></select>
         </label>
-        <label>企业名称
-          <input id="companyName" type="text" maxlength="24" placeholder="输入你的手机企业名" />
+        <label>企业名称（固定）
+          <input type="text" value="StartPhone" disabled />
         </label>
         <label>启动难度
           <select id="startupDifficulty">
@@ -39,7 +39,6 @@
           </select>
         </label>
       </div>
-      <div id="companyNameHint" class="muted">企业名称需为 2~24 个字符，仅支持中文和英文字母，且不得包含违禁词或主流品牌名。</div>
       <div class="row">
         <button id="rollEvents" class="accent">刷新 3 个市场环境</button>
         <div id="eventHint" class="muted">请选择 1 个，它将影响整局。</div>
@@ -57,14 +56,13 @@
         <label>SoC
           <select id="soc"></select>
         </label>
-        <label>机型命名（英文/拼音+数字）
-          <input id="modelBaseName" type="text" maxlength="20" placeholder="例如 Neo9 / xuanjing15" />
+        <label>机型命名（固定）
+          <input type="text" value="Neo（自动 Gen）" disabled />
         </label>
         <label>定价（元）
           <input id="price" type="number" min="999" max="19999" step="100" value="3999" />
         </label>
       </div>
-      <div id="modelNameHint" class="muted">机型命名需为 2~20 位，仅支持英文字母和数字，并通过违禁词与品牌词审查。</div>
 
       <h3>屏幕系统</h3>
       <div class="grid4">

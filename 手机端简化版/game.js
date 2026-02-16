@@ -2,6 +2,8 @@ const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
 const BENCHMARK_NAME = 'GeekBeak G6';
+const FIXED_COMPANY_NAME = 'StartPhone';
+const FIXED_MODEL_BASE_NAME = 'Neo';
 const BENCHMARK_BASELINE = {
   name: '果核 R²',
   // Nut R2-like baseline for gameplay readability.
@@ -423,7 +425,7 @@ const state = {
   launched: false,
   ended: false,
   memoryMarket: null,
-  companyName: '',
+  companyName: FIXED_COMPANY_NAME,
   product: null,
   phaseEnded: false,
   soldTotal: 0,
@@ -1635,7 +1637,7 @@ function fillOptions() {
     .join('');
   el.marketingFocus.value = 'balanced';
   el.campaignLevel.value = 'medium';
-  if (el.modelBaseName) el.modelBaseName.value = 'Neo';
+  if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   updateModelNameHint();
 }
 
@@ -1710,10 +1712,9 @@ function assignRandomRegion() {
 }
 
 function updateEventGateState() {
-  const nameCheck = validateCompanyName(el.companyName ? el.companyName.value : '');
   const hasMarket = Boolean(state.marketPick);
   const hasRegion = Boolean(el.region && el.region.value && chinaRegions[el.region.value]);
-  const ready = hasMarket && hasRegion && nameCheck.ok;
+  const ready = hasMarket && hasRegion;
   el.confirmEvent.disabled = !ready;
 
   if (!hasMarket) {
@@ -1722,25 +1723,7 @@ function updateEventGateState() {
     return;
   }
   if (!hasRegion) return;
-  if (!nameCheck.ok) {
-    el.eventHint.textContent = nameCheck.msg;
-    if (el.companyNameHint) {
-      if (nameCheck.name.length > 0) {
-        el.companyNameHint.className = 'bad';
-        el.companyNameHint.textContent = `命名校验：${nameCheck.msg}`;
-      } else {
-        el.companyNameHint.className = 'muted';
-        el.companyNameHint.textContent = '企业名称需为 2~24 个字符，仅支持中文和英文字母，且不得包含违禁词或主流品牌名。';
-      }
-    }
-    return;
-  }
-
-  if (el.companyNameHint) {
-    el.companyNameHint.className = 'good';
-    el.companyNameHint.textContent = `命名校验通过：${nameCheck.name}`;
-  }
-  el.eventHint.textContent = `已选：${state.marketPick.name}；企业：${nameCheck.name}；成立区域：${chinaRegions[el.region.value].name}（系统随机）`;
+  el.eventHint.textContent = `已选：${state.marketPick.name}；企业：${FIXED_COMPANY_NAME}；成立区域：${chinaRegions[el.region.value].name}（系统随机）`;
 }
 
 function selectedValues() {
@@ -1784,7 +1767,7 @@ function selectedValues() {
     marketing,
     campaign,
     startupDifficulty,
-    modelBaseName: (el.modelBaseName ? el.modelBaseName.value : '').trim(),
+    modelBaseName: FIXED_MODEL_BASE_NAME,
     disp,
     cams,
     chosenExtras,
@@ -3583,7 +3566,7 @@ function restart() {
   state.month = 0;
   state.chosenMarket = null;
   state.memoryMarket = null;
-  state.companyName = '';
+  state.companyName = FIXED_COMPANY_NAME;
   state.launched = false;
   state.ended = false;
   state.phaseEnded = false;
@@ -3608,8 +3591,7 @@ function restart() {
   el.previewBox.innerHTML = '等待计算。';
   clearPhonePreview();
   el.eventHint.textContent = '请选择 1 个，它将影响整局。';
-  if (el.companyName) el.companyName.value = '';
-  if (el.modelBaseName) el.modelBaseName.value = 'Neo';
+  if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   updateModelNameHint();
   updateDisplayMaterialOptions();
   assignRandomRegion();
@@ -3630,17 +3612,11 @@ function refreshDesignPanelsLive() {
 
 function bind() {
   el.rollEvents.addEventListener('click', rollThreeMarkets);
-  el.companyName.addEventListener('input', updateEventGateState);
   if (el.modelBaseName) el.modelBaseName.addEventListener('input', updateModelNameHint);
   el.confirmEvent.addEventListener('click', () => {
     if (!state.marketPick) return;
-    const nameCheck = validateCompanyName(el.companyName.value);
-    if (!nameCheck.ok) {
-      el.eventHint.textContent = nameCheck.msg;
-      return;
-    }
     state.chosenMarket = state.marketPick;
-    state.companyName = nameCheck.name;
+    state.companyName = FIXED_COMPANY_NAME;
     const roll = Math.random();
     state.memoryMarket = roll < 0.35
       ? memoryMarketLevels[0]
