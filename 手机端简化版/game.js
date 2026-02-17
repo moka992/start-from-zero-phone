@@ -500,6 +500,7 @@ const state = {
   smallScreenAchievedNotified: false,
   flatBackAchievedNotified: false,
   largeScreenAchievedNotified: false,
+  goodLuckAchievedNotified: false,
   achievements: [],
   premiumPriceToleranceCarry: 1.0,
   premiumOnlineDemandCarry: 1.0,
@@ -4247,6 +4248,19 @@ function checkLargeScreenAchievement(buildLike) {
   );
 }
 
+function checkGoodLuckAchievement(opportunity) {
+  if (state.ended || state.goodLuckAchievedNotified || !opportunity) return;
+  const strongBuffIds = new Set(['top_reviewer', 'headline_report', 'tech_breakthrough']);
+  const isStrongBuff = strongBuffIds.has(String(opportunity.id || ''));
+  if (!isStrongBuff) return;
+  state.goodLuckAchievedNotified = true;
+  addAchievementCard('good_luck', '好运降临', '运营中命中顶级强 buff 事件。');
+  openGameModal(
+    '成就解锁',
+    `本月强力加成命中：<strong>${opportunity.name}</strong>。<br>恭喜达成 <strong>好运降临</strong> 成就！<br>这波属于“天时地利人和，一把就把热度打穿”。`
+  );
+}
+
 function updateDesignRestartButtonState() {
   if (!el.restartDesign) return;
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) {
@@ -4561,6 +4575,7 @@ function nextMonth() {
   state.shortEvents.push(noise.name);
   if (swan) state.shortEvents.push(`黑天鹅:${swan.name}`);
   if (opportunity) state.shortEvents.push(`机遇:${opportunity.name}`);
+  checkGoodLuckAchievement(opportunity);
 
   const swanDemandMul = swan ? (swan.demandMul || 1) : 1;
   const swanCostMul = swan ? (swan.costMul || 1) : 1;
@@ -5029,6 +5044,11 @@ function nextMonth() {
   }
   if (swanInstantKill) {
     endGame(`黑天鹅致命事件：${swan.name}。`);
+    openGameModal(
+      '游戏结束',
+      `黑天鹅来了：<strong>${swan.name}</strong>。<br>${swan.reason || '市场突发极端冲击，企业直接被抬走。'}<br>这波属于“不是你不会运营，是天上先掉了个陨石”。`,
+      'gameover'
+    );
     return;
   }
   if (swanForcePhaseEnd) {
@@ -5342,6 +5362,7 @@ function restart() {
   state.smallScreenAchievedNotified = false;
   state.flatBackAchievedNotified = false;
   state.largeScreenAchievedNotified = false;
+  state.goodLuckAchievedNotified = false;
   state.achievements = [];
   state.premiumPriceToleranceCarry = 1.0;
   state.premiumOnlineDemandCarry = 1.0;
