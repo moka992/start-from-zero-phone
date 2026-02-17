@@ -218,6 +218,7 @@ const extras = [
   { id: 'gps_dual', name: '双频 GPS', cost: 12, weight: 0.5, space: 0.2, score: 2, demand: 0.005 },
   { id: 'dynamic_island', name: '灵动岛交互', cost: 8, weight: 0, space: 0.05, score: 2, demand: 0.008 },
   { id: 'active_fan', name: '主动散热风扇', cost: 86, weight: 21, space: 8.4, score: 5, demand: 0.016 },
+  { id: 'semi_cooler', name: '冰爽半导体散热风扇', cost: 168, weight: 34, space: 12.2, score: 6, demand: 0.018 },
   { id: 'battery_tech', name: '新型高密度电池技术', cost: 180, weight: 0, space: 0.2, score: 3, demand: 0.006 },
   { id: 'flat_back', name: '纯平背板', cost: 22, weight: 2.5, space: 1.1, score: 5, demand: 0.018 },
   { id: 'magsafe', name: '磁吸生态配件', cost: 25, weight: 4, space: 1.2, score: 3, demand: 0.012 },
@@ -406,7 +407,7 @@ const startupDifficulties = {
   },
   hard: {
     name: '困难',
-    baseDemand: 0.78,
+    baseDemand: 0.75,
     trust: 0.82,
     designElasticity: 1.2,
     brandRamp: 0.86,
@@ -497,6 +498,7 @@ const state = {
   foldableAchievedNotified: false,
   einkAchievedNotified: false,
   futureEinkAchievedNotified: false,
+  ebookAchievedNotified: false,
   ultraFlagshipAchievedNotified: false,
   advancedAlloyAchievedNotified: false,
   ceramicAchievedNotified: false,
@@ -653,7 +655,7 @@ const QUICK_GUIDE_HTML = [
   '玩法：先抽市场与难度，再做配置（屏幕/SoC/影像/SKU/营销），立项后按月运营。',
   '关键：体积能装下、现金别断、定价别离谱、库存别失控；缺货会伤生命周期，压货会拖现金流。',
   '进阶：换代要有变化（屏幕/摄像头/SKU/机身/额外功能），否则会有换代疲劳惩罚。',
-  '彩蛋：成就很多，含口碑封神、超强现金流、折叠屏、散热狂魔、挤牙膏、科技以不换壳为本等。'
+  '彩蛋：游戏内有成就系统，欢迎自行探索解锁。'
 ].join('<br>');
 
 const QUICK_GUIDE_SEEN_KEY = 'start_phone_quick_guide_seen_v1';
@@ -1082,8 +1084,18 @@ function drawFrontDisplayShape(ctx, v, sx, sy, sw, sh, scale) {
     ctx.arc(centerX, topY + rr, rr, 0, Math.PI * 2);
     ctx.fill();
     if (islandEnabled) {
-      roundedRectPath(ctx, centerX - rr * 2.8, topY - 1, rr * 5.6, rr * 2.3, rr * 1.1);
+      // Keep single-hole shape as a circle on all devices.
+      // "Dynamic island" only adds a subtle glow hint, not a capsule cutout.
+      const gx = centerX;
+      const gy = topY + rr * 1.25;
+      const grad = ctx.createRadialGradient(gx, gy, rr * 0.55, gx, gy, rr * 2.1);
+      grad.addColorStop(0, 'rgba(18,32,52,0.42)');
+      grad.addColorStop(1, 'rgba(18,32,52,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(gx, gy, rr * 2.15, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = 'rgba(5,8,12,0.96)';
     }
   } else if (formName.includes('药丸')) {
     const pw = Math.max(baseR * 5.4, Math.min(sw * 0.12, baseR * 7.2));
@@ -2337,29 +2349,44 @@ function evolveExistingSocPool() {
     soc.score = Math.max(18, Number((soc.score * 0.985).toFixed(1)));
     soc.tier = normalizeSocTierByScore(soc);
     soc.risk = clamp((soc.risk || 1) * 0.985, 0.68, 1.5);
+    // Hard lifespan cap: a SoC should not survive more than 4 refresh rounds.
+    if ((soc.age || 0) >= 4) {
+      soc.retired = true;
+      retiredThisRound += 1;
+      return;
+    }
     // Speed up obsolescence so older platforms leave the market sooner.
-    if ((soc.age || 0) >= 2 && soc.score <= 34) {
+    if ((soc.age || 0) >= 2 && soc.score <= 38) {
       soc.retired = true;
       retiredThisRound += 1;
       return;
     }
-    if ((soc.age || 0) >= 3 && soc.score <= 44) {
+    if ((soc.age || 0) >= 3 && soc.score <= 50) {
       soc.retired = true;
       retiredThisRound += 1;
       return;
     }
-    if ((soc.age || 0) >= 5 && soc.score <= 52) {
+    if ((soc.age || 0) >= 3 && soc.score <= 62 && String(soc.tier || '').includes('入门')) {
       soc.retired = true;
       retiredThisRound += 1;
     }
   });
-  // Ensure every refresh round has at least some down-shelving for SoC options.
-  if (retiredThisRound === 0) {
+  // Ensure each refresh round retires enough old chips to keep the list clean.
+  const activeAfter = socs.filter((s) => !s.retired).length;
+  const minRetireTarget = activeAfter >= 22 ? 3 : 2;
+  while (retiredThisRound < minRetireTarget) {
     const candidate = socs
       .filter((s) => !s.retired && (s.age || 0) >= 2)
-      .sort((a, b) => (Number(a.score || 0) - Number(b.score || 0)) || (Number(a.cost || 0) - Number(b.cost || 0)))[0];
-    if (candidate) candidate.retired = true;
-    retiredThisRound += candidate ? 1 : 0;
+      .sort((a, b) => {
+        const ageGap = Number(b.age || 0) - Number(a.age || 0);
+        if (ageGap !== 0) return ageGap;
+        const scoreGap = Number(a.score || 0) - Number(b.score || 0);
+        if (scoreGap !== 0) return scoreGap;
+        return Number(a.cost || 0) - Number(b.cost || 0);
+      })[0];
+    if (!candidate) break;
+    candidate.retired = true;
+    retiredThisRound += 1;
   }
   return retiredThisRound;
 }
@@ -2567,6 +2594,16 @@ function addNewGenerationCamera(addQuota = 3) {
   ];
 
   const selected = pickSpreadCandidates(candidates, quota);
+  // Ensure flagship camera cadence doesn't lag behind SoC cadence.
+  // For quota >= 2, force one current-gen flagship main sensor into the batch.
+  if (quota >= 2) {
+    const flagship = candidates.find((x) => x.id === `lytx_${cycle}`);
+    if (flagship && !selected.some((x) => x.id === flagship.id)) {
+      const replaceIdx = selected.findIndex((x) => x.id.startsWith('main_lite_') || x.id.startsWith('front_') || x.id.startsWith('uwx_'));
+      if (replaceIdx >= 0) selected[replaceIdx] = flagship;
+      else selected[0] = flagship;
+    }
+  }
   let added = 0;
   selected.forEach((cam) => {
     if (cameraModules.some((x) => x.id === cam.id)) return;
@@ -2598,7 +2635,9 @@ function maybeRefreshTechComponentPool(trigger = 'time') {
   const socTargetActive = clamp(preSocActive + cycleDrift, preSocActive - 1, preSocActive + 1);
   const camTargetActive = clamp(preCamActive + cycleDrift, preCamActive - 1, preCamActive + 1);
   const socAddQuota = clamp(socTargetActive - socActiveAfterRetire + (socRetired > 2 ? 1 : 0), 0, 6);
-  const camAddQuota = clamp(camTargetActive - camActiveAfterRetire + (camRetired > 2 ? 1 : 0), 0, 6);
+  // Camera updates are slightly faster than before (especially noticeable on flagship sensors).
+  const camRefreshBonus = state.techCycle % 2 === 1 ? 1 : 0;
+  const camAddQuota = clamp(camTargetActive - camActiveAfterRetire + (camRetired > 2 ? 1 : 0) + camRefreshBonus, 0, 6);
   addNewGenerationSoc(socAddQuota);
   addNewGenerationCamera(camAddQuota);
   refreshTechSelectableOptions();
@@ -2793,6 +2832,14 @@ function estimateSocOverheatSeconds(thermalPressure, socLabScoreForHeat) {
 
 function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryLabScore, thermalPressure) {
   const socRef = socBenchmarkAnchors[v.soc.id] || socBenchmarkAnchors.dim7300;
+  const parseGenFromId = (id) => {
+    const m = String(id || '').match(/_(?:x)?(\d+)$/i);
+    return m ? Math.max(0, Number(m[1]) || 0) : 0;
+  };
+  const techRound = clamp(Number(state.techCycle || 0), 0, 24);
+  const socGen = parseGenFromId(v.soc.id);
+  const socEra = clamp(techRound + socGen * 0.65, 0, 24);
+  const socDynamicUpper = Math.round(clamp(236 * Math.pow(1.09, socEra), 236, 980));
   const hasActiveFan = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'active_fan');
   const hasVCBoost = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'vc');
   const socLabScoreRaw = clamp(
@@ -2801,16 +2848,16 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
       + socRef.geekbench6Single / 90
       + socRef.geekbench6Multi / 220,
     55,
-    215
+    socDynamicUpper
   );
   const socBoostMul = 1 + (hasActiveFan ? 0.1 : 0) + (hasVCBoost ? 0.1 : 0);
-  const socLabScoreForHeat = clamp(socLabScoreRaw * socBoostMul, 55, 236);
+  const socLabScoreForHeat = clamp(socLabScoreRaw * socBoostMul, 55, socDynamicUpper);
   const socOverheatSec = estimateSocOverheatSeconds(thermalPressure, socLabScoreForHeat);
   // If overheat occurs before 6s, SoC score linearly drops up to 50%.
   const socThermalPenaltyRatio = socOverheatSec < 6
     ? clamp(1 - ((6 - socOverheatSec) / 6) * 0.5, 0.5, 1)
     : 1;
-  const socLabScore = clamp(socLabScoreForHeat * socThermalPenaltyRatio, 30, 236);
+  const socLabScore = clamp(socLabScoreForHeat * socThermalPenaltyRatio, 30, socDynamicUpper);
 
   const storageSpeedMap = {
     '64_emmc': { read: 250, write: 125 },
@@ -2842,16 +2889,28 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
   const ultra = v.cams.ultra.id === 'none' ? 0 : v.cams.ultra.score;
   const tele = v.cams.tele.id === 'none' ? 0 : v.cams.tele.score;
   const front = v.cams.front.id === 'none' ? 0 : v.cams.front.score;
-  const cameraLabScore = clamp(
-    46
-      + main * 1.25
-      + ultra * 0.65
-      + tele * 0.78
-      + front * 0.34
-      + (main > 0 && ultra > 0 && tele > 0 ? 6 : 0),
-    35,
-    165
-  );
+  const camGenAvg = (
+    parseGenFromId(v.cams.main.id)
+    + parseGenFromId(v.cams.ultra.id)
+    + parseGenFromId(v.cams.tele.id)
+    + parseGenFromId(v.cams.front.id)
+  ) / 4;
+  const camEra = clamp(techRound * 0.9 + camGenAvg * 0.9, 0, 24);
+  const cameraDynamicUpper = Math.round(clamp(165 * Math.pow(1.085, camEra), 165, 760));
+  const hasAnyCamera = main > 0 || ultra > 0 || tele > 0 || front > 0;
+  const cameraLabScore = hasAnyCamera
+    ? clamp(
+      46
+        + main * 1.25
+        + ultra * 0.65
+        + tele * 0.78
+        + front * 0.34
+        + camEra * 2.8
+        + (main > 0 && ultra > 0 && tele > 0 ? 6 : 0),
+      35,
+      cameraDynamicUpper
+    )
+    : 0;
 
   const total = Math.round(
     socLabScore * 0.39
@@ -2964,6 +3023,7 @@ function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
     satellite: 0.06,
     stereo: 0.03,
     vc: 0.02,
+    semi_cooler: 0.04,
     magsafe: 0.02,
     fast120: 0.02,
     dynamic_island: 0.005
@@ -2971,7 +3031,9 @@ function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
   const otherRel = 1 + v.chosenExtras.reduce((sum, x) => sum + (extraPowerRel[x.id] || 0), 0);
 
   const powerIndex = clamp(socRel * 0.36 + screenRel * 0.44 + otherRel * 0.2, 0.55, 1.95);
-  const hours = BATTERY_BASELINE.hours * (batteryWh / BATTERY_BASELINE.batteryWh) / powerIndex;
+  const hasSemiCooler = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'semi_cooler');
+  const hoursRaw = BATTERY_BASELINE.hours * (batteryWh / BATTERY_BASELINE.batteryWh) / powerIndex;
+  const hours = hasSemiCooler ? hoursRaw * 0.95 : hoursRaw;
   const endurancePct = clamp((hours / BATTERY_BASELINE.hours) * 100, 45, 200);
   const batteryLabScore = clamp(20 + endurancePct * 0.8, 35, 165);
 
@@ -3206,6 +3268,7 @@ function evaluateBuild() {
   const batteryEval = calcBatteryEndurance(v, screenMm, displayFeatureKeys);
   const hasVC = v.chosenExtras.some((x) => x.id === 'vc');
   const hasActiveFan = v.chosenExtras.some((x) => x.id === 'active_fan');
+  const hasSemiCooler = v.chosenExtras.some((x) => x.id === 'semi_cooler');
   const socThermalMap = {
     s480: 0.78, g35: 0.72, g81: 0.74, t7225: 0.76, dim6100: 0.8, s4g2: 0.82,
     dim6300: 0.84, g99: 0.85, s6g4: 0.92, s695: 0.9, dim7200: 0.95, dim7300: 0.96,
@@ -3240,10 +3303,13 @@ function evaluateBuild() {
   const baselineCoolingMul = clamp(1 - coolingTechRound * 0.018, 0.82, 1.0);
   const vcCoolingMul = hasVC ? clamp(0.7 - coolingTechRound * 0.016, 0.5, 0.7) : 1.0;
   const fanCoolingMul = hasActiveFan ? clamp(0.58 - coolingTechRound * 0.02, 0.4, 0.58) : 1.0;
+  // Semiconductor cooling: starts at ~20% stronger than active fan, and scales with tech rounds.
+  const semiCoolingMul = hasSemiCooler ? clamp(0.46 - coolingTechRound * 0.022, 0.3, 0.46) : 1.0;
   const thermalPressureRaw = clamp(
     (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
       * vcCoolingMul
       * fanCoolingMul
+      * semiCoolingMul
       * baselineCoolingMul
       * bodyThermalFactor
       * surfaceAreaThermalFactor,
@@ -3338,7 +3404,7 @@ function evaluateBuild() {
   const boardWeight = 68;
   const totalWeight = boardWeight + displayWeight + v.body.weight + batteryWeight + cameraWeight + extraWeight;
 
-  const geekExtras = new Set(['usb3', 'vc', 'satellite', 'fast120', 'magsafe']);
+  const geekExtras = new Set(['usb3', 'vc', 'semi_cooler', 'satellite', 'fast120', 'magsafe']);
   const geekBonus = v.chosenExtras.reduce((s, x) => s + (geekExtras.has(x.id) ? 1 : 0), 0) * 2.2;
   const hasFlagshipSoc = v.soc.tier.includes('旗舰');
   const isUltraFlagshipSoc = v.soc.tier.includes('旗舰+');
@@ -3381,6 +3447,7 @@ function evaluateBuild() {
     + (hasUsb3 ? 6 : 0)
     + (hasVC ? 5 : 0)
     + (hasActiveFan ? 6 : 0)
+    + (hasSemiCooler ? 8 : 0)
     + (isUltraFlagshipSoc ? 12 : hasFlagshipSoc ? 8 : 0);
   const geekAttraction = clamp(
     v.soc.score * 0.4 + cameraScore * 0.24 + (featureScore + v.disp.form.score) * 0.32 + geekBonus + geekSpecialBonus + virtualBench.benchmarkGeekBonus,
@@ -3508,11 +3575,155 @@ function evaluateBuild() {
     0.2,
     0.8
   );
-
-  const baseDemand = 4_600 * v.startupDifficulty.baseDemand
+  // Multi-lane demand model: online and offline react to different design traits.
+  const onlineMarketWeight = clamp(v.marketStats.onlinePenetration, 0.25, 0.92);
+  const offlineMarketWeight = 1 - onlineMarketWeight;
+  const hasHighEndMemorySku = skuCosting.some((s) => s && s.ram && s.rom && (s.ram.id === '24_lp5x' || s.ram.id === '16_lp5x') && s.rom.id === '1t_ufs40');
+  const hasProCameraPack = hasOneInchMain || (hasCameraMatrix && hasLargeMain);
+  const featureBreadth = clamp(
+    0.84
+      + v.chosenExtras.length * 0.028
+      + v.disp.features.length * 0.02
+      + (hasDynamicIsland ? 0.025 : 0),
+    0.72,
+    1.34
+  );
+  const premiumSignal = clamp(
+    0.9
+      + (isUltraFlagshipSoc ? 0.14 : hasFlagshipSoc ? 0.08 : 0)
+      + (hasProCameraPack ? 0.1 : 0)
+      + (hasHighEndMemorySku ? 0.08 : 0)
+      + Math.max(0, (virtualBench.total - 110) / 420),
+    0.82,
+    1.42
+  );
+  const perfAcceptance = clamp(
+    0.76
+      + Math.max(0, (virtualBench.total - 85) / 180)
+      + Math.max(0, (qualityScore - 58) / 260),
+    0.62,
+    1.48
+  );
+  const aestheticAcceptance = clamp(
+    0.72
+      + (appearanceDemandFactor - 0.74) * 0.72
+      + (bezelDemandFactor - 0.78) * 0.66
+      + (ratioDemandFactor - 0.78) * 0.56
+      + (mainstreamSizeDemandFactor - 0.8) * 0.5
+      + (screenToBodyRatio >= 0.87 ? 0.03 : 0),
+    0.58,
+    1.45
+  );
+  const materialOnlinePref = clamp(
+    0.92
+      + (v.body.id === 'aramid' ? 0.08 : 0)
+      + (v.body.id === 'titanium' ? 0.05 : 0)
+      + (el.dispMat.value === 'foldable' ? 0.09 : 0)
+      + (el.dispMat.value === 'eink' ? 0.05 : 0)
+      - (v.body.id === 'plastic' ? 0.04 : 0),
+    0.78,
+    1.3
+  );
+  const materialOfflinePref = clamp(
+    0.92
+      + (v.body.id === 'ceramic' ? 0.1 : 0)
+      + (v.body.id === 'titanium' ? 0.06 : 0)
+      + (v.body.id === 'glass' ? 0.04 : 0)
+      + (el.dispMat.value === 'foldable' ? 0.12 : 0)
+      - (el.dispMat.value === 'eink' ? 0.06 : 0)
+      - (v.body.id === 'plastic' ? 0.06 : 0),
+    0.74,
+    1.36
+  );
+  const onlinePriceAcceptance = clamp(
+    1.0
+      + (priceFit - 1) * 0.6
+      + (premiumSignal - 1) * 0.22
+      - Math.max(0, pricePressure - 1.08) * 0.26,
+    0.64,
+    1.28
+  );
+  const offlinePriceAcceptance = clamp(
+    0.98
+      + (priceFit - 1) * 0.48
+      + (aestheticAcceptance - 1) * 0.16
+      - Math.max(0, pricePressure - 1.05) * 0.32,
+    0.58,
+    1.24
+  );
+  const flagshipCameraCount = [v.cams.main, v.cams.ultra, v.cams.tele].filter((c) => c && c.id !== 'none' && Number(c.score || 0) >= 34).length;
+  const hasMultipleFlagshipCams = flagshipCameraCount >= 2;
+  const isHighQualityLcd = el.dispMat.value === 'lcd' && v.disp.features.length >= 3 && displayScore >= 62;
+  const isBigScreen = v.disp.size >= 6.7;
+  const isHighScreenBody = screenToBodyRatio >= 0.89;
+  const isSlimPhone = v.phoneT <= 8.1 && totalWeight <= 215;
+  const isImagingStrong = Number(virtualBench.cameraLabScore || 0) >= 112 || cameraScore >= 88;
+  const onlineGeekPreference = clamp(
+    0.86
+      + (v.disp.size < 6.0 ? 0.12 : 0)
+      + (el.dispMat.value === 'lcd' ? 0.08 : 0)
+      + (isHighQualityLcd ? 0.08 : 0)
+      + (el.dispMat.value === 'eink' ? 0.16 : 0)
+      + (hasFlagshipSoc ? 0.1 : 0)
+      + (isUltraFlagshipSoc ? 0.04 : 0),
+    0.66,
+    1.46
+  );
+  const offlineMassPreference = clamp(
+    0.84
+      + (isBigScreen ? 0.11 : 0)
+      + (isHighScreenBody ? 0.1 : 0)
+      + (isSlimPhone ? 0.08 : 0)
+      + (hasMultipleFlagshipCams ? 0.1 : 0)
+      + (isImagingStrong ? 0.08 : 0),
+    0.64,
+    1.5
+  );
+  const onlineDesignDemand = clamp(
+    perfAcceptance
+      * featureBreadth
+      * premiumSignal
+      * materialOnlinePref
+      * onlinePriceAcceptance
+      * onlineGeekPreference
+      * thermalDemandMul
+      * batteryEval.onlineDemandMul
+      * clamp(0.82 + geekAttraction / 150, 0.75, 1.5),
+    0.4,
+    2.35
+  );
+  const offlineDesignDemand = clamp(
+    clamp(0.84 + qualityScore / 175, 0.78, 1.4)
+      * featureBreadth
+      * aestheticAcceptance
+      * materialOfflinePref
+      * offlinePriceAcceptance
+      * offlineMassPreference
+      * batteryEval.offlineDemandMul
+      * clamp(0.8 + offlinePreferenceBoost * 0.3 + appearanceRetailBoost * 0.24, 0.72, 1.5),
+    0.42,
+    2.45
+  );
+  const onlineStructuralDemand = clamp(
+    onlinePotential
+      * (0.88 + v.marketing.online * 0.22)
+      * (0.9 + v.region.onlineInfra * 0.14)
+      * onlineMarketWeight,
+    0.22,
+    2.2
+  );
+  const offlineStructuralDemand = clamp(
+    offlinePotential
+      * (0.88 + v.marketing.offline * 0.2)
+      * (0.9 + v.region.offlineInfra * 0.16)
+      * offlineMarketWeight,
+    0.22,
+    2.3
+  );
+  const demandScaleBase = 4_600
+    * v.startupDifficulty.baseDemand
     * v.region.demand
     * popFactor
-    * channelFactor
     * designDemandElasticity
     * novelty.demandMul
     * virtualBench.benchmarkDemandMul
@@ -3522,6 +3733,9 @@ function evaluateBuild() {
     * (1 + extraDemandBoost)
     * pricingCredibilityMul
     / (v.region.comp / supplyStability);
+  const onlineDemandTrack = onlineStructuralDemand * onlineDesignDemand;
+  const offlineDemandTrack = offlineStructuralDemand * offlineDesignDemand;
+  const baseDemand = demandScaleBase * (onlineDemandTrack * 0.56 + offlineDemandTrack * 0.44);
 
   const grossMargin = (weightedSkuPrice - unitCost) / Math.max(1, weightedSkuPrice);
   let strategy = '均衡';
@@ -3606,6 +3820,10 @@ function evaluateBuild() {
     onlineCostIndex,
     offlineCostIndex,
     channelFactor,
+    onlineDesignDemand,
+    offlineDesignDemand,
+    onlineDemandTrack,
+    offlineDemandTrack,
     popFactor,
     designDemandElasticity,
     launchTrustFactor,
@@ -3693,6 +3911,7 @@ function renderPreview() {
       `市场氛围：${state.marketPick ? state.marketPick.name : '常态竞争'}。${state.marketPick ? state.marketPick.text : ''}`,
       `区域画像：${regionNarrative(e.input.region)}`,
       `渠道建议：${channelNarrative(e.onlineShare)}`,
+      `设计驱动：线上轨道 x${e.onlineDemandTrack.toFixed(2)}（设计适配 x${e.onlineDesignDemand.toFixed(2)}）｜线下轨道 x${e.offlineDemandTrack.toFixed(2)}（设计适配 x${e.offlineDesignDemand.toFixed(2)}）`,
       `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
       `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
       `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
@@ -4055,6 +4274,7 @@ function launch() {
   checkFoldableAchievement(e);
   checkEinkAchievement(e);
   checkFutureEinkAchievement(e);
+  checkEbookAchievement(e);
   checkUltraFlagshipAchievement(e);
   checkAdvancedAlloyAchievement(e);
   checkCeramicAchievement(e);
@@ -4767,6 +4987,20 @@ function checkFutureEinkAchievement(buildLike) {
   openGameModal(
     '成就解锁',
     '你把墨水屏、LTPO 和高刷新凑到了一台机子上！恭喜达成 <strong>未来墨水屏！</strong> 成就。<br>这波是“纸感和丝滑我全都要”。'
+  );
+}
+
+function checkEbookAchievement(buildLike) {
+  if (state.ended || state.ebookAchievedNotified) return;
+  const disp = buildLike && buildLike.input ? buildLike.input.disp : null;
+  const matName = disp && disp.mat ? String(disp.mat.name || '') : '';
+  const ratio = disp ? String(disp.ratio || '') : '';
+  if (matName !== '墨水屏' || ratio !== '4:3') return;
+  state.ebookAchievedNotified = true;
+  addAchievementCard('ebook', '电子书', '4:3 墨水屏机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了 <strong>4:3 墨水屏</strong> 机型，恭喜达成 <strong>电子书</strong> 成就！<br>这波是“翻页感拉满，阅读党直接开香槟”。'
   );
 }
 
@@ -5549,11 +5783,43 @@ function nextMonth() {
   const stockoutDecay = clamp(1 - (p.stockoutStress || 0) * 0.28 - p.idleNoStockMonths * 0.06, 0.32, 1.02);
   const remainingMarket = Math.max(0, p.marketCapacity - p.marketConsumed);
   const saturationFactor = clamp(remainingMarket / Math.max(1, p.marketCapacity), 0.16, 1.0);
-  const demandRaw = p.baseDemand * life * brandRamp * reputation * randomness * noise.demand * swanDemandMul * oppDemandMul * demandShockMul * slumpMul * onlinePulse * stockoutDecay * saturationFactor;
-  const demand = Math.max(0, Math.min(remainingMarket, demandRaw));
+  const isRealFirstGenFirstMonth = diff.name === '真实' && Number(p.modelGeneration || 1) === 1 && state.month === 1;
+  const coldStartMul = isRealFirstGenFirstMonth
+    ? clamp(
+      0.78
+        + Math.max(0, (state.rating - 50) / 520)
+        + Math.max(0, ((p.qualityScore || 60) - 60) / 620),
+      0.78,
+      0.9
+    )
+    : 1.0;
+  const demandRaw = p.baseDemand * life * brandRamp * reputation * randomness * noise.demand * swanDemandMul * oppDemandMul * demandShockMul * slumpMul * onlinePulse * stockoutDecay * saturationFactor * coldStartMul;
+  const launchMonthCap = isRealFirstGenFirstMonth ? 1500 : Number.POSITIVE_INFINITY;
+  const demand = Math.max(0, Math.min(remainingMarket, demandRaw, launchMonthCap));
 
   const inventoryBefore = state.inventory;
-  const demandTarget = Math.max(0, Math.round(demand));
+  const rawDemandTarget = Math.max(0, Math.round(demand));
+  const lastDemand = Array.isArray(p.demandHistory) && p.demandHistory.length
+    ? Number(p.demandHistory[p.demandHistory.length - 1] || 0)
+    : null;
+  let demandTarget = rawDemandTarget;
+  if (lastDemand !== null) {
+    const blended = lastDemand + (rawDemandTarget - lastDemand) * 0.42;
+    const prevMomentum = Number(p.demandMomentum || 0);
+    const dir = Math.sign(rawDemandTarget - lastDemand);
+    const momentum = dir === 0
+      ? prevMomentum * 0.45
+      : (Math.sign(prevMomentum) === dir
+        ? clamp(prevMomentum * 0.58 + dir * 120, -420, 420)
+        : clamp(prevMomentum * 0.32 + dir * 80, -320, 320));
+    p.demandMomentum = momentum;
+    const trendCandidate = Math.round(blended + momentum);
+    const lower = Math.max(0, lastDemand - 1000);
+    const upper = lastDemand + 1000;
+    demandTarget = clamp(trendCandidate, lower, upper);
+  } else {
+    p.demandMomentum = 0;
+  }
   p.demandHistory = Array.isArray(p.demandHistory) ? p.demandHistory : [];
   p.demandHistory.push(demandTarget);
   if (p.demandHistory.length > 18) p.demandHistory.shift();
@@ -6023,13 +6289,14 @@ function archiveCurrentProduct(reason, extra = {}) {
 
 function liquidateLegacyInventory(product) {
   if (!product) return { revenue: 0, units: 0 };
+  const liquidationRatio = product?.input?.startupDifficulty?.name === '困难' ? 0.2 : 0.3;
   let units = 0;
   let revenue = 0;
   (product.skuStats || []).forEach((s) => {
     const left = Number(state.inventoryBySku[s.id] || 0);
     if (left <= 0) return;
     units += left;
-    revenue += left * s.price * 0.3;
+    revenue += left * s.price * liquidationRatio;
     state.inventoryBySku[s.id] = 0;
   });
   syncInventoryTotal();
@@ -6166,6 +6433,7 @@ function restart() {
   state.foldableAchievedNotified = false;
   state.einkAchievedNotified = false;
   state.futureEinkAchievedNotified = false;
+  state.ebookAchievedNotified = false;
   state.ultraFlagshipAchievedNotified = false;
   state.advancedAlloyAchievedNotified = false;
   state.ceramicAchievedNotified = false;
