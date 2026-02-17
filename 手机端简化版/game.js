@@ -12,6 +12,11 @@ const BENCHMARK_BASELINE = {
   geekbench6Multi: 3532,
   total: 115
 };
+const BATTERY_BASELINE = {
+  name: '果核 R²',
+  hours: 8.8,
+  batteryWh: 4510 * 3.85 / 1000
+};
 const DEFAULT_LIFECYCLE_MONTHS = 30;
 const PREORDER_MONTH_LIMIT = 2;
 const PREORDER_PAY_RATIO = 1.0;
@@ -1781,7 +1786,7 @@ function selectedValues() {
   };
 }
 
-function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore) {
+function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryLabScore) {
   const socRef = socBenchmarkAnchors[v.soc.id] || socBenchmarkAnchors.dim7300;
   const socLabScore = clamp(
     50
@@ -1834,10 +1839,11 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
   );
 
   const total = Math.round(
-    socLabScore * 0.46
-    + storageLabScore * 0.18
-    + displayLabScore * 0.16
-    + cameraLabScore * 0.2
+    socLabScore * 0.39
+    + storageLabScore * 0.15
+    + displayLabScore * 0.12
+    + cameraLabScore * 0.17
+    + batteryLabScore * 0.17
   );
   const baselineRatio = total / BENCHMARK_BASELINE.total;
   const baselineDeltaPct = (baselineRatio - 1) * 100;
@@ -1857,6 +1863,7 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     storageLabScore: Math.round(storageLabScore),
     displayLabScore: Math.round(displayLabScore),
     cameraLabScore: Math.round(cameraLabScore),
+    batteryLabScore: Math.round(batteryLabScore),
     socReference: socRef,
     baselineRatio,
     baselineDeltaPct,
@@ -1869,6 +1876,84 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
 function benchmarkRatioText(ratio) {
   const pct = clamp((Number(ratio) || 0) * 100, 0, 999);
   return `${Math.round(pct)}%`;
+}
+
+function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
+  const batteryWh = v.battery * 3.85 / 1000;
+  const baselineDim = getScreenDimensionsMm(6.67, '20:9');
+  const baselineArea = baselineDim.widthMm * baselineDim.heightMm;
+  const screenArea = screenMm.widthMm * screenMm.heightMm;
+  const sizeRel = Math.pow(Math.max(0.5, screenArea / Math.max(1, baselineArea)), 0.72);
+
+  const matPowerRel = {
+    lcd: 1.12,
+    oled: 1.0,
+    dual_oled: 1.28,
+    eink: 0.42,
+    foldable: 1.38
+  };
+  const matRel = matPowerRel[el.dispMat.value] || 1.0;
+  const highRefreshRel = displayFeatureKeys.includes('high_refresh') ? 1.08 : 0.9;
+  const ltpoRel = (displayFeatureKeys.includes('ltpo') && ['oled', 'dual_oled', 'foldable'].includes(el.dispMat.value)) ? 0.9 : 1.0;
+  const highResRel = displayFeatureKeys.includes('high_res') ? 1.09 : 1.0;
+  const colorRel = (displayFeatureKeys.includes('p3') ? 1.01 : 1.0) * (displayFeatureKeys.includes('high_pwm') ? 1.01 : 1.0);
+  const screenRel = matRel * sizeRel * highRefreshRel * ltpoRel * highResRel * colorRel;
+
+  const socPowerRel = {
+    g81: 0.92,
+    t7225: 0.96,
+    dim6300: 1.01,
+    s6g4: 0.98,
+    dim7300: 0.95,
+    s7sg3: 1.0,
+    dim8400: 1.06,
+    s8sg4: 1.12,
+    s8elite: 1.18,
+    s8eliteg5: 1.24
+  };
+  const socRel = socPowerRel[v.soc.id] || 1.0;
+
+  const extraPowerRel = {
+    satellite: 0.06,
+    stereo: 0.03,
+    vc: 0.02,
+    magsafe: 0.02,
+    fast120: 0.02,
+    dynamic_island: 0.005
+  };
+  const otherRel = 1 + v.chosenExtras.reduce((sum, x) => sum + (extraPowerRel[x.id] || 0), 0);
+
+  const powerIndex = clamp(socRel * 0.36 + screenRel * 0.44 + otherRel * 0.2, 0.55, 1.95);
+  const hours = BATTERY_BASELINE.hours * (batteryWh / BATTERY_BASELINE.batteryWh) / powerIndex;
+  const endurancePct = clamp((hours / BATTERY_BASELINE.hours) * 100, 45, 200);
+  const batteryLabScore = clamp(20 + endurancePct * 0.8, 35, 165);
+
+  let onlineDemandMul = 1.0;
+  let offlineDemandMul = 1.0;
+  if (hours < 8) {
+    const deficit = 8 - hours;
+    onlineDemandMul = clamp(1 - deficit * 0.06, 0.6, 1.0);
+    offlineDemandMul = clamp(1 - deficit * 0.08, 0.52, 1.0);
+  } else {
+    const surplus = Math.min(hours - 8, 6);
+    onlineDemandMul = clamp(1 + surplus * 0.01, 1.0, 1.06);
+    offlineDemandMul = clamp(1 + surplus * 0.02, 1.0, 1.12);
+  }
+
+  const tag = hours < 8
+    ? '续航低于 8 小时，体验会拖累销量'
+    : hours >= 11
+      ? '续航表现优秀，线下接受度更高'
+      : '续航中规中矩';
+
+  return {
+    hours,
+    endurancePct,
+    batteryLabScore,
+    onlineDemandMul,
+    offlineDemandMul,
+    tag
+  };
 }
 
 function evaluateBuild() {
@@ -2037,7 +2122,8 @@ function evaluateBuild() {
   const displayVolume = displayAreaCm2 * displayThickness / 10;
   const avgRamScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.ram.score * (x.share / 100), 0) : 0;
   const avgRomScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.rom.score * (x.share / 100), 0) : 0;
-  const virtualBench = calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore);
+  const batteryEval = calcBatteryEndurance(v, screenMm, displayFeatureKeys);
+  const virtualBench = calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryEval.batteryLabScore);
   // Memory space model (discrete tiers):
   // ROM: 64GB smallest; 128~512GB same mid tier; 1TB slightly larger.
   // RAM: 4~16GB same; 24GB slightly larger.
@@ -2113,6 +2199,7 @@ function evaluateBuild() {
       + 0.07 * v.body.score
       + 0.07 * extraScore
       + (v.battery >= 5000 ? 4 : -1)
+      + (batteryEval.endurancePct - 100) * 0.05
       + (virtualBench.total - 100) * 0.05
       + (v.region.rdTalent - 1) * 8.5,
     15,
@@ -2186,8 +2273,22 @@ function evaluateBuild() {
     0.75,
     1.46
   );
-  const onlinePotential = clamp((onlinePotentialRaw + (hasDynamicIsland ? 0.08 : 0)) * foldableOnlineBoost * premiumOnlineDemandCarry, 0.72, 2.2);
-  const offlinePotential = clamp((offlinePotentialRaw + (hasDynamicIsland ? 0.06 : 0)) * foldableOfflineBoost * premiumOfflineDemandCarry, 0.75, 2.25);
+  const onlinePotential = clamp(
+    (onlinePotentialRaw + (hasDynamicIsland ? 0.08 : 0))
+      * foldableOnlineBoost
+      * premiumOnlineDemandCarry
+      * batteryEval.onlineDemandMul,
+    0.58,
+    2.2
+  );
+  const offlinePotential = clamp(
+    (offlinePotentialRaw + (hasDynamicIsland ? 0.06 : 0))
+      * foldableOfflineBoost
+      * premiumOfflineDemandCarry
+      * batteryEval.offlineDemandMul,
+    0.5,
+    2.25
+  );
   const channelFactor = onlinePotential * 0.62 + offlinePotential * 0.38;
   const onlineShare = clamp(
     (onlinePotential * v.marketStats.onlinePenetration) / (onlinePotential * v.marketStats.onlinePenetration + offlinePotential * (1 - v.marketStats.onlinePenetration)),
@@ -2300,6 +2401,7 @@ function evaluateBuild() {
     qualityScore,
     geekAttraction,
     virtualBench,
+    batteryEval,
     onlineShare,
     offlineShare,
     appearanceRetailBoost,
@@ -2355,8 +2457,9 @@ function renderPreview() {
     `市场氛围：${state.marketPick ? state.marketPick.name : '常态竞争'}。${state.marketPick ? state.marketPick.text : ''}`,
     `区域画像：${regionNarrative(e.input.region)}`,
     `渠道建议：${channelNarrative(e.onlineShare)}`,
-    `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}`,
+    `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
     `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
+    `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
     `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
     `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
     `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
@@ -2489,6 +2592,7 @@ function launch() {
     `企业：<strong>${state.companyName || '未命名科技'}</strong>（${e.input.region.name}）`,
     `机型：<strong>${e.modelName}</strong>｜难度：<strong>${e.input.startupDifficulty.name}</strong>`,
     `${BENCHMARK_NAME} 热度：综合 <strong>${e.virtualBench.total}</strong>（约为 ${BENCHMARK_BASELINE.name} 的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}，${e.virtualBench.baselineTag}）`,
+    `续航基线：约 ${e.batteryEval.hours.toFixed(1)} 小时（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）`,
     `本局市场：<strong>${state.marketPick.name}</strong>，${state.marketPick.text}`,
     `区域一句话：${regionNarrative(e.input.region)}`,
     `渠道倾向：${channelNarrative(e.onlineShare)}`,
@@ -3726,6 +3830,7 @@ function fillSources() {
     ['Samsung ISOCELL HP2 产品页', 'https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/'],
     ['NanoReview SoC 基准库（AnTuTu / Geekbench）', 'https://nanoreview.net/en/soc-list/rating'],
     ['GSMArena：Smartisan Nut R2 规格', 'https://www.gsmarena.com/smartisan_nut_r2-10445.php'],
+    ['Notebookcheck：Snapdragon 865 功耗与性能评测', 'https://www.notebookcheck.net/Qualcomm-Snapdragon-865-5G-Processor-Benchmarks-and-Specs.443773.0.html'],
     ['DXOMARK Camera：Xiaomi 14 Ultra', 'https://www.dxomark.com/xiaomi-14-ultra-camera-test/'],
     ['DXOMARK Camera：Samsung Galaxy S23 Ultra', 'https://www.dxomark.com/samsung-galaxy-s23-ultra-camera-test/'],
     ['XDA：UFS 2.2/3.1/4.0 与 eMMC 速度层级说明', 'https://www.xda-developers.com/what-ufs-4-how-is-it-better-than-ufs-3-1/'],
