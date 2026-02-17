@@ -126,6 +126,9 @@ const socBenchmarkAnchors = {
   s8eliteg5: { antutu10: 3872080, geekbench6Single: 3621, geekbench6Multi: 11190, inferred: true }
 };
 
+const dynamicSocThermalMap = {};
+const dynamicMainCamThermalMap = {};
+
 const displayMaterials = {
   lcd: { name: 'LCD', baseCost: 160, baseWeight: 31, score: 55, powerPenalty: 5 },
   oled: { name: 'OLED', baseCost: 260, baseWeight: 24, score: 72, powerPenalty: 2 },
@@ -201,8 +204,13 @@ const cameraModules = [
   { id: 'lyt900', name: '1英寸 LYT-9OO 旗舰主摄', cost: 238, weight: 21, score: 53, type: 'main', volume: 5.0 },
   { id: 'uw_50', name: '50MP 超广角模组', cost: 66, weight: 8, score: 20, type: 'ultra', volume: 1.8 },
   { id: 'tele_50p', name: '50MP 潜望长焦模组', cost: 132, weight: 15, score: 34, type: 'tele', volume: 3.8 },
-  { id: 'front_32', name: '32MP 前摄模组', cost: 36, weight: 4.8, score: 10, type: 'front', volume: 0.7 }
+  { id: 'front_32', name: '32MP 前摄模组', cost: 36, weight: 4.8, score: 10, type: 'front', volume: 0.7 },
+  { id: 'front_g1sq', name: 'G1 正方形前摄传感器', cost: 40, weight: 5.2, score: 13, type: 'front', volume: 0.75 }
 ];
+
+const baseSocs = JSON.parse(JSON.stringify(socs));
+const baseCameraModules = JSON.parse(JSON.stringify(cameraModules));
+const baseSocBenchmarkAnchors = JSON.parse(JSON.stringify(socBenchmarkAnchors));
 
 const extras = [
   { id: 'stereo', name: '低音增强立体声单元', cost: 28, weight: 8, space: 2.8, score: 4, demand: 0.02 },
@@ -269,8 +277,8 @@ const chinaRegions = {
     logistics: 0.98,
     labor: 0.93,
     rent: 0.88,
-    onlineInfra: 0.98,
-    offlineInfra: 1.01,
+    onlineInfra: 0.84,
+    offlineInfra: 1.2,
     supplyEco: 0.95,
     rdTalent: 0.94,
     profile: '走量潜力大，对配置与价格平衡敏感'
@@ -297,8 +305,8 @@ const chinaRegions = {
     logistics: 1.08,
     labor: 0.88,
     rent: 0.8,
-    onlineInfra: 0.9,
-    offlineInfra: 0.92,
+    onlineInfra: 0.72,
+    offlineInfra: 1.26,
     supplyEco: 0.86,
     rdTalent: 0.88,
     profile: '市场分散，渠道覆盖与售后半径挑战更大'
@@ -311,8 +319,8 @@ const chinaRegions = {
     logistics: 1.05,
     labor: 0.91,
     rent: 0.82,
-    onlineInfra: 0.93,
-    offlineInfra: 0.95,
+    onlineInfra: 0.76,
+    offlineInfra: 1.24,
     supplyEco: 0.9,
     rdTalent: 0.9,
     profile: '换机节奏偏稳，价格敏感度较高'
@@ -426,23 +434,23 @@ const provinceMarketData = [
   { region: 'south_coastal', province: '广东', pop: 126.6, online: 0.83 },
   { region: 'south_coastal', province: '福建', pop: 41.9, online: 0.79 },
   { region: 'south_coastal', province: '海南', pop: 10.3, online: 0.76 },
-  { region: 'central', province: '湖北', pop: 58.3, online: 0.76 },
-  { region: 'central', province: '湖南', pop: 66.0, online: 0.74 },
-  { region: 'central', province: '江西', pop: 45.2, online: 0.73 },
-  { region: 'central', province: '河南', pop: 98.7, online: 0.72 },
-  { region: 'central', province: '安徽', pop: 61.3, online: 0.73 },
+  { region: 'central', province: '湖北', pop: 58.3, online: 0.62 },
+  { region: 'central', province: '湖南', pop: 66.0, online: 0.6 },
+  { region: 'central', province: '江西', pop: 45.2, online: 0.58 },
+  { region: 'central', province: '河南', pop: 98.7, online: 0.57 },
+  { region: 'central', province: '安徽', pop: 61.3, online: 0.58 },
   { region: 'southwest', province: '四川', pop: 83.7, online: 0.72 },
   { region: 'southwest', province: '重庆', pop: 32.1, online: 0.78 },
   { region: 'southwest', province: '云南', pop: 46.9, online: 0.68 },
   { region: 'southwest', province: '贵州', pop: 38.6, online: 0.67 },
-  { region: 'northwest', province: '陕西', pop: 39.5, online: 0.74 },
-  { region: 'northwest', province: '甘肃', pop: 24.9, online: 0.65 },
-  { region: 'northwest', province: '青海', pop: 5.9, online: 0.64 },
-  { region: 'northwest', province: '宁夏', pop: 7.2, online: 0.7 },
-  { region: 'northeast', province: '辽宁', pop: 42.6, online: 0.73 },
-  { region: 'northeast', province: '吉林', pop: 23.5, online: 0.7 },
-  { region: 'northeast', province: '黑龙江', pop: 31.8, online: 0.69 },
-  { region: 'northwest', province: '新疆', pop: 25.9, online: 0.63 },
+  { region: 'northwest', province: '陕西', pop: 39.5, online: 0.58 },
+  { region: 'northwest', province: '甘肃', pop: 24.9, online: 0.49 },
+  { region: 'northwest', province: '青海', pop: 5.9, online: 0.46 },
+  { region: 'northwest', province: '宁夏', pop: 7.2, online: 0.5 },
+  { region: 'northeast', province: '辽宁', pop: 42.6, online: 0.56 },
+  { region: 'northeast', province: '吉林', pop: 23.5, online: 0.52 },
+  { region: 'northeast', province: '黑龙江', pop: 31.8, online: 0.5 },
+  { region: 'northwest', province: '新疆', pop: 25.9, online: 0.47 },
   { region: 'southwest', province: '西藏', pop: 3.6, online: 0.54 },
   { region: 'hk_mo_tw', province: '香港', pop: 7.5, online: 0.93 },
   { region: 'hk_mo_tw', province: '澳门', pop: 0.68, online: 0.94 },
@@ -475,9 +483,13 @@ const state = {
   timeline: [],
   loans: [],
   eventRerollUsed: false,
+  techCycle: 0,
+  lastTechRefreshMonth: 0,
+  lastTechRefreshGeneration: 1,
   designDeadEndNotified: false,
   minDesignLaunchCostCache: null,
   rating100Notified: false,
+  rating90PricingImmunityNotified: false,
   cash1bNotified: false,
   tenYearVeteranNotified: false,
   screenMaterialsUsed: new Set(),
@@ -501,6 +513,9 @@ const state = {
   flatBackAchievedNotified: false,
   largeScreenAchievedNotified: false,
   goodLuckAchievedNotified: false,
+  noRefreshAchievedNotified: false,
+  squeezeToothpasteAchievedNotified: false,
+  brandToneAchievedNotified: false,
   achievements: [],
   premiumPriceToleranceCarry: 1.0,
   premiumOnlineDemandCarry: 1.0,
@@ -525,6 +540,7 @@ const el = {
   eventCards: document.getElementById('eventCards'),
   eventHint: document.getElementById('eventHint'),
   confirmEvent: document.getElementById('confirmEvent'),
+  quickGuideBtn: document.getElementById('quickGuideBtn'),
   companyNameHint: document.getElementById('companyNameHint'),
   companyName: document.getElementById('companyName'),
   soc: document.getElementById('soc'),
@@ -631,6 +647,39 @@ const runQuizPool = [
   '运营拷问：现金发抖时，是 <strong>开贷款续命</strong>，还是 <strong>咬牙硬扛</strong>？',
   '运营拷问：口碑掉线但还能赚，你是 <strong>降价冲榜</strong>，还是 <strong>守价修碑</strong>？'
 ];
+
+const QUICK_GUIDE_HTML = [
+  '目标：活得久、赚得多、口碑高；可持续做多代机，也可企业结算看总成绩。',
+  '玩法：先抽市场与难度，再做配置（屏幕/SoC/影像/SKU/营销），立项后按月运营。',
+  '关键：体积能装下、现金别断、定价别离谱、库存别失控；缺货会伤生命周期，压货会拖现金流。',
+  '进阶：换代要有变化（屏幕/摄像头/SKU/机身/额外功能），否则会有换代疲劳惩罚。',
+  '彩蛋：成就很多，含口碑封神、超强现金流、折叠屏、散热狂魔、挤牙膏、科技以不换壳为本等。'
+].join('<br>');
+
+const QUICK_GUIDE_SEEN_KEY = 'start_phone_quick_guide_seen_v1';
+
+function readQuickGuideSeen() {
+  try {
+    return window.localStorage.getItem(QUICK_GUIDE_SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeQuickGuideSeen(seen) {
+  try {
+    window.localStorage.setItem(QUICK_GUIDE_SEEN_KEY, seen ? '1' : '0');
+  } catch {
+    // ignore storage errors (private mode, quota, etc.)
+  }
+}
+
+function refreshQuickGuideButtonState() {
+  if (!el.quickGuideBtn) return;
+  const seen = readQuickGuideSeen();
+  el.quickGuideBtn.classList.toggle('guide-unseen', !seen);
+  el.quickGuideBtn.classList.toggle('guide-seen', seen);
+}
 
 function pickRandom(arr) {
   if (!Array.isArray(arr) || !arr.length) return '';
@@ -1824,6 +1873,252 @@ function composeModelName(baseName, genIdx) {
   return `${baseName} Gen${genIdx}`;
 }
 
+function jaccardSimilarity(setA, setB) {
+  const a = setA instanceof Set ? setA : new Set();
+  const b = setB instanceof Set ? setB : new Set();
+  const union = new Set([...a, ...b]);
+  if (!union.size) return 1;
+  let inter = 0;
+  union.forEach((x) => {
+    if (a.has(x) && b.has(x)) inter += 1;
+  });
+  return inter / union.size;
+}
+
+function buildSpecSnapshotFromInput(inputLike, weightedSkuPrice = 0, skuPlans = []) {
+  if (!inputLike) return null;
+  const disp = inputLike.disp || {};
+  const cams = inputLike.cams || {};
+  const body = inputLike.body || {};
+  const extrasArr = Array.isArray(inputLike.chosenExtras) ? inputLike.chosenExtras : [];
+  const featureArr = Array.isArray(disp.features) ? disp.features : [];
+  const skuArr = Array.isArray(skuPlans) ? skuPlans : [];
+  const skuSignatures = skuArr
+    .map((s) => `${String(s?.ram?.id || s?.ramId || '')}+${String(s?.rom?.id || s?.romId || '')}@${Math.round(Number(s?.share || 0))}`)
+    .filter((x) => x !== '+@0')
+    .sort();
+
+  let maxRamScore = 0;
+  let maxRomScore = 0;
+  skuArr.forEach((s) => {
+    maxRamScore = Math.max(maxRamScore, Number((s && s.ram && s.ram.score) || s?.ramScore || 0));
+    maxRomScore = Math.max(maxRomScore, Number((s && s.rom && s.rom.score) || s?.romScore || 0));
+  });
+
+  return {
+    socId: String(inputLike.soc?.id || ''),
+    socTier: String(inputLike.soc?.tier || ''),
+    displayMat: String(disp.mat?.name || ''),
+    displayForm: String(disp.form?.name || ''),
+    displaySize: Number(disp.size || 0),
+    featureIds: featureArr.map((f) => String(f?.id || f?.name || '')).filter(Boolean).sort(),
+    bodyId: String(body.id || ''),
+    battery: Number(inputLike.battery || 0),
+    phoneH: Number(inputLike.phoneH || 0),
+    phoneW: Number(inputLike.phoneW || 0),
+    phoneT: Number(inputLike.phoneT || 0),
+    camMain: String(cams.main?.id || 'none'),
+    camUltra: String(cams.ultra?.id || 'none'),
+    camTele: String(cams.tele?.id || 'none'),
+    camFront: String(cams.front?.id || 'none'),
+    extraIds: extrasArr.map((x) => String(x?.id || '')).filter(Boolean).sort(),
+    skuSignatures,
+    skuCount: skuSignatures.length,
+    weightedPrice: Number(weightedSkuPrice || 0),
+    maxRamScore,
+    maxRomScore
+  };
+}
+
+function getLastGenerationSpecSnapshot() {
+  const last = state.productHistory && state.productHistory.length
+    ? state.productHistory[state.productHistory.length - 1]
+    : null;
+  if (!last) return null;
+  if (last.specSnapshot) return last.specSnapshot;
+
+  // Fallback for legacy saves without structured snapshot.
+  const displayText = String(last.display || '');
+  const sizeMatch = displayText.match(/(\d+(?:\.\d+)?)"/);
+  return {
+    socId: '',
+    socTier: '',
+    displayMat: String(displayText.split(' ')[0] || ''),
+    displayForm: '',
+    displaySize: sizeMatch ? Number(sizeMatch[1]) : 0,
+    featureIds: [],
+    bodyId: '',
+    battery: 0,
+    phoneH: 0,
+    phoneW: 0,
+    phoneT: 0,
+    camMain: 'none',
+    camUltra: 'none',
+    camTele: 'none',
+    camFront: 'none',
+    extraIds: [],
+    skuSignatures: [],
+    skuCount: 0,
+    weightedPrice: 0,
+    maxRamScore: 0,
+    maxRomScore: 0
+  };
+}
+
+function calcGenerationNovelty(currentSpec, previousSpec, difficultyName = '真实') {
+  if (!currentSpec || !previousSpec) {
+    return {
+      score: 100,
+      demandMul: 1.0,
+      tag: '首代产品或无上代参考',
+      warning: ''
+    };
+  }
+
+  let score = 0;
+  let changedCount = 0;
+  const bumpChanged = (changed) => {
+    if (changed) changedCount += 1;
+    return changed;
+  };
+
+  const socChanged = bumpChanged(currentSpec.socId && previousSpec.socId && currentSpec.socId !== previousSpec.socId);
+  if (socChanged) score += 22;
+
+  const matChanged = bumpChanged(currentSpec.displayMat !== previousSpec.displayMat);
+  if (matChanged) score += 12;
+
+  const formChanged = bumpChanged(currentSpec.displayForm !== previousSpec.displayForm);
+  if (formChanged) score += 7;
+
+  const sizeDiff = Math.abs((currentSpec.displaySize || 0) - (previousSpec.displaySize || 0));
+  const sizeChanged = bumpChanged(sizeDiff >= 0.2);
+  score += Math.min(10, sizeDiff * 4.5);
+  if (sizeChanged) score += 2;
+
+  const currentFeatureSet = new Set(currentSpec.featureIds || []);
+  const previousFeatureSet = new Set(previousSpec.featureIds || []);
+  const featureDiffRatio = (1 - jaccardSimilarity(currentFeatureSet, previousFeatureSet));
+  const featureUnion = new Set([...currentFeatureSet, ...previousFeatureSet]);
+  let featureDeltaCount = 0;
+  featureUnion.forEach((id) => {
+    const inCurrent = currentFeatureSet.has(id);
+    const inPrevious = previousFeatureSet.has(id);
+    if (inCurrent !== inPrevious) featureDeltaCount += 1;
+  });
+  if (featureDeltaCount > 0) {
+    changedCount += Math.min(6, featureDeltaCount);
+  }
+  score += featureDiffRatio * 12;
+  score += Math.min(8, featureDeltaCount * 1.4);
+
+  const bodyChanged = bumpChanged(currentSpec.bodyId && previousSpec.bodyId && currentSpec.bodyId !== previousSpec.bodyId);
+  if (bodyChanged) score += 7;
+
+  const batteryDiff = Math.abs((currentSpec.battery || 0) - (previousSpec.battery || 0));
+  const batteryChanged = bumpChanged(batteryDiff >= 400);
+  score += Math.min(8, batteryDiff / 350);
+  if (batteryChanged) score += 2;
+
+  const phoneHDiff = Math.abs((currentSpec.phoneH || 0) - (previousSpec.phoneH || 0));
+  const phoneWDiff = Math.abs((currentSpec.phoneW || 0) - (previousSpec.phoneW || 0));
+  const phoneTDiff = Math.abs((currentSpec.phoneT || 0) - (previousSpec.phoneT || 0));
+  const bodySizeDiffScore = Math.min(10, phoneHDiff * 0.42 + phoneWDiff * 0.55 + phoneTDiff * 2.1);
+  const bodySizeChanged = bumpChanged(phoneHDiff >= 1.5 || phoneWDiff >= 1 || phoneTDiff >= 0.2);
+  score += bodySizeDiffScore;
+  if (bodySizeChanged) score += 2;
+
+  const mainCamChanged = bumpChanged(currentSpec.camMain !== previousSpec.camMain);
+  if (mainCamChanged) score += 8;
+
+  const ultraCamChanged = bumpChanged(currentSpec.camUltra !== previousSpec.camUltra);
+  if (ultraCamChanged) score += 5;
+
+  const teleCamChanged = bumpChanged(currentSpec.camTele !== previousSpec.camTele);
+  if (teleCamChanged) score += 5;
+
+  const frontCamChanged = bumpChanged(currentSpec.camFront !== previousSpec.camFront);
+  if (frontCamChanged) score += 5;
+
+  const currentExtrasSet = new Set(currentSpec.extraIds || []);
+  const previousExtrasSet = new Set(previousSpec.extraIds || []);
+  const extraDiffRatio = (1 - jaccardSimilarity(currentExtrasSet, previousExtrasSet));
+  const extraUnion = new Set([...currentExtrasSet, ...previousExtrasSet]);
+  let extraDeltaCount = 0;
+  extraUnion.forEach((id) => {
+    const inCurrent = currentExtrasSet.has(id);
+    const inPrevious = previousExtrasSet.has(id);
+    if (inCurrent !== inPrevious) extraDeltaCount += 1;
+  });
+  if (extraDeltaCount > 0) {
+    changedCount += Math.min(6, extraDeltaCount);
+  }
+  score += extraDiffRatio * 11;
+  score += Math.min(10, extraDeltaCount * 1.8);
+
+  const currentSkuSet = new Set(currentSpec.skuSignatures || []);
+  const previousSkuSet = new Set(previousSpec.skuSignatures || []);
+  const skuDiffRatio = (1 - jaccardSimilarity(currentSkuSet, previousSkuSet));
+  const skuUnion = new Set([...currentSkuSet, ...previousSkuSet]);
+  let skuDeltaCount = 0;
+  skuUnion.forEach((sig) => {
+    const inCurrent = currentSkuSet.has(sig);
+    const inPrevious = previousSkuSet.has(sig);
+    if (inCurrent !== inPrevious) skuDeltaCount += 1;
+  });
+  if (skuDeltaCount > 0 || (currentSpec.skuCount || 0) !== (previousSpec.skuCount || 0)) {
+    changedCount += Math.min(6, Math.max(skuDeltaCount, Math.abs((currentSpec.skuCount || 0) - (previousSpec.skuCount || 0))));
+  }
+  score += skuDiffRatio * 12;
+  score += Math.min(9, skuDeltaCount * 1.6);
+
+  score += Math.min(6, Math.abs((currentSpec.weightedPrice || 0) - (previousSpec.weightedPrice || 0)) / 1000 * 6);
+  score += Math.min(7, Math.abs((currentSpec.maxRamScore + currentSpec.maxRomScore) - (previousSpec.maxRamScore + previousSpec.maxRomScore)) * 0.16);
+
+  const noveltyScore = clamp(Math.round(score), 0, 100);
+  const hardMode = String(difficultyName || '').includes('困难');
+  const fatigueBypassChanges = hardMode ? 4 : 3;
+  if (changedCount >= fatigueBypassChanges) {
+    return {
+      score: noveltyScore,
+      demandMul: 1.0,
+      tag: `换代改动充足（${changedCount}项）`,
+      warning: ''
+    };
+  }
+
+  if (noveltyScore < 18) {
+    return {
+      score: noveltyScore,
+      demandMul: 0.68,
+      tag: '换代疲劳（严重）',
+      warning: '请对产品换代，否则会严重影响销量。'
+    };
+  }
+  if (noveltyScore < 32) {
+    return {
+      score: noveltyScore,
+      demandMul: 0.78,
+      tag: '换代疲劳（明显）',
+      warning: '本代改动偏小，市场新鲜感下降明显。'
+    };
+  }
+  if (noveltyScore < 48) {
+    return {
+      score: noveltyScore,
+      demandMul: 0.9,
+      tag: '换代改动偏保守',
+      warning: '建议拉开差异化，避免“挤牙膏式换代”。'
+    };
+  }
+  return {
+    score: noveltyScore,
+    demandMul: 1.0,
+    tag: '换代差异合理',
+    warning: ''
+  };
+}
+
 function updateModelNameHint() {
   if (!el.modelNameHint || !el.modelBaseName) return;
   const check = validateModelName(el.modelBaseName.value);
@@ -1893,9 +2188,18 @@ function getDisplayLiveEstimate() {
 }
 
 function fillOptions() {
-  el.soc.innerHTML = socs
-    .map((s) => `<option value="${s.id}" ${s.id === 'dim7300' ? 'selected' : ''}>${s.name}（${s.tier}，估价 ${RMB(s.cost)}）</option>`)
+  const prevSoc = el.soc ? el.soc.value : '';
+  const activeSocs = socs
+    .filter((s) => !s.retired)
+    .slice()
+    .sort((a, b) => (Number(a.cost || 0) - Number(b.cost || 0)) || (Number(a.score || 0) - Number(b.score || 0)));
+  el.soc.innerHTML = activeSocs
+    .map((s) => `<option value="${s.id}">${s.name}（${s.tier}，估价 ${RMB(s.cost)}）</option>`)
     .join('');
+  if (el.soc) {
+    const fallbackSoc = activeSocs.some((s) => s.id === 'dim7300') ? 'dim7300' : (activeSocs[0]?.id || '');
+    el.soc.value = activeSocs.some((s) => s.id === prevSoc) ? prevSoc : fallbackSoc;
+  }
   updateDisplayMaterialOptions();
 
   el.region.innerHTML = Object.entries(chinaRegions)
@@ -1919,15 +2223,24 @@ function fillOptions() {
   initSkuRows();
   el.body.innerHTML = bodyOptions.map((x, idx) => `<option value="${x.id}" ${idx === 1 ? 'selected' : ''}>${x.name}（${RMB(x.cost)}）</option>`).join('');
 
-  const cameraOpt = cameraModules.map((x) => `<option value="${x.id}">${x.name}${x.cost ? `（${RMB(x.cost)}）` : ''}</option>`).join('');
+  const prevMain = el.camMain ? el.camMain.value : '';
+  const prevUltra = el.camUltra ? el.camUltra.value : '';
+  const prevTele = el.camTele ? el.camTele.value : '';
+  const prevFront = el.camFront ? el.camFront.value : '';
+  const activeCameras = cameraModules
+    .filter((x) => !x.retired)
+    .slice()
+    .sort((a, b) => (Number(a.cost || 0) - Number(b.cost || 0)) || (Number(a.score || 0) - Number(b.score || 0)));
+  const cameraOpt = activeCameras.map((x) => `<option value="${x.id}">${x.name}${x.cost ? `（${RMB(x.cost)}）` : ''}</option>`).join('');
   el.camMain.innerHTML = cameraOpt;
   el.camUltra.innerHTML = cameraOpt;
   el.camTele.innerHTML = cameraOpt;
   el.camFront.innerHTML = cameraOpt;
-  el.camMain.value = 'ov50h';
-  el.camUltra.value = 'uw_50';
-  el.camTele.value = 'none';
-  el.camFront.value = 'front_32';
+  const hasCam = (id) => activeCameras.some((x) => x.id === id);
+  el.camMain.value = hasCam(prevMain) ? prevMain : (hasCam('ov50h') ? 'ov50h' : (activeCameras[0]?.id || 'none'));
+  el.camUltra.value = hasCam(prevUltra) ? prevUltra : (hasCam('uw_50') ? 'uw_50' : 'none');
+  el.camTele.value = hasCam(prevTele) ? prevTele : 'none';
+  el.camFront.value = hasCam(prevFront) ? prevFront : (hasCam('front_32') ? 'front_32' : 'none');
 
   el.extras.innerHTML = extras.map((x, idx) => `
     <label><input type="checkbox" value="${x.id}" /> ${x.name}（+${RMB(x.cost)}，+${x.weight}g）</label>
@@ -1944,6 +2257,373 @@ function fillOptions() {
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   updateStartupDifficultyStyle();
   updateModelNameHint();
+}
+
+function refreshTechSelectableOptions() {
+  const activeSocs = socs
+    .filter((s) => !s.retired)
+    .slice()
+    .sort((a, b) => (Number(a.cost || 0) - Number(b.cost || 0)) || (Number(a.score || 0) - Number(b.score || 0)));
+  const currentSoc = el.soc ? el.soc.value : '';
+  if (el.soc) {
+    el.soc.innerHTML = activeSocs
+      .map((s) => `<option value="${s.id}">${s.name}（${s.tier}，估价 ${RMB(s.cost)}）</option>`)
+      .join('');
+    const fallbackSoc = activeSocs.some((s) => s.id === 'dim7300') ? 'dim7300' : (activeSocs[0]?.id || '');
+    el.soc.value = activeSocs.some((s) => s.id === currentSoc) ? currentSoc : fallbackSoc;
+  }
+
+  const activeCameras = cameraModules
+    .filter((x) => !x.retired)
+    .slice()
+    .sort((a, b) => (Number(a.cost || 0) - Number(b.cost || 0)) || (Number(a.score || 0) - Number(b.score || 0)));
+  const currentMain = el.camMain ? el.camMain.value : '';
+  const currentUltra = el.camUltra ? el.camUltra.value : '';
+  const currentTele = el.camTele ? el.camTele.value : '';
+  const currentFront = el.camFront ? el.camFront.value : '';
+  const hasCam = (id) => activeCameras.some((x) => x.id === id);
+  const cameraOpt = activeCameras.map((x) => `<option value="${x.id}">${x.name}${x.cost ? `（${RMB(x.cost)}）` : ''}</option>`).join('');
+
+  if (el.camMain) {
+    el.camMain.innerHTML = cameraOpt;
+    el.camMain.value = hasCam(currentMain) ? currentMain : (hasCam('ov50h') ? 'ov50h' : (activeCameras[0]?.id || 'none'));
+  }
+  if (el.camUltra) {
+    el.camUltra.innerHTML = cameraOpt;
+    el.camUltra.value = hasCam(currentUltra) ? currentUltra : (hasCam('uw_50') ? 'uw_50' : 'none');
+  }
+  if (el.camTele) {
+    el.camTele.innerHTML = cameraOpt;
+    el.camTele.value = hasCam(currentTele) ? currentTele : 'none';
+  }
+  if (el.camFront) {
+    el.camFront.innerHTML = cameraOpt;
+    el.camFront.value = hasCam(currentFront) ? currentFront : (hasCam('front_32') ? 'front_32' : 'none');
+  }
+}
+
+function estimateSocBenchmarkByScore(score) {
+  const s = clamp(Number(score || 0), 20, 130) / 100;
+  const antutu10 = Math.round(120_000 + Math.pow(s, 2.4) * 3_850_000);
+  const geekbench6Single = Math.round(320 + Math.pow(s, 2.1) * 3_500);
+  const geekbench6Multi = Math.round(1_150 + Math.pow(s, 2.05) * 10_600);
+  return { antutu10, geekbench6Single, geekbench6Multi, inferred: true };
+}
+
+function normalizeSocTierByScore(soc) {
+  const sc = Number(soc.score || 0);
+  if (sc >= 96) return '旗舰+';
+  if (sc >= 89) return '旗舰';
+  if (sc >= 81) return '次旗舰';
+  if (sc >= 72) return '中高端';
+  if (sc >= 59) return '中端';
+  if (sc >= 48) return '中低端';
+  if (sc >= 34) return '入门';
+  return '入门(老款)';
+}
+
+function evolveExistingSocPool() {
+  let retiredThisRound = 0;
+  socs.forEach((soc) => {
+    if (soc.retired) return;
+    // First tech refresh: all explicitly labeled "老款" leave the catalog.
+    if ((state.techCycle || 0) === 1 && String(soc.tier || '').includes('老款')) {
+      soc.retired = true;
+      retiredThisRound += 1;
+      return;
+    }
+    soc.age = (soc.age || 0) + 1;
+    soc.cost = Math.max(62, Math.round(soc.cost * 0.93));
+    soc.score = Math.max(18, Number((soc.score * 0.985).toFixed(1)));
+    soc.tier = normalizeSocTierByScore(soc);
+    soc.risk = clamp((soc.risk || 1) * 0.985, 0.68, 1.5);
+    // Speed up obsolescence so older platforms leave the market sooner.
+    if ((soc.age || 0) >= 2 && soc.score <= 34) {
+      soc.retired = true;
+      retiredThisRound += 1;
+      return;
+    }
+    if ((soc.age || 0) >= 3 && soc.score <= 44) {
+      soc.retired = true;
+      retiredThisRound += 1;
+      return;
+    }
+    if ((soc.age || 0) >= 5 && soc.score <= 52) {
+      soc.retired = true;
+      retiredThisRound += 1;
+    }
+  });
+  // Ensure every refresh round has at least some down-shelving for SoC options.
+  if (retiredThisRound === 0) {
+    const candidate = socs
+      .filter((s) => !s.retired && (s.age || 0) >= 2)
+      .sort((a, b) => (Number(a.score || 0) - Number(b.score || 0)) || (Number(a.cost || 0) - Number(b.cost || 0)))[0];
+    if (candidate) candidate.retired = true;
+    retiredThisRound += candidate ? 1 : 0;
+  }
+  return retiredThisRound;
+}
+
+function pickSpreadCandidates(list, count) {
+  if (!Array.isArray(list) || !list.length || count <= 0) return [];
+  if (count >= list.length) return [...list];
+  if (count === 1) return [list[Math.floor(list.length / 2)]];
+  const picked = [];
+  const used = new Set();
+  for (let i = 0; i < count; i += 1) {
+    const idx = Math.round((i * (list.length - 1)) / (count - 1));
+    if (used.has(idx)) continue;
+    used.add(idx);
+    picked.push(list[idx]);
+  }
+  // fill if rounding produced duplicates
+  for (let i = 0; picked.length < count && i < list.length; i += 1) {
+    if (used.has(i)) continue;
+    used.add(i);
+    picked.push(list[i]);
+  }
+  return picked;
+}
+
+function addNewGenerationSoc(addQuota = 3) {
+  const cycle = Math.max(1, state.techCycle || 1);
+  const quota = clamp(Number(addQuota || 0), 0, 6);
+  if (quota <= 0) return 0;
+  const active = socs.filter((s) => !s.retired);
+  const topScore = active.length ? Math.max(...active.map((s) => Number(s.score || 0))) : 98;
+  const topCost = active.length ? Math.max(...active.map((s) => Number(s.cost || 0))) : 1380;
+  const midScore = active.length ? active.reduce((a, b) => a + Number(b.score || 0), 0) / active.length : 64;
+  const lowScore = active.length ? Math.min(...active.map((s) => Number(s.score || 0))) : 30;
+  const lowCost = active.length ? Math.min(...active.map((s) => Number(s.cost || 0))) : 95;
+  const yearMark = 2026 + cycle;
+
+  const socCandidates = [
+    {
+      id: `gx_${cycle}`,
+      name: `Helioo Gx${cycle}`,
+      tier: '入门',
+      score: Math.round(clamp(lowScore + 6 + cycle * 0.3, 30, 48)),
+      cost: Math.round(clamp(lowCost * 1.06, 88, 260)),
+      risk: clamp(0.88 + cycle * 0.006, 0.84, 1.06),
+      age: 0
+    },
+    {
+      id: `s6neo_${cycle}`,
+      name: `SnapDrake 6 Neo Gen${cycle + 4}`,
+      tier: '中端',
+      score: Math.round(Math.max(60, midScore + 3)),
+      cost: Math.round(topCost * 0.48),
+      risk: clamp(1.0 + cycle * 0.007, 0.96, 1.22),
+      age: 0
+    },
+    {
+      id: `s7neo_${cycle}`,
+      name: `SnapDrake 7 Neo Gen${cycle + 3}`,
+      tier: '中高端',
+      score: Math.round(Math.max(66, midScore + 8)),
+      cost: Math.round(topCost * 0.62),
+      risk: clamp(1.08 + cycle * 0.008, 1.0, 1.3),
+      age: 0
+    },
+    {
+      id: `s8neo_${cycle}`,
+      name: `SnapDrake 8 Neo Gen${cycle + 2}`,
+      tier: '次旗舰',
+      score: Math.round(topScore + 2),
+      cost: Math.round(topCost * 0.86),
+      risk: clamp(1.2 + cycle * 0.009, 1.1, 1.42),
+      age: 0
+    },
+    {
+      id: `dimx_${cycle}`,
+      name: `MedaTek DimeCity X${yearMark}`,
+      tier: '旗舰',
+      score: Math.round(topScore + 5),
+      cost: Math.round(topCost * 1.07),
+      risk: clamp(1.26 + cycle * 0.01, 1.2, 1.48),
+      age: 0
+    },
+    {
+      id: `s8elite_x${cycle}`,
+      name: `SnapDrake 8 El1te X${cycle}`,
+      tier: '旗舰+',
+      score: Math.round(topScore + 8),
+      cost: Math.round(topCost * 1.11),
+      risk: clamp(1.32 + cycle * 0.01, 1.25, 1.55),
+      age: 0
+    }
+  ];
+
+  const selected = pickSpreadCandidates(socCandidates, quota);
+  let added = 0;
+  selected.forEach((soc) => {
+    if (socs.some((x) => x.id === soc.id)) return;
+    socs.push(soc);
+    socBenchmarkAnchors[soc.id] = estimateSocBenchmarkByScore(soc.score);
+    dynamicSocThermalMap[soc.id] = clamp(0.72 + (soc.score / 100) * 0.9 + (soc.tier.includes('旗舰') ? 0.1 : 0), 0.76, 1.75);
+    added += 1;
+  });
+  return added;
+}
+
+function evolveExistingCameraPool() {
+  let retiredThisRound = 0;
+  cameraModules.forEach((cam) => {
+    if (cam.retired || cam.id === 'none') return;
+    cam.age = (cam.age || 0) + 1;
+    cam.cost = Math.max(14, Math.round(cam.cost * 0.95));
+    cam.score = Math.max(4, Number((cam.score * 0.985).toFixed(1)));
+    // Sensors also iterate faster now; low-end and aging modules retire earlier.
+    if ((cam.age || 0) >= 4 && cam.cost <= 52) {
+      cam.retired = true;
+      retiredThisRound += 1;
+      return;
+    }
+    if ((cam.age || 0) >= 6 && cam.score <= 16) {
+      cam.retired = true;
+      retiredThisRound += 1;
+    }
+  });
+  // Keep cadence: if no sensor retired naturally, retire one aging low-end module.
+  if (retiredThisRound === 0) {
+    const candidate = cameraModules
+      .filter((c) => !c.retired && c.id !== 'none' && (c.age || 0) >= 3)
+      .sort((a, b) => (Number(a.score || 0) - Number(b.score || 0)) || (Number(a.cost || 0) - Number(b.cost || 0)))[0];
+    if (candidate) candidate.retired = true;
+    retiredThisRound += candidate ? 1 : 0;
+  }
+  return retiredThisRound;
+}
+
+function addNewGenerationCamera(addQuota = 3) {
+  const cycle = Math.max(1, state.techCycle || 1);
+  const quota = clamp(Number(addQuota || 0), 0, 6);
+  if (quota <= 0) return 0;
+  const activeMain = cameraModules.filter((x) => !x.retired && x.type === 'main');
+  const topMain = activeMain.length ? activeMain.reduce((a, b) => (a.score > b.score ? a : b)) : { score: 53, cost: 238 };
+  const midMain = activeMain.length ? activeMain[Math.floor(activeMain.length / 2)] : { score: 33, cost: 105 };
+
+  const candidates = [
+    {
+      id: `main_lite_${cycle}`,
+      name: `LiteCam ${cycle} 入门主摄`,
+      cost: Math.round(clamp(midMain.cost * 0.78, 36, 160)),
+      weight: 8.6,
+      score: Math.round(clamp(midMain.score - 4, 16, 42)),
+      type: 'main',
+      volume: 2.1,
+      age: 0
+    },
+    {
+      id: `ovx_${cycle}`,
+      name: `OVX${cycle} 50MP 新主摄`,
+      cost: Math.round(midMain.cost * 1.1),
+      weight: 12.8,
+      score: Math.round(midMain.score + 5),
+      type: 'main',
+      volume: 3.2,
+      age: 0
+    },
+    {
+      id: `lytx_${cycle}`,
+      name: `1英寸 LYT-X${cycle} 旗舰主摄`,
+      cost: Math.round(topMain.cost * 1.12),
+      weight: 22.5,
+      score: Math.round(topMain.score + 4),
+      type: 'main',
+      volume: 5.4,
+      age: 0
+    },
+    {
+      id: `front_x${cycle}`,
+      name: `${36 + cycle * 2}MP 前摄模组`,
+      cost: Math.round(38 + cycle * 4),
+      weight: 5.2,
+      score: Math.round(12 + cycle * 1.2),
+      type: 'front',
+      volume: 0.75,
+      age: 0
+    },
+    {
+      id: `front_g1sq_x${cycle}`,
+      name: `G${cycle + 1} 正方形前摄传感器`,
+      cost: Math.round(40 + cycle * 5),
+      weight: 5.3,
+      score: Math.round(13 + cycle * 1.6),
+      type: 'front',
+      volume: 0.78,
+      age: 0
+    },
+    {
+      id: `uwx_${cycle}`,
+      name: `UWX${cycle} 超广角模组`,
+      cost: Math.round(clamp(midMain.cost * 0.72, 48, 150)),
+      weight: 8.4,
+      score: Math.round(clamp(midMain.score - 3, 18, 36)),
+      type: 'ultra',
+      volume: 1.9,
+      age: 0
+    }
+  ];
+
+  const selected = pickSpreadCandidates(candidates, quota);
+  let added = 0;
+  selected.forEach((cam) => {
+    if (cameraModules.some((x) => x.id === cam.id)) return;
+    cameraModules.push(cam);
+    added += 1;
+  });
+
+  dynamicMainCamThermalMap[`lytx_${cycle}`] = 0.52;
+  dynamicMainCamThermalMap[`ovx_${cycle}`] = 0.29;
+  return added;
+}
+
+function maybeRefreshTechComponentPool(trigger = 'time') {
+  const nextGen = getNextGenerationIndex();
+  const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
+  if (!unlocked) return false;
+  const timeDue = (state.companyMonthsTotal - (state.lastTechRefreshMonth || 0)) >= 12;
+  const genDue = trigger === 'generation' && nextGen > (state.lastTechRefreshGeneration || 1);
+  if (!timeDue && !genDue) return false;
+
+  state.techCycle = (state.techCycle || 0) + 1;
+  const preSocActive = socs.filter((s) => !s.retired).length;
+  const preCamActive = cameraModules.filter((c) => !c.retired && c.id !== 'none').length;
+  const socRetired = evolveExistingSocPool();
+  const camRetired = evolveExistingCameraPool();
+  const socActiveAfterRetire = socs.filter((s) => !s.retired).length;
+  const camActiveAfterRetire = cameraModules.filter((c) => !c.retired && c.id !== 'none').length;
+  const cycleDrift = state.techCycle % 3 === 0 ? 1 : 0; // occasional slight expansion
+  const socTargetActive = clamp(preSocActive + cycleDrift, preSocActive - 1, preSocActive + 1);
+  const camTargetActive = clamp(preCamActive + cycleDrift, preCamActive - 1, preCamActive + 1);
+  const socAddQuota = clamp(socTargetActive - socActiveAfterRetire + (socRetired > 2 ? 1 : 0), 0, 6);
+  const camAddQuota = clamp(camTargetActive - camActiveAfterRetire + (camRetired > 2 ? 1 : 0), 0, 6);
+  addNewGenerationSoc(socAddQuota);
+  addNewGenerationCamera(camAddQuota);
+  refreshTechSelectableOptions();
+  updateDisplayMaterialOptions();
+  if (el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+    refreshDesignPanelsLive();
+  }
+
+  state.lastTechRefreshMonth = state.companyMonthsTotal;
+  state.lastTechRefreshGeneration = nextGen;
+
+  openGameModal(
+    '代际更新',
+    `行业进入新一轮更新：新旗舰/新中端已入场，老款芯片与传感器开始下沉或淘汰。<br>本次更新已生效（第 <strong>${state.techCycle}</strong> 轮），建议重新检查配置与定价。`
+  );
+  return true;
+}
+
+function resetTechPoolsToBase() {
+  socs.splice(0, socs.length, ...JSON.parse(JSON.stringify(baseSocs)));
+  cameraModules.splice(0, cameraModules.length, ...JSON.parse(JSON.stringify(baseCameraModules)));
+  Object.keys(dynamicSocThermalMap).forEach((k) => { delete dynamicSocThermalMap[k]; });
+  Object.keys(dynamicMainCamThermalMap).forEach((k) => { delete dynamicMainCamThermalMap[k]; });
+  Object.keys(socBenchmarkAnchors).forEach((k) => { delete socBenchmarkAnchors[k]; });
+  Object.assign(socBenchmarkAnchors, JSON.parse(JSON.stringify(baseSocBenchmarkAnchors)));
 }
 
 function trendArrows(factor) {
@@ -2038,8 +2718,10 @@ function updateEventGateState() {
 }
 
 function selectedValues() {
-  const soc = socs.find((x) => x.id === el.soc.value);
-  const body = bodyOptions.find((x) => x.id === el.body.value);
+  const socRaw = socs.find((x) => x.id === el.soc.value);
+  const bodyRaw = bodyOptions.find((x) => x.id === el.body.value);
+  const soc = socRaw ? { ...socRaw } : null;
+  const body = bodyRaw ? { ...bodyRaw } : null;
   const region = chinaRegions[el.region.value];
   const marketStats = getRegionMarketStats(el.region.value);
   const procurement = procurementPlans[el.procurementPlan.value];
@@ -2048,23 +2730,25 @@ function selectedValues() {
   const startupDifficulty = startupDifficulties[el.startupDifficulty.value] || startupDifficulties.real;
 
   const disp = {
-    mat: displayMaterials[el.dispMat.value],
-    vendor: displayVendors[el.dispVendor.value],
-    form: displayForms[el.dispForm.value],
+    mat: { ...displayMaterials[el.dispMat.value] },
+    vendor: { ...displayVendors[el.dispVendor.value] },
+    form: { ...displayForms[el.dispForm.value] },
     size: Number(el.dispSize.value),
     ratio: el.dispRatio.value,
-    features: [...el.displayFeatures.querySelectorAll('input:checked')].map((i) => displayFeatureMap[i.value])
+    features: [...el.displayFeatures.querySelectorAll('input:checked')].map((i) => ({ ...displayFeatureMap[i.value] }))
   };
 
   const cams = {
-    main: cameraModules.find((x) => x.id === el.camMain.value),
-    ultra: cameraModules.find((x) => x.id === el.camUltra.value),
-    tele: cameraModules.find((x) => x.id === el.camTele.value),
-    front: cameraModules.find((x) => x.id === el.camFront.value)
+    main: { ...(cameraModules.find((x) => x.id === el.camMain.value) || { id: 'none', name: '无', cost: 0, weight: 0, score: 0, type: 'none', volume: 0 }) },
+    ultra: { ...(cameraModules.find((x) => x.id === el.camUltra.value) || { id: 'none', name: '无', cost: 0, weight: 0, score: 0, type: 'none', volume: 0 }) },
+    tele: { ...(cameraModules.find((x) => x.id === el.camTele.value) || { id: 'none', name: '无', cost: 0, weight: 0, score: 0, type: 'none', volume: 0 }) },
+    front: { ...(cameraModules.find((x) => x.id === el.camFront.value) || { id: 'none', name: '无', cost: 0, weight: 0, score: 0, type: 'none', volume: 0 }) }
   };
 
   const chosenExtras = [...el.extras.querySelectorAll('input:checked')]
-    .map((i) => extras.find((x) => x.id === i.value));
+    .map((i) => extras.find((x) => x.id === i.value))
+    .filter(Boolean)
+    .map((x) => ({ ...x }));
 
   const basePrice = Number(el.price.value);
   const skuPlans = buildSkuPlansFromInputs(basePrice);
@@ -2219,6 +2903,13 @@ function baselineBandClass(ratio) {
   return 'perf-mid';
 }
 
+function getSocGenerationIndex(socId) {
+  const id = String(socId || '');
+  const m = id.match(/_(?:x)?(\d+)$/i);
+  if (!m) return 0;
+  return Math.max(0, Number(m[1]) || 0);
+}
+
 function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
   const batteryWh = v.battery * 3.85 / 1000;
   const baselineDim = getScreenDimensionsMm(6.67, '20:9');
@@ -2264,7 +2955,10 @@ function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
     s8elite: 1.18,
     s8eliteg5: 1.24
   };
-  const socRel = socPowerRel[v.soc.id] || 1.0;
+  const socGenIdx = getSocGenerationIndex(v.soc.id);
+  // Newer SoC generations are slightly more efficient at similar performance levels.
+  const socGenEfficiencyMul = clamp(1 - socGenIdx * 0.007, 0.93, 1.0);
+  const socRel = (socPowerRel[v.soc.id] || 1.0) * socGenEfficiencyMul;
 
   const extraPowerRel = {
     satellite: 0.06,
@@ -2522,8 +3216,8 @@ function evaluateBuild() {
     none: 0.0, basic13: 0.06, ov13b10: 0.08, mx586_48: 0.12, jn1_50: 0.14, ov64b_64: 0.18,
     mx766_50: 0.2, ov50h: 0.24, gn3_50: 0.3, hp3_200: 0.36, hp2_200: 0.38, lyt900: 0.46
   };
-  const socThermal = socThermalMap[v.soc.id] || 1.0;
-  const mainCamThermal = mainCamThermalMap[v.cams.main.id] || 0.14;
+  const socThermal = dynamicSocThermalMap[v.soc.id] ?? socThermalMap[v.soc.id] ?? 1.0;
+  const mainCamThermal = dynamicMainCamThermalMap[v.cams.main.id] ?? mainCamThermalMap[v.cams.main.id] ?? 0.14;
   const bodyThermalFactorMap = {
     aluminum: 0.92,
     glass: 0.9,
@@ -2541,10 +3235,16 @@ function evaluateBuild() {
     0.82,
     1.24
   );
+  // Cooling tech also evolves with the component cycle: newer eras are slightly better by default.
+  const coolingTechRound = clamp(Number(state.techCycle || 0), 0, 10);
+  const baselineCoolingMul = clamp(1 - coolingTechRound * 0.018, 0.82, 1.0);
+  const vcCoolingMul = hasVC ? clamp(0.7 - coolingTechRound * 0.016, 0.5, 0.7) : 1.0;
+  const fanCoolingMul = hasActiveFan ? clamp(0.58 - coolingTechRound * 0.02, 0.4, 0.58) : 1.0;
   const thermalPressureRaw = clamp(
     (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
-      * (hasVC ? 0.7 : 1.0)
-      * (hasActiveFan ? 0.58 : 1.0)
+      * vcCoolingMul
+      * fanCoolingMul
+      * baselineCoolingMul
       * bodyThermalFactor
       * surfaceAreaThermalFactor,
     0.65,
@@ -2617,6 +3317,9 @@ function evaluateBuild() {
   const componentCost = skuCosting.reduce((s, x) => s + x.componentCost * (x.share / 100), 0);
   const unitCost = skuCosting.reduce((s, x) => s + x.unitCost * (x.share / 100), 0);
   const weightedSkuPrice = skuCosting.reduce((s, x) => s + x.price * (x.share / 100), 0);
+  const currentSpecSnapshot = buildSpecSnapshotFromInput(v, weightedSkuPrice, v.skuPlans);
+  const lastSpecSnapshot = getLastGenerationSpecSnapshot();
+  const novelty = calcGenerationNovelty(currentSpecSnapshot, lastSpecSnapshot, v.startupDifficulty?.name || '真实');
 
   const procurementUpfront = v.procurement.upfront * clamp(1.06 - (v.region.supplyEco - 1) * 0.55, 0.84, 1.15);
   const supplyStability = clamp(v.procurement.supply * v.region.supplyEco, 0.82, 1.25);
@@ -2699,7 +3402,8 @@ function evaluateBuild() {
     + (displayFeatureKeys.includes('p3') ? 3 : 0)
     + (v.chosenExtras.some((x) => x.id === 'magsafe') ? 3 : 0)
     + (v.chosenExtras.some((x) => x.id === 'fast120') ? 4 : 0)
-    + (v.chosenExtras.some((x) => x.id === 'gps_dual') ? 2 : 0);
+    + (v.chosenExtras.some((x) => x.id === 'gps_dual') ? 2 : 0)
+    + (v.cams.front.id === 'front_g1sq' || String(v.cams.front.id || '').startsWith('front_g1sq_x') ? 8 : 0);
   const offlinePreferenceBoost = clamp(1 + offlinePreferencePoints * 0.018, 1.0, 1.28);
   const premiumPriceToleranceCarry = state.premiumPriceToleranceCarry || 1.0;
   const premiumOnlineDemandCarry = state.premiumOnlineDemandCarry || 1.0;
@@ -2738,7 +3442,7 @@ function evaluateBuild() {
     2.2
   );
   const offlinePotential = clamp(
-    (offlinePotentialRaw + (hasDynamicIsland ? 0.06 : 0))
+    (offlinePotentialRaw + (hasDynamicIsland ? 0.06 : 0) + (v.cams.front.id === 'front_g1sq' || String(v.cams.front.id || '').startsWith('front_g1sq_x') ? 0.09 : 0))
       * foldableOfflineBoost
       * bodyChannelPreference.offline
       * premiumOfflineDemandCarry
@@ -2758,6 +3462,29 @@ function evaluateBuild() {
 
   const pricePressure = clamp(weightedSkuPrice / (unitCost * 1.85), 0.55, 1.7);
   const priceFit = clamp(1.32 - (pricePressure - v.region.tolerance * 0.95 * premiumPriceToleranceCarry), 0.4, 1.55);
+  const priceToCostRatio = Math.max(0, weightedSkuPrice / Math.max(1, unitCost));
+  const pricingImmunity = state.rating > 90;
+  const linearStartRatio = state.rating > 75 ? 2.0 : 1.75;
+  const exponentialStartRatio = state.rating > 75 ? 3.25 : 3.0;
+  let pricingCredibilityMul = 1.0;
+  if (!pricingImmunity && priceToCostRatio > linearStartRatio) {
+    if (priceToCostRatio <= exponentialStartRatio) {
+      // Between linearStart and exponentialStart: linear demand penalty.
+      const linearT = (priceToCostRatio - linearStartRatio) / Math.max(0.01, (exponentialStartRatio - linearStartRatio));
+      pricingCredibilityMul = clamp(1 - linearT * 0.4, 0.6, 1.0);
+    } else {
+      // Above exponentialStart: demand drops exponentially.
+      const extra = priceToCostRatio - exponentialStartRatio;
+      pricingCredibilityMul = clamp(0.6 * Math.exp(-extra * 0.9), 0.08, 0.6);
+    }
+  }
+  const pricingWarningLevel = pricingImmunity
+    ? 'immune'
+    : priceToCostRatio > exponentialStartRatio
+    ? 'critical'
+    : priceToCostRatio > linearStartRatio
+      ? 'warn'
+      : 'none';
   const designDemandElasticity = clamp(
     Math.pow(clamp(qualityScore / 72, 0.45, 1.5), 1.35)
       * Math.pow(clamp(priceFit, 0.45, 1.5), 1.55)
@@ -2787,11 +3514,13 @@ function evaluateBuild() {
     * popFactor
     * channelFactor
     * designDemandElasticity
+    * novelty.demandMul
     * virtualBench.benchmarkDemandMul
     * v.campaign.demand
     * (state.marketPick ? state.marketPick.demand : 1)
     * launchTrustFactor
     * (1 + extraDemandBoost)
+    * pricingCredibilityMul
     / (v.region.comp / supplyStability);
 
   const grossMargin = (weightedSkuPrice - unitCost) / Math.max(1, weightedSkuPrice);
@@ -2884,7 +3613,18 @@ function evaluateBuild() {
     grossMargin,
     strategy,
     priceFit,
-    memoryMarketFactor
+    priceToCostRatio,
+    pricingCredibilityMul,
+    pricingWarningLevel,
+    pricingImmunity,
+    pricingLinearStartRatio: linearStartRatio,
+    pricingExponentialStartRatio: exponentialStartRatio,
+    memoryMarketFactor,
+    noveltyScore: novelty.score,
+    noveltyDemandMul: novelty.demandMul,
+    noveltyTag: novelty.tag,
+    noveltyWarning: novelty.warning,
+    specSnapshot: currentSpecSnapshot
   };
 }
 
@@ -2911,9 +3651,15 @@ function renderPreview() {
 
   const compactRows = [
     { t: '机型', b: `<strong>${e.modelName || 'Neo Gen?'}</strong>` },
-    { t: '单台制造成本', b: `<strong>${RMB(e.unitCost)}</strong>` },
+    {
+      t: '单台制造成本',
+      b: e.pricingWarningLevel === 'critical'
+        ? `<span class="bad"><strong>${RMB(e.unitCost)}</strong>｜注意售价</span>`
+        : `<strong>${RMB(e.unitCost)}</strong>`
+    },
     { t: `${BENCHMARK_NAME} 得分`, b: `<span class="${benchmarkClass}"><strong>${e.virtualBench.total}</strong>（基线 ${benchmarkRatioText(e.virtualBench.baselineRatio)}）</span>` },
     { t: '续航评测', b: `<span class="${enduranceClass}"><strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（基线 ${Math.round(e.batteryEval.endurancePct)}%）</span>` },
+    { t: '换代新鲜度', b: `${e.noveltyDemandMul < 1 ? `<span class="bad"><strong>${e.noveltyTag}</strong>（需求系数 x${e.noveltyDemandMul.toFixed(2)}）</span>${e.noveltyWarning ? `｜${e.noveltyWarning}` : ''}` : `<span class="good"><strong>${e.noveltyTag}</strong></span>`}` },
     { t: '屏幕-机身关系', b: `屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm｜机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm｜${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}` },
     { t: '设计问题检查', b: issueHtml }
   ];
@@ -2950,10 +3696,12 @@ function renderPreview() {
       `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
       `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
       `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
+      `换代新鲜度：${e.noveltyDemandMul < 1 ? `<span class="bad">${e.noveltyTag}</span>（需求系数 x${e.noveltyDemandMul.toFixed(2)}）` : `<span class="good">${e.noveltyTag}</span>`}${e.noveltyWarning ? `｜<span class="bad">${e.noveltyWarning}</span>` : ''}`,
+      `定价可信度：${e.pricingWarningLevel === 'immune' ? `<span class="good">口碑护城河生效（口碑>90），高溢价惩罚免疫</span>` : e.pricingWarningLevel === 'critical' ? `<span class="bad">售价过高（约成本 ${e.priceToCostRatio.toFixed(2)}x），需求指数下滑</span>` : e.pricingWarningLevel === 'warn' ? `<span class="risk-warn">售价偏高（约成本 ${e.priceToCostRatio.toFixed(2)}x），需求线性下滑</span>` : '<span class="good">定价与成本关系合理</span>'}${e.pricingCredibilityMul < 1 ? `（需求系数 x${e.pricingCredibilityMul.toFixed(2)}）` : ''}`,
       `散热评估：${e.thermalPressure <= 1.12 ? '<span class="good">散热压力可控</span>' : e.thermalPressure <= 1.38 ? `<span class="risk-warn">${e.thermalTag}</span>` : `<span class="bad">${e.thermalTag}</span>`}｜${thermalPerfImpact}`,
       `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
       `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
-      `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
+      `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>${e.pricingWarningLevel === 'critical' ? '｜<span class="bad">注意售价</span>' : e.pricingWarningLevel === 'warn' ? '｜<span class="risk-warn">售价偏激进</span>' : ''}｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
       ...(screenRatioBenefitParts.length ? [`高屏占比收益：${screenRatioBenefitParts.join('｜')}`] : []),
       `采购影响：${e.input.procurement.name}（单价系数 x${e.input.procurement.factor.toFixed(2)}｜锁量首付 ${RMB(e.procurementUpfront)}｜锁量承诺 ${e.lockCommitUnits > 0 ? `${e.lockCommitUnits.toLocaleString('zh-CN')} 台 / ${RMB(e.lockCommitCost)}` : '无'}｜补货交期约 ${e.input.procurement.leadMonths} 月）`,
       `体积可行性：${volumeOk ? '<span class="good">可以量产</span>' : '<span class="bad">内部空间过载，需重做</span>'}`,
@@ -3322,6 +4070,9 @@ function launch() {
   checkSmallScreenAchievement(e);
   checkFlatBackAchievement(e);
   checkLargeScreenAchievement(e);
+  checkNoRefreshAchievement(e);
+  checkSqueezeToothpasteAchievement(e);
+  checkBrandToneAchievement(e);
   state.product.modelBaseName = e.modelNameCheck.name;
   state.product.modelGeneration = e.modelGeneration;
   state.product.modelName = e.modelName;
@@ -3334,6 +4085,8 @@ function launch() {
   state.product.skuStats = e.skuCosting.map((s) => ({
     id: s.id,
     name: s.name,
+    ramId: s.ram.id,
+    romId: s.rom.id,
     ramName: s.ram.name,
     romName: s.rom.name,
     ramScore: s.ram.score,
@@ -3911,6 +4664,13 @@ function checkRatingMilestones() {
   } else {
     state.rating100Notified = false;
   }
+  if (state.rating > 90 && !state.rating90PricingImmunityNotified) {
+    state.rating90PricingImmunityNotified = true;
+    openGameModal(
+      '口碑护城河',
+      '当前口碑已超过 <strong>90</strong>！<br>消费者默认“你家这代不会太离谱”，高溢价需求惩罚已临时免疫。'
+    );
+  }
 }
 
 function checkCashMilestones() {
@@ -4261,6 +5021,51 @@ function checkGoodLuckAchievement(opportunity) {
   );
 }
 
+function checkNoRefreshAchievement(buildLike) {
+  if (state.ended || state.noRefreshAchievedNotified) return;
+  const noveltyTag = String((buildLike && buildLike.noveltyTag) || '');
+  const noveltyMul = Number((buildLike && buildLike.noveltyDemandMul) || 1);
+  const isSevereFatigue = noveltyTag.includes('换代疲劳（严重）') || noveltyMul <= 0.68;
+  if (!isSevereFatigue) return;
+  state.noRefreshAchievedNotified = true;
+  addAchievementCard('no_refresh_shell', '科技以不换壳为本', '严重换代疲劳机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了“换代疲劳（严重）”机型，恭喜达成 <strong>科技以不换壳为本</strong> 成就！<br>这波是“发布会PPT翻到最后，观众发现和上代像双胞胎”。'
+  );
+}
+
+function checkSqueezeToothpasteAchievement(buildLike) {
+  if (state.ended || state.squeezeToothpasteAchievedNotified) return;
+  const noveltyTag = String((buildLike && buildLike.noveltyTag) || '');
+  const noveltyMul = Number((buildLike && buildLike.noveltyDemandMul) || 1);
+  const isSevere = noveltyTag.includes('换代疲劳（严重）') || noveltyMul <= 0.68;
+  const isObvious = noveltyTag.includes('换代疲劳（明显）') || noveltyMul <= 0.78;
+  if (!isObvious || isSevere) return;
+  state.squeezeToothpasteAchievedNotified = true;
+  addAchievementCard('squeeze_toothpaste', '挤牙膏', '明显换代疲劳机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了“换代疲劳（明显）”机型，恭喜达成 <strong>挤牙膏</strong> 成就！<br>这波是“参数有变，体感要靠想象力补完”。'
+  );
+}
+
+function checkBrandToneAchievement(buildLike) {
+  if (state.ended || state.brandToneAchievedNotified) return;
+  const noveltyTag = String((buildLike && buildLike.noveltyTag) || '');
+  const noveltyMul = Number((buildLike && buildLike.noveltyDemandMul) || 1);
+  const isSevere = noveltyTag.includes('换代疲劳（严重）') || noveltyMul <= 0.68;
+  const isObvious = noveltyTag.includes('换代疲劳（明显）') || noveltyMul <= 0.78;
+  const isConservative = noveltyTag.includes('换代改动偏保守') || noveltyMul <= 0.9;
+  if (!isConservative || isSevere || isObvious) return;
+  state.brandToneAchievedNotified = true;
+  addAchievementCard('brand_tone', '打造品牌调性', '保守换代机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了“换代改动偏保守”机型，恭喜达成 <strong>打造品牌调性</strong> 成就！<br>这波是“变化不大，但味道要对，用户一眼就认得你”。'
+  );
+}
+
 function updateDesignRestartButtonState() {
   if (!el.restartDesign) return;
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) {
@@ -4549,6 +5354,7 @@ function nextMonth() {
 
   state.month += 1;
   state.companyMonthsTotal += 1;
+  maybeRefreshTechComponentPool('time');
   resetRestockButtonState();
   const p = state.product;
   const dueLoans = state.loans.filter((x) => !x.settled && x.dueCompanyMonth <= state.companyMonthsTotal);
@@ -5189,6 +5995,14 @@ function archiveCurrentProduct(reason, extra = {}) {
     region: p.input.region.name,
     soc: p.input.soc.name,
     display: `${p.input.disp.mat.name} ${p.input.disp.size}" ${p.input.disp.ratio} ${p.input.disp.form.name}`,
+    specSnapshot: buildSpecSnapshotFromInput(
+      p.input,
+      Number(p.weightedSkuPrice || 0),
+      (p.skuStats || []).map((s) => ({
+        ramScore: s.ramScore,
+        romScore: s.romScore
+      }))
+    ),
     qualityScore: Number(p.qualityScore || 0),
     geekAttraction: Number(p.geekAttraction || 0),
     onlineShare: Number(p.onlineShare || 0),
@@ -5304,6 +6118,7 @@ function endGame(reason) {
 
 function restart() {
   resetRestockButtonState();
+  resetTechPoolsToBase();
   closePreviewLightbox();
   closeBenchPage();
   if (el.gameModalStack) el.gameModalStack.innerHTML = '';
@@ -5337,9 +6152,13 @@ function restart() {
   state.timeline = [];
   state.loans = [];
   state.eventRerollUsed = false;
+  state.techCycle = 0;
+  state.lastTechRefreshMonth = 0;
+  state.lastTechRefreshGeneration = 1;
   state.designDeadEndNotified = false;
   state.minDesignLaunchCostCache = null;
   state.rating100Notified = false;
+  state.rating90PricingImmunityNotified = false;
   state.cash1bNotified = false;
   state.tenYearVeteranNotified = false;
   state.screenMaterialsUsed = new Set();
@@ -5363,6 +6182,9 @@ function restart() {
   state.flatBackAchievedNotified = false;
   state.largeScreenAchievedNotified = false;
   state.goodLuckAchievedNotified = false;
+  state.noRefreshAchievedNotified = false;
+  state.squeezeToothpasteAchievedNotified = false;
+  state.brandToneAchievedNotified = false;
   state.achievements = [];
   state.premiumPriceToleranceCarry = 1.0;
   state.premiumOnlineDemandCarry = 1.0;
@@ -5382,13 +6204,12 @@ function restart() {
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   if (el.restart) el.restart.classList.remove('gameover-cta', 'celebrate-cta');
   if (el.restartDesign) el.restartDesign.classList.remove('gameover-cta', 'celebrate-cta');
+  fillOptions();
   updateModelNameHint();
-  updateDisplayMaterialOptions();
   assignRandomRegion();
   if (el.restockSku) el.restockSku.innerHTML = '';
   placeContinueNext('auto');
   if (el.continueNext) el.continueNext.classList.add('hidden');
-  initSkuRows();
   rollThreeMarkets();
   renderAchievementPanel();
   setStep(1);
@@ -5476,6 +6297,13 @@ function bind() {
     el.rollEvents.disabled = true;
     el.rollEvents.textContent = '已刷新';
   });
+  if (el.quickGuideBtn) {
+    el.quickGuideBtn.addEventListener('click', () => {
+      openGameModal('玩法速览', QUICK_GUIDE_HTML);
+      writeQuickGuideSeen(true);
+      refreshQuickGuideButtonState();
+    });
+  }
   if (el.modelBaseName) el.modelBaseName.addEventListener('input', updateModelNameHint);
   el.confirmEvent.addEventListener('click', () => {
     if (!state.marketPick) return;
@@ -5513,6 +6341,7 @@ function bind() {
       if (el.continueNext) el.continueNext.classList.add('hidden');
       el.reportBox.innerHTML = `已进入下一代机型研发阶段。现金与口碑会继承，本代市场记忆也会延续。<br>当前存储行情：${state.memoryMarket.name}。`;
       renderRunBrief('本月重点：等待推进月份。');
+      maybeRefreshTechComponentPool('generation');
       setStep(2);
       updateModelNameHint();
       updateDisplayMaterialOptions();
@@ -5676,6 +6505,7 @@ function fillSources() {
 }
 
 async function boot() {
+  resetTechPoolsToBase();
   await loadForbiddenNameDictionary();
   fillOptions();
   assignRandomRegion();
@@ -5686,6 +6516,7 @@ async function boot() {
   setStep(1);
   updateDisplayQuickBox();
   updateEventGateState();
+  refreshQuickGuideButtonState();
 }
 
 boot();
