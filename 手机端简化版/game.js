@@ -475,6 +475,32 @@ const state = {
   timeline: [],
   loans: [],
   eventRerollUsed: false,
+  designDeadEndNotified: false,
+  minDesignLaunchCostCache: null,
+  rating100Notified: false,
+  cash1bNotified: false,
+  tenYearVeteranNotified: false,
+  screenMaterialsUsed: new Set(),
+  screenCollectorNotified: false,
+  foldableAchievedNotified: false,
+  einkAchievedNotified: false,
+  futureEinkAchievedNotified: false,
+  ultraFlagshipAchievedNotified: false,
+  advancedAlloyAchievedNotified: false,
+  ceramicAchievedNotified: false,
+  noCameraAchievedNotified: false,
+  aramidAchievedNotified: false,
+  selfieAchievedNotified: false,
+  topLcdAchievedNotified: false,
+  flagshipLcdDemonAchievedNotified: false,
+  thermalManiacAchievedNotified: false,
+  satelliteAchievedNotified: false,
+  batteryTechAchievedNotified: false,
+  magsafeAchievedNotified: false,
+  smallScreenAchievedNotified: false,
+  flatBackAchievedNotified: false,
+  largeScreenAchievedNotified: false,
+  achievements: [],
   premiumPriceToleranceCarry: 1.0,
   premiumOnlineDemandCarry: 1.0,
   premiumOfflineDemandCarry: 1.0
@@ -489,6 +515,11 @@ const el = {
   stageEvent: document.getElementById('stageEvent'),
   stageConfig: document.getElementById('stageConfig'),
   stageRun: document.getElementById('stageRun'),
+  achieveEntry: document.getElementById('achieveEntry'),
+  achieveClose: document.getElementById('achieveClose'),
+  achieveCount: document.getElementById('achieveCount'),
+  achievePanel: document.getElementById('achievePanel'),
+  achieveList: document.getElementById('achieveList'),
   rollEvents: document.getElementById('rollEvents'),
   eventCards: document.getElementById('eventCards'),
   eventHint: document.getElementById('eventHint'),
@@ -511,6 +542,7 @@ const el = {
   displayFeatures: document.getElementById('displayFeatures'),
   skuBox: document.getElementById('skuBox'),
   skuList: document.getElementById('skuList'),
+  skuShareHint: document.getElementById('skuShareHint'),
   addSku: document.getElementById('addSku'),
   body: document.getElementById('body'),
   battery: document.getElementById('battery'),
@@ -557,6 +589,8 @@ const el = {
   previewLightboxClose: document.getElementById('previewLightboxClose'),
   previewLightboxTitle: document.getElementById('previewLightboxTitle'),
   previewLightboxImage: document.getElementById('previewLightboxImage'),
+  gameModal: document.getElementById('gameModal'),
+  gameModalStack: document.getElementById('gameModalStack'),
   benchPage: document.getElementById('benchPage'),
   benchClose: document.getElementById('benchClose'),
   benchProgressText: document.getElementById('benchProgressText'),
@@ -583,6 +617,7 @@ const el = {
 };
 
 let benchRunToken = 0;
+let skuShareValidTimer = 0;
 
 const designQuizPool = [
   '设计拷问：这代是要做 <strong>跑分战神</strong>，还是 <strong>屏幕卷王</strong>？',
@@ -951,11 +986,23 @@ function openPreviewLightbox(canvas, title) {
     el.previewLightboxTitle.textContent = title || '机型预览';
   }
   el.previewLightbox.classList.remove('hidden');
+  refreshOverlayLockState();
 }
 
 function closePreviewLightbox() {
   if (!el.previewLightbox) return;
   el.previewLightbox.classList.add('hidden');
+  refreshOverlayLockState();
+}
+
+function refreshOverlayLockState() {
+  const hasOverlayOpen = Boolean(
+    (el.achievePanel && !el.achievePanel.classList.contains('hidden'))
+    || (el.gameModal && !el.gameModal.classList.contains('hidden'))
+    || (el.previewLightbox && !el.previewLightbox.classList.contains('hidden'))
+    || (el.benchPage && !el.benchPage.classList.contains('hidden'))
+  );
+  document.body.classList.toggle('overlay-open', hasOverlayOpen);
 }
 
 function drawFrontDisplayShape(ctx, v, sx, sy, sw, sh, scale) {
@@ -1266,6 +1313,11 @@ function addSkuRow(seed = {}) {
 function refreshSkuButtons() {
   if (!el.skuList) return;
   const rows = [...el.skuList.querySelectorAll('.sku-row')];
+  const single = rows.length === 1;
+  if (single) {
+    const onlyShare = rows[0].querySelector('.sku-share');
+    if (onlyShare) onlyShare.value = '100';
+  }
   rows.forEach((row, idx) => {
     const label = SKU_LABELS[idx] || String(idx + 1);
     row.dataset.label = label;
@@ -1279,10 +1331,89 @@ function refreshSkuButtons() {
       removeBtn.textContent = `删除 SKU-${label}`;
       removeBtn.disabled = rows.length <= 1;
     }
+    const shareInput = row.querySelector('.sku-share');
+    if (shareInput) {
+      shareInput.disabled = single;
+      if (single) shareInput.value = '100';
+    }
   });
   if (el.addSku) {
     el.addSku.disabled = rows.length >= MAX_SKU_COUNT;
   }
+  updateSkuShareValidation(false);
+}
+
+function collectSkuShareValidation() {
+  if (!el.skuList) return { valid: true, sum: 100, rows: [] };
+  const rows = [...el.skuList.querySelectorAll('.sku-row')];
+  const items = rows.map((row) => {
+    const input = row.querySelector('.sku-share');
+    const raw = String(input?.value ?? '').trim();
+    const num = Number(raw);
+    const isInt = Number.isFinite(num) && Number.isInteger(num);
+    const inRange = isInt && num >= 0 && num <= 100;
+    return { row, input, raw, num, isInt, inRange };
+  });
+  if (rows.length === 1 && items[0]?.input) {
+    items[0].input.value = '100';
+    items[0].num = 100;
+    items[0].isInt = true;
+    items[0].inRange = true;
+  }
+  const allValidNums = items.every((x) => x.inRange);
+  const sum = items.reduce((s, x) => s + (x.inRange ? x.num : 0), 0);
+  const valid = rows.length <= 1 ? allValidNums : (allValidNums && sum === 100);
+  return { valid, sum, rows: items };
+}
+
+function updateSkuShareValidation(flashOnValid = false) {
+  const result = collectSkuShareValidation();
+  const rows = result.rows || [];
+  rows.forEach((x) => {
+    if (!x.input) return;
+    x.input.classList.remove('sku-invalid');
+    x.input.classList.remove('sku-valid');
+  });
+  if (skuShareValidTimer) {
+    clearTimeout(skuShareValidTimer);
+    skuShareValidTimer = 0;
+  }
+
+  if (!result.valid) {
+    const hasInvalidIntInput = rows.some((x) => !x.inRange);
+    rows.forEach((x) => {
+      if (!x.input) return;
+      x.input.classList.add('sku-invalid');
+    });
+    if (el.skuShareHint) {
+      el.skuShareHint.textContent = hasInvalidIntInput
+        ? '仅能输入 0~100 的整数'
+        : '请保证配额和是100%';
+      el.skuShareHint.classList.remove('hidden');
+    }
+    if (el.launch && el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+      el.launch.disabled = true;
+    }
+    return result;
+  }
+
+  if (el.skuShareHint) {
+    el.skuShareHint.classList.add('hidden');
+  }
+  if (el.launch && el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+    el.launch.disabled = false;
+  }
+  if (flashOnValid && rows.length >= 2) {
+    rows.forEach((x) => {
+      if (!x.input) return;
+      x.input.classList.add('sku-valid');
+    });
+    skuShareValidTimer = window.setTimeout(() => {
+      rows.forEach((x) => x.input && x.input.classList.remove('sku-valid'));
+      skuShareValidTimer = 0;
+    }, 500);
+  }
+  return result;
 }
 
 function initSkuRows() {
@@ -1960,7 +2091,22 @@ function selectedValues() {
   };
 }
 
-function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryLabScore) {
+function estimateSocOverheatSeconds(thermalPressure, socLabScoreForHeat) {
+  let temp = 26;
+  let t = 0;
+  const dt = 0.12;
+  while (temp < 95 && t < 8) {
+    const baseRise = 0.34 + thermalPressure * 0.56 + socLabScoreForHeat / 420;
+    const heatProgress = clamp((temp - 26) / (95 - 26), 0, 1);
+    const curveMul = 1.12 - 0.34 * Math.pow(heatProgress, 1.45);
+    const rise = baseRise * curveMul;
+    temp = clamp(temp + rise, 26, 99.5);
+    t += dt;
+  }
+  return clamp(t, 0, 8);
+}
+
+function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryLabScore, thermalPressure) {
   const socRef = socBenchmarkAnchors[v.soc.id] || socBenchmarkAnchors.dim7300;
   const hasActiveFan = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'active_fan');
   const hasVCBoost = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'vc');
@@ -1973,7 +2119,13 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     215
   );
   const socBoostMul = 1 + (hasActiveFan ? 0.1 : 0) + (hasVCBoost ? 0.1 : 0);
-  const socLabScore = clamp(socLabScoreRaw * socBoostMul, 55, 236);
+  const socLabScoreForHeat = clamp(socLabScoreRaw * socBoostMul, 55, 236);
+  const socOverheatSec = estimateSocOverheatSeconds(thermalPressure, socLabScoreForHeat);
+  // If overheat occurs before 6s, SoC score linearly drops up to 50%.
+  const socThermalPenaltyRatio = socOverheatSec < 6
+    ? clamp(1 - ((6 - socOverheatSec) / 6) * 0.5, 0.5, 1)
+    : 1;
+  const socLabScore = clamp(socLabScoreForHeat * socThermalPenaltyRatio, 30, 236);
 
   const storageSpeedMap = {
     '64_emmc': { read: 250, write: 125 },
@@ -2038,10 +2190,13 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
   return {
     total,
     socLabScore: Math.round(socLabScore),
+    socLabScoreForHeat: Math.round(socLabScoreForHeat),
     storageLabScore: Math.round(storageLabScore),
     displayLabScore: Math.round(displayLabScore),
     cameraLabScore: Math.round(cameraLabScore),
     batteryLabScore: Math.round(batteryLabScore),
+    socOverheatSec,
+    socThermalPenaltyRatio,
     socReference: socRef,
     baselineRatio,
     baselineDeltaPct,
@@ -2157,6 +2312,7 @@ function evaluateBuild() {
   const v = selectedValues();
   const issues = [];
   const modelNameCheck = validateModelName(v.modelBaseName);
+  const skuShareCheck = collectSkuShareValidation();
 
   if (!state.marketPick) issues.push('请先在第一层选择市场环境。');
   if (!v.soc || !v.body) issues.push('配置项不完整。');
@@ -2174,9 +2330,13 @@ function evaluateBuild() {
   if (!v.skuPlans.length) {
     issues.push('至少配置 1 个 SKU 且首发配比大于 0%。');
   }
-  const skuShareSum = v.skuPlans.reduce((s, x) => s + x.share, 0);
-  if (Math.round(skuShareSum) !== 100) {
-    issues.push(`SKU 首发配比总和需为 100%，当前为 ${skuShareSum.toFixed(0)}%。`);
+  if (!skuShareCheck.valid) {
+    if (skuShareCheck.rows.some((x) => !x.inRange)) {
+      issues.push('SKU 首发配比仅支持 0~100 的整数。');
+    }
+    if (skuShareCheck.rows.length >= 2) {
+      issues.push(`SKU 首发配比总和需为 100%，当前为 ${Math.round(skuShareCheck.sum)}%。`);
+    }
   }
   if (v.skuPlans.some((s) => !s.ram || !s.rom)) {
     issues.push('SKU 的内存或存储配置不完整。');
@@ -2203,9 +2363,6 @@ function evaluateBuild() {
   const bezelScoreAdj = clamp((2.5 - bezel.sideBezel) * 4.2, -6, 6);
   const displayScore = v.disp.mat.score + v.disp.vendor.scoreAdj + featureScore + v.disp.form.score + bezelScoreAdj;
 
-  if (v.disp.features.some((x) => x.name === 'LTPO') && ['lcd', 'eink'].includes(el.dispMat.value)) {
-    issues.push('LTPO 仅适用于 OLED/双层 OLED。');
-  }
 
   const screenMm = getScreenDimensionsMm(v.disp.size, v.disp.ratio);
   const maxScreenW = v.phoneW - 2 * bezel.sideBezel;
@@ -2352,7 +2509,57 @@ function evaluateBuild() {
   const avgRamScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.ram.score * (x.share / 100), 0) : 0;
   const avgRomScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.rom.score * (x.share / 100), 0) : 0;
   const batteryEval = calcBatteryEndurance(v, screenMm, displayFeatureKeys);
-  const virtualBench = calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryEval.batteryLabScore);
+  const hasVC = v.chosenExtras.some((x) => x.id === 'vc');
+  const hasActiveFan = v.chosenExtras.some((x) => x.id === 'active_fan');
+  const socThermalMap = {
+    s480: 0.78, g35: 0.72, g81: 0.74, t7225: 0.76, dim6100: 0.8, s4g2: 0.82,
+    dim6300: 0.84, g99: 0.85, s6g4: 0.92, s695: 0.9, dim7200: 0.95, dim7300: 0.96,
+    s778g: 0.98, dim8300: 1.06, s7sg3: 1.02, dim8400: 1.12, s8sg4: 1.2, s8g3: 1.28,
+    dim9300: 1.3, dim9400: 1.38, s8elite: 1.36, s8eliteg5: 1.48
+  };
+  const mainCamThermalMap = {
+    none: 0.0, basic13: 0.06, ov13b10: 0.08, mx586_48: 0.12, jn1_50: 0.14, ov64b_64: 0.18,
+    mx766_50: 0.2, ov50h: 0.24, gn3_50: 0.3, hp3_200: 0.36, hp2_200: 0.38, lyt900: 0.46
+  };
+  const socThermal = socThermalMap[v.soc.id] || 1.0;
+  const mainCamThermal = mainCamThermalMap[v.cams.main.id] || 0.14;
+  const bodyThermalFactorMap = {
+    aluminum: 0.92,
+    glass: 0.9,
+    plastic: 1.0,
+    titanium: 1.0,
+    aramid: 1.08,
+    ceramic: 1.12
+  };
+  const bodyThermalFactor = bodyThermalFactorMap[v.body.id] || 1.0;
+  // Thermal dissipation is tied to exposed body surface area (mm^2).
+  const bodySurfaceAreaMm2 = 2 * (v.phoneH * v.phoneW + v.phoneH * v.phoneT + v.phoneW * v.phoneT);
+  const baselineSurfaceAreaMm2 = 2 * (161 * 75 + 161 * 8.6 + 75 * 8.6);
+  const surfaceAreaThermalFactor = clamp(
+    Math.pow(baselineSurfaceAreaMm2 / Math.max(1, bodySurfaceAreaMm2), 0.55),
+    0.82,
+    1.24
+  );
+  const thermalPressureRaw = clamp(
+    (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
+      * (hasVC ? 0.7 : 1.0)
+      * (hasActiveFan ? 0.58 : 1.0)
+      * bodyThermalFactor
+      * surfaceAreaThermalFactor,
+    0.65,
+    2.2
+  );
+  // Slight global uplift so all SoCs are a bit easier to overheat.
+  const thermalPressure = clamp(thermalPressureRaw * 1.1, 0.65, 2.2);
+  const virtualBench = calcVirtualBenchmark(
+    v,
+    avgRamScore,
+    avgRomScore,
+    displayScore,
+    cameraScore,
+    batteryEval.batteryLabScore,
+    thermalPressure
+  );
   // Memory space model (discrete tiers):
   // ROM: 64GB smallest; 128~512GB same mid tier; 1TB slightly larger.
   // RAM: 4~16GB same; 24GB slightly larger.
@@ -2435,38 +2642,6 @@ function evaluateBuild() {
   const hasLargeMain = ['mx766_50', 'ov50h', 'gn3_50', 'hp3_200', 'hp2_200', 'lyt900'].includes(v.cams.main.id);
   const hasCameraMatrix = v.cams.main.id !== 'none' && v.cams.ultra.id !== 'none' && v.cams.tele.id !== 'none';
   const hasUsb3 = v.chosenExtras.some((x) => x.id === 'usb3');
-  const hasVC = v.chosenExtras.some((x) => x.id === 'vc');
-  const hasActiveFan = v.chosenExtras.some((x) => x.id === 'active_fan');
-  const socThermalMap = {
-    s480: 0.78, g35: 0.72, g81: 0.74, t7225: 0.76, dim6100: 0.8, s4g2: 0.82,
-    dim6300: 0.84, g99: 0.85, s6g4: 0.92, s695: 0.9, dim7200: 0.95, dim7300: 0.96,
-    s778g: 0.98, dim8300: 1.06, s7sg3: 1.02, dim8400: 1.12, s8sg4: 1.2, s8g3: 1.28,
-    dim9300: 1.3, dim9400: 1.38, s8elite: 1.36, s8eliteg5: 1.48
-  };
-  const mainCamThermalMap = {
-    none: 0.0, basic13: 0.06, ov13b10: 0.08, mx586_48: 0.12, jn1_50: 0.14, ov64b_64: 0.18,
-    mx766_50: 0.2, ov50h: 0.24, gn3_50: 0.3, hp3_200: 0.36, hp2_200: 0.38, lyt900: 0.46
-  };
-  const socThermal = socThermalMap[v.soc.id] || 1.0;
-  const mainCamThermal = mainCamThermalMap[v.cams.main.id] || 0.14;
-  const bodyThermalFactor = v.body.id === 'plastic' ? 1.08 : v.body.id === 'ceramic' ? 0.95 : 1.0;
-  // Thermal dissipation is tied to exposed body surface area (mm^2).
-  const bodySurfaceAreaMm2 = 2 * (v.phoneH * v.phoneW + v.phoneH * v.phoneT + v.phoneW * v.phoneT);
-  const baselineSurfaceAreaMm2 = 2 * (161 * 75 + 161 * 8.6 + 75 * 8.6);
-  const surfaceAreaThermalFactor = clamp(
-    Math.pow(baselineSurfaceAreaMm2 / Math.max(1, bodySurfaceAreaMm2), 0.55),
-    0.82,
-    1.24
-  );
-  const thermalPressure = clamp(
-    (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
-      * (hasVC ? 0.7 : 1.0)
-      * (hasActiveFan ? 0.58 : 1.0)
-      * bodyThermalFactor
-      * surfaceAreaThermalFactor,
-    0.65,
-    2.2
-  );
   const thermalDemandMul = clamp(1.03 - Math.max(0, thermalPressure - 1) * 0.22, 0.74, 1.03);
   const thermalQualityPenalty = clamp(Math.max(0, thermalPressure - 1) * 8, 0, 9);
   const qualityScore = clamp(
@@ -2536,6 +2711,10 @@ function evaluateBuild() {
   const foldableOfflineBoost = el.dispMat.value === 'foldable'
     ? clamp(1.14 + (v.disp.size - 7.0) * 0.1, 1.14, 1.36)
     : 1.0;
+  const bodyChannelPreference = {
+    online: v.body.id === 'aramid' ? 1.1 : 1.0,
+    offline: v.body.id === 'ceramic' ? 1.1 : 1.0
+  };
   const onlinePotentialRaw = clamp(
     0.68
       + v.marketStats.onlinePenetration * v.marketing.online * v.region.onlineInfra
@@ -2551,6 +2730,7 @@ function evaluateBuild() {
   const onlinePotential = clamp(
     (onlinePotentialRaw + (hasDynamicIsland ? 0.08 : 0))
       * foldableOnlineBoost
+      * bodyChannelPreference.online
       * premiumOnlineDemandCarry
       * batteryEval.onlineDemandMul,
     0.58,
@@ -2559,6 +2739,7 @@ function evaluateBuild() {
   const offlinePotential = clamp(
     (offlinePotentialRaw + (hasDynamicIsland ? 0.06 : 0))
       * foldableOfflineBoost
+      * bodyChannelPreference.offline
       * premiumOfflineDemandCarry
       * batteryEval.offlineDemandMul,
     0.5,
@@ -2729,6 +2910,7 @@ function renderPreview() {
 
   const compactRows = [
     { t: '机型', b: `<strong>${e.modelName || 'Neo Gen?'}</strong>` },
+    { t: '单台制造成本', b: `<strong>${RMB(e.unitCost)}</strong>` },
     { t: `${BENCHMARK_NAME} 得分`, b: `<span class="${benchmarkClass}"><strong>${e.virtualBench.total}</strong>（基线 ${benchmarkRatioText(e.virtualBench.baselineRatio)}）</span>` },
     { t: '续航评测', b: `<span class="${enduranceClass}"><strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（基线 ${Math.round(e.batteryEval.endurancePct)}%）</span>` },
     { t: '屏幕-机身关系', b: `屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm｜机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm｜${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}` },
@@ -2752,6 +2934,12 @@ function renderPreview() {
   if ((e.screenRatioRepGain || 0) > 0) screenRatioBenefitParts.push(`口碑 +${(e.screenRatioRepGain || 0).toFixed(1)}`);
   if ((e.screenRatioPremiumGain || 0) > 0) screenRatioBenefitParts.push(`下代高价接受度 +${((e.screenRatioPremiumGain || 0) * 100).toFixed(1)}%`);
 
+  const thermalPerfImpact = e.virtualBench.socOverheatSec < 6
+    ? (e.virtualBench.socThermalPenaltyRatio <= 0.75
+      ? '<span class="bad">严重影响性能</span>'
+      : '<span class="risk-warn">轻微影响性能</span>')
+    : '<span class="good">性能释放稳定</span>';
+
   if (el.previewDetailBox) {
     el.previewDetailBox.innerHTML = [
       `机型：<strong>${e.modelName || 'Neo Gen?'}</strong>｜定位：<strong>${e.strategy}</strong>`,
@@ -2761,7 +2949,7 @@ function renderPreview() {
       `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
       `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
       `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
-      `散热评估：${e.thermalPressure <= 1.12 ? '<span class="good">散热压力可控</span>' : e.thermalPressure <= 1.38 ? `<span class="risk-warn">${e.thermalTag}</span>` : `<span class="bad">${e.thermalTag}</span>`}`,
+      `散热评估：${e.thermalPressure <= 1.12 ? '<span class="good">散热压力可控</span>' : e.thermalPressure <= 1.38 ? `<span class="risk-warn">${e.thermalTag}</span>` : `<span class="bad">${e.thermalTag}</span>`}｜${thermalPerfImpact}`,
       `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
       `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
       `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
@@ -2900,7 +3088,17 @@ async function runBenchSocTest(e, token) {
     if (temp >= 95 || t >= 8) break;
     await benchSleep(120);
     if (!benchIsAlive(token)) return false;
-    const rise = (0.34 + e.thermalPressure * 0.56 + e.virtualBench.socLabScore / 420) * (1 + Math.sin(t * 1.9) * 0.06);
+    const socHeatScore = Number(e.virtualBench.socLabScoreForHeat || e.virtualBench.socLabScore || 0);
+    const baseRise = 0.34 + e.thermalPressure * 0.56 + socHeatScore / 420;
+    const heatProgress = clamp((temp - 26) / (95 - 26), 0, 1);
+    // Curved climb: fast ramp-up first, then slow near thermal ceiling.
+    const curveMul = 1.12 - 0.34 * Math.pow(heatProgress, 1.45);
+    // Continuous small jitter (sensor sampling / workload fluctuation feel).
+    const microNoise = Math.sin(t * 2.35) * 0.05 + Math.sin(t * 6.9 + temp * 0.02) * 0.03;
+    // Occasional tiny spikes, but bounded to avoid changing stop logic.
+    const spikeGate = Math.max(0, Math.sin(t * 3.7 + 0.6));
+    const spike = Math.pow(spikeGate, 7) * 0.2;
+    const rise = baseRise * curveMul * (1 + microNoise + spike);
     temp = clamp(temp + rise, 26, 99.5);
     temps.push(temp);
   }
@@ -3008,6 +3206,7 @@ function closeBenchPage() {
   benchRunToken += 1;
   if (el.benchPage) el.benchPage.classList.add('hidden');
   document.body.classList.remove('bench-page-open');
+  refreshOverlayLockState();
 }
 
 async function openBenchPage() {
@@ -3025,6 +3224,7 @@ async function openBenchPage() {
   if (!el.benchPage) return;
   el.benchPage.classList.remove('hidden');
   document.body.classList.add('bench-page-open');
+  refreshOverlayLockState();
   const token = benchRunToken + 1;
   benchRunToken = token;
   resetBenchPage(e);
@@ -3101,6 +3301,26 @@ function launch() {
   }
 
   state.product = e;
+  markScreenMaterialProduced(el.dispMat ? el.dispMat.value : '');
+  checkScreenCollectorMilestone();
+  checkFoldableAchievement(e);
+  checkEinkAchievement(e);
+  checkFutureEinkAchievement(e);
+  checkUltraFlagshipAchievement(e);
+  checkAdvancedAlloyAchievement(e);
+  checkCeramicAchievement(e);
+  checkNoCameraAchievement(e);
+  checkAramidAchievement(e);
+  checkSelfieAchievement(e);
+  checkTopLcdAchievement(e);
+  checkFlagshipLcdDemonAchievement(e);
+  checkThermalManiacAchievement(e);
+  checkSatelliteAchievement(e);
+  checkBatteryTechAchievement(e);
+  checkMagsafeAchievement(e);
+  checkSmallScreenAchievement(e);
+  checkFlatBackAchievement(e);
+  checkLargeScreenAchievement(e);
   state.product.modelBaseName = e.modelNameCheck.name;
   state.product.modelGeneration = e.modelGeneration;
   state.product.modelName = e.modelName;
@@ -3152,6 +3372,7 @@ function launch() {
   if (isFlagshipCamera) premiumSignalScore += 1.0;
   if (hasTopRamSku) premiumSignalScore += 0.8;
   if (isFlagshipSoc && isFlagshipCamera) premiumSignalScore += 0.5;
+  const bodyReputationBoost = ['aramid', 'ceramic', 'titanium'].includes(e.input.body.id) ? 1.4 : 0;
   const premiumImmediateRating = clamp(premiumSignalScore * 0.35, 0, 1.8);
   const nextPriceTolGain = premiumSignalScore * 0.055;
   const nextOnlineDemandGain = premiumSignalScore * 0.05;
@@ -3160,11 +3381,20 @@ function launch() {
   state.premiumOnlineDemandCarry = clamp((state.premiumOnlineDemandCarry || 1) + nextOnlineDemandGain, 1.0, 1.65);
   state.premiumOfflineDemandCarry = clamp((state.premiumOfflineDemandCarry || 1) + nextOfflineDemandGain, 1.0, 1.75);
 
-  state.rating = clamp(
-    state.rating + (state.marketPick.rating || 0) + e.input.campaign.rating + (e.qualityScore - 55) * 0.08 + premiumImmediateRating + (e.screenRatioRepGain || 0),
-    1,
-    100
+  const launchRatingDeltaRaw =
+    (state.marketPick.rating || 0)
+    + e.input.campaign.rating
+    + (e.qualityScore - 55) * 0.08
+    + premiumImmediateRating
+    + bodyReputationBoost
+    + (e.screenRatioRepGain || 0);
+  const launchRatingDelta = applyRatingDeltaByDifficulty(
+    launchRatingDeltaRaw,
+    e.input.startupDifficulty?.name || '真实'
   );
+  state.rating = clamp(state.rating + launchRatingDelta, 1, 100);
+  checkRatingMilestones();
+  if (state.ended) return;
   state.month = 0;
   state.soldTotal = 0;
   state.revenueTotal = 0;
@@ -3306,7 +3536,7 @@ const opportunityEvents = [
     weight: 22,
     demandMul: 1.2,
     costMul: 0.98,
-    ratingDelta: 2.6,
+    ratingDelta: 4.6,
     onlineMul: 1.08
   },
   {
@@ -3316,8 +3546,18 @@ const opportunityEvents = [
     weight: 18,
     demandMul: 1.12,
     costMul: 0.99,
-    ratingDelta: 1.8,
+    ratingDelta: 3.8,
     onlineMul: 1.04
+  },
+  {
+    id: 'tech_breakthrough',
+    name: '核心技术突破报道',
+    reason: '关键技术方案获行业关注，品牌技术认知显著上扬。',
+    weight: 12,
+    demandMul: 1.08,
+    costMul: 0.98,
+    ratingDelta: 4.2,
+    onlineMul: 1.06
   },
   {
     id: 'capital_favor',
@@ -3346,9 +3586,15 @@ const opportunityEvents = [
     weight: 12,
     demandMul: 1.1,
     costMul: 0.99,
-    ratingDelta: 2.2
+    ratingDelta: 3.9
   }
 ];
+
+function scaleOpportunityRatingDeltaByDifficulty(delta, diffName) {
+  if (diffName === '真实') return delta * 1.3;
+  if (diffName === '困难') return delta * 0.82;
+  return delta;
+}
 
 function pickWeighted(items) {
   const total = items.reduce((s, x) => s + Math.max(0, x.weight || 0), 0);
@@ -3519,6 +3765,488 @@ function renderRunBrief(html, options = {}) {
   el.runBriefBox.classList.toggle('is-end', Boolean(options.highlightEnd));
 }
 
+function renderAchievementPanel() {
+  if (el.achieveCount) {
+    const count = Array.isArray(state.achievements) ? state.achievements.length : 0;
+    el.achieveCount.textContent = String(count);
+  }
+  if (!el.achieveList) return;
+  const list = Array.isArray(state.achievements) ? state.achievements : [];
+  if (!list.length) {
+    el.achieveList.innerHTML = '<div class="achieve-empty">暂无已达成成就，继续推进看看会解锁什么。</div>';
+    return;
+  }
+  el.achieveList.innerHTML = list
+    .map((x) => `<div class="achieve-item"><strong>${x.name}</strong><div class="tiny">${x.desc}</div></div>`)
+    .join('');
+}
+
+function addAchievementCard(id, name, desc) {
+  if (!id) return;
+  if (!Array.isArray(state.achievements)) state.achievements = [];
+  if (state.achievements.some((x) => x.id === id)) return;
+  state.achievements.push({
+    id,
+    name: name || '未命名成就',
+    desc: desc || '',
+    companyMonth: state.companyMonthsTotal || 0
+  });
+  renderAchievementPanel();
+}
+
+function openAchievementPanel() {
+  if (!el.achievePanel) return;
+  renderAchievementPanel();
+  el.achievePanel.classList.remove('hidden');
+  refreshOverlayLockState();
+}
+
+function closeAchievementPanel() {
+  if (!el.achievePanel) return;
+  el.achievePanel.classList.add('hidden');
+  refreshOverlayLockState();
+}
+
+let gameModalSeq = 0;
+let gameoverCtaLatched = false;
+let celebrateCtaLatched = false;
+
+function applyRestartCtaState(mode = 'none') {
+  const restartBtns = [el.restart, el.restartDesign].filter(Boolean);
+  restartBtns.forEach((btn) => btn.classList.remove('gameover-cta', 'celebrate-cta'));
+  if (mode === 'gameover') {
+    restartBtns.forEach((btn) => btn.classList.add('gameover-cta'));
+    if (window.matchMedia('(max-width: 760px)').matches) {
+      if (el.stageRun && !el.stageRun.classList.contains('hidden')) {
+        el.stageRun.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  } else if (mode === 'celebrate') {
+    restartBtns.forEach((btn) => btn.classList.add('celebrate-cta'));
+  }
+}
+
+function closeGameModalById(id) {
+  if (!el.gameModal || !el.gameModalStack) return;
+  const node = el.gameModalStack.querySelector(`.game-modal-card[data-modal-id="${id}"]`);
+  if (!node) return;
+  const closedAction = String(node.getAttribute('data-action') || '');
+  node.remove();
+  const hasCards = el.gameModalStack.children.length > 0;
+  if (!hasCards) {
+    el.gameModal.classList.add('hidden');
+  }
+  refreshOverlayLockState();
+  if (closedAction === 'celebrate' && !gameoverCtaLatched) {
+    celebrateCtaLatched = true;
+  }
+  if (gameoverCtaLatched) {
+    applyRestartCtaState('gameover');
+    return;
+  }
+  applyRestartCtaState(celebrateCtaLatched ? 'celebrate' : 'none');
+}
+
+function openGameModal(title, bodyHtml, action = 'normal') {
+  if (!el.gameModal || !el.gameModalStack) return;
+  const id = String(++gameModalSeq);
+  const card = document.createElement('div');
+  const actionKey = ['gameover', 'celebrate'].includes(action) ? action : 'normal';
+  card.className = `game-modal-card modal-${actionKey}`;
+  card.dataset.modalId = id;
+  card.dataset.action = action;
+  card.innerHTML = [
+    `<h3>${title || '提示'}</h3>`,
+    `<div class="game-modal-body">${bodyHtml || ''}</div>`,
+    '<div class="row"><button type="button" class="accent game-modal-close">关闭</button></div>'
+  ].join('');
+  if (action === 'gameover') {
+    gameoverCtaLatched = true;
+    celebrateCtaLatched = false;
+    el.gameModalStack.prepend(card);
+    applyRestartCtaState('gameover');
+  } else {
+    el.gameModalStack.appendChild(card);
+    if (!gameoverCtaLatched && action === 'celebrate') {
+      applyRestartCtaState('celebrate');
+    }
+  }
+  el.gameModal.classList.remove('hidden');
+  refreshOverlayLockState();
+}
+
+function closeLastGameModal() {
+  if (!el.gameModalStack) return;
+  const cards = el.gameModalStack.querySelectorAll('.game-modal-card');
+  if (!cards.length) return;
+  const last = cards[cards.length - 1];
+  const id = last.getAttribute('data-modal-id');
+  if (id) closeGameModalById(id);
+}
+
+function checkRatingMilestones() {
+  if (state.ended) return;
+  if (state.rating <= 1) {
+    endGame('口碑跌穿地板，企业信誉崩盘。');
+    openGameModal(
+      '游戏结束',
+      '口碑已经低到 <strong>1</strong>，用户评论区开始“全员避雷”。<br>这波属于“参数还在，信任没了”。',
+      'gameover'
+    );
+    return;
+  }
+  if (state.rating >= 100) {
+    if (!state.rating100Notified) {
+      state.rating100Notified = true;
+      addAchievementCard('rating_100', '口碑封神', '口碑到达100，评论区进入免检状态。');
+      openGameModal(
+        '口碑封神',
+        '口碑到达 <strong>100</strong>！<br>你现在是“评论区免检产品”，继续运营看你能不能把销量也拉满。',
+        'celebrate'
+      );
+    }
+  } else {
+    state.rating100Notified = false;
+  }
+}
+
+function checkCashMilestones() {
+  if (state.ended) return;
+  if (state.cash >= 1_000_000_000) {
+    if (!state.cash1bNotified) {
+      state.cash1bNotified = true;
+      addAchievementCard('cash_1b', '超强现金流', '企业现金突破10亿。');
+      openGameModal(
+        '现金流成就解锁',
+        '现金已突破 <strong>10亿</strong>！<br>你现在是“财报区开挂选手”，资金池厚到可以把焦虑当装饰品。',
+        'celebrate'
+      );
+    }
+  } else {
+    state.cash1bNotified = false;
+  }
+}
+
+function checkTenYearVeteranMilestone() {
+  if (state.ended) return;
+  if (Number(state.companyMonthsTotal || 0) >= 120) {
+    if (!state.tenYearVeteranNotified) {
+      state.tenYearVeteranNotified = true;
+      addAchievementCard('ten_year_veteran', '十年老兵', '企业经营总月数达到120个月。');
+      openGameModal(
+        '成就解锁',
+        '企业已经跑到 <strong>120 个月</strong>！恭喜达成 <strong>十年老兵</strong> 成就。<br>这波是“友商换了几轮，你还在稳定输出”。',
+        'celebrate'
+      );
+    }
+  } else {
+    state.tenYearVeteranNotified = false;
+  }
+}
+
+function markScreenMaterialProduced(matKey) {
+  if (!matKey || !displayMaterials[matKey]) return;
+  if (!(state.screenMaterialsUsed instanceof Set)) state.screenMaterialsUsed = new Set();
+  state.screenMaterialsUsed.add(matKey);
+}
+
+function checkScreenCollectorMilestone() {
+  if (state.ended) return;
+  const allMatKeys = Object.keys(displayMaterials || {});
+  const collectedCount = state.screenMaterialsUsed instanceof Set ? state.screenMaterialsUsed.size : 0;
+  if (allMatKeys.length > 0 && collectedCount >= allMatKeys.length && !state.screenCollectorNotified) {
+    state.screenCollectorNotified = true;
+    addAchievementCard('screen_collector', '屏幕收集者', '完成全部屏幕材质发售收集。');
+    openGameModal(
+      '成就解锁',
+      '你已经把全材质屏幕都做了一遍，恭喜达成 <strong>屏幕收集者</strong>！<br>从 LCD 到折叠屏，这波属于“屏幕图鉴全亮”。'
+    );
+  }
+}
+
+function checkFoldableAchievement(buildLike) {
+  if (state.ended || state.foldableAchievedNotified) return;
+  const isFoldable = Boolean(buildLike && buildLike.input && buildLike.input.disp && buildLike.input.disp.mat && buildLike.input.disp.mat.name === '折叠屏');
+  if (!isFoldable) return;
+  state.foldableAchievedNotified = true;
+  addAchievementCard('foldable', '折叠屏！', '成功发售折叠屏机型。');
+  openGameModal(
+    '成就解锁',
+    '你已经把折叠屏机型成功发售！恭喜达成 <strong>折叠屏！</strong> 成就。<br>这波是“口袋里装平板，气场直接拉满”。'
+  );
+}
+
+function checkEinkAchievement(buildLike) {
+  if (state.ended || state.einkAchievedNotified) return;
+  const isEink = Boolean(buildLike && buildLike.input && buildLike.input.disp && buildLike.input.disp.mat && buildLike.input.disp.mat.name === '墨水屏');
+  if (!isEink) return;
+  state.einkAchievedNotified = true;
+  addAchievementCard('eink', '墨水屏！', '成功发售墨水屏机型。');
+  openGameModal(
+    '成就解锁',
+    '你已经把墨水屏机型成功发售！恭喜达成 <strong>墨水屏！</strong> 成就。<br>这波是“续航像开挂，刷新率靠信仰”。'
+  );
+}
+
+function checkFutureEinkAchievement(buildLike) {
+  if (state.ended || state.futureEinkAchievedNotified) return;
+  const disp = buildLike && buildLike.input ? buildLike.input.disp : null;
+  const matName = disp && disp.mat ? String(disp.mat.name || '') : '';
+  if (matName !== '墨水屏') return;
+  const featureNames = Array.isArray(disp && disp.features)
+    ? disp.features.map((f) => String((f && f.name) || ''))
+    : [];
+  const hasLtpo = featureNames.some((name) => name.includes('LTPO'));
+  const hasHighRefresh = featureNames.some((name) => name.includes('高刷新'));
+  if (!hasLtpo || !hasHighRefresh) return;
+  state.futureEinkAchievedNotified = true;
+  addAchievementCard('future_eink', '未来墨水屏！', '墨水屏 + LTPO + 高刷新率成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把墨水屏、LTPO 和高刷新凑到了一台机子上！恭喜达成 <strong>未来墨水屏！</strong> 成就。<br>这波是“纸感和丝滑我全都要”。'
+  );
+}
+
+function checkUltraFlagshipAchievement(buildLike) {
+  if (state.ended || state.ultraFlagshipAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const socTier = input && input.soc ? String(input.soc.tier || '') : '';
+  const isUltraSoc = socTier.includes('旗舰+');
+  if (!isUltraSoc) return;
+  const skuList = Array.isArray(buildLike && buildLike.skuCosting) ? buildLike.skuCosting : [];
+  const has24G1T = skuList.some((sku) => sku && sku.ram && sku.rom && sku.ram.id === '24_lp5x' && sku.rom.id === '1t_ufs40');
+  if (!has24G1T) return;
+  state.ultraFlagshipAchievedNotified = true;
+  addAchievementCard('ultra_flagship', '旗舰中的旗舰', '旗舰+SoC并含24G+1TB SKU成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把旗舰+ SoC 和 24G+1TB 同时端上来了，恭喜达成 <strong>旗舰中的旗舰</strong> 成就！<br>这波属于“参数表先发言，发布会后补充”。'
+  );
+}
+
+function checkAdvancedAlloyAchievement(buildLike) {
+  if (state.ended || state.advancedAlloyAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const bodyId = input && input.body ? String(input.body.id || '') : '';
+  if (bodyId !== 'titanium') return;
+  state.advancedAlloyAchievedNotified = true;
+  addAchievementCard('advanced_alloy', '先进合金', '钛金属中框+玻璃机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了钛合金中框+玻璃机型，恭喜达成 <strong>先进合金</strong> 成就！<br>这波是“手感一摸就知道，预算一看就沉默”。'
+  );
+}
+
+function checkCeramicAchievement(buildLike) {
+  if (state.ended || state.ceramicAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const bodyId = input && input.body ? String(input.body.id || '') : '';
+  if (bodyId !== 'ceramic') return;
+  state.ceramicAchievedNotified = true;
+  addAchievementCard('ceramic', '温润如玉', '陶瓷机身机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了陶瓷机身机型，恭喜达成 <strong>温润如玉</strong> 成就！<br>这波是“观感高级，手感讲究，钱包先抖”。'
+  );
+}
+
+function checkNoCameraAchievement(buildLike) {
+  if (state.ended || state.noCameraAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const cams = input && input.cams ? input.cams : null;
+  if (!cams) return;
+  const noMain = cams.main && cams.main.id === 'none';
+  const noUltra = cams.ultra && cams.ultra.id === 'none';
+  const noTele = cams.tele && cams.tele.id === 'none';
+  const noFront = cams.front && cams.front.id === 'none';
+  if (!(noMain && noUltra && noTele && noFront)) return;
+  state.noCameraAchievedNotified = true;
+  addAchievementCard('no_camera', '苞米', '全无摄像头机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了“全无摄像头”机型，恭喜达成 <strong>苞米</strong> 成就！<br>这波是“主打一个不拍照，只管打电话和刷机”。'
+  );
+}
+
+function checkAramidAchievement(buildLike) {
+  if (state.ended || state.aramidAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const bodyId = input && input.body ? String(input.body.id || '') : '';
+  if (bodyId !== 'aramid') return;
+  state.aramidAchievedNotified = true;
+  addAchievementCard('aramid', '能防弹吗？', '芳纶复合后盖机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了芳纶复合后盖机型，恭喜达成 <strong>能防弹吗？</strong> 成就！<br>这波是“后盖一看很硬核，参数一看也不含糊”。'
+  );
+}
+
+function checkSelfieAchievement(buildLike) {
+  if (state.ended || state.selfieAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const frontCam = input && input.cams ? input.cams.front : null;
+  const frontCost = Number(frontCam && frontCam.cost ? frontCam.cost : 0);
+  if (!(frontCam && frontCam.id !== 'none' && frontCost > 100)) return;
+  state.selfieAchievedNotified = true;
+  addAchievementCard('selfie', '自拍神器', '高规格前摄（成本>100）机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了高规格前摄机型，恭喜达成 <strong>自拍神器</strong> 成就！<br>这波是“后置先放一边，前置必须站C位”。'
+  );
+}
+
+function checkTopLcdAchievement(buildLike) {
+  if (state.ended || state.topLcdAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const disp = input && input.disp ? input.disp : null;
+  const matName = disp && disp.mat ? String(disp.mat.name || '') : '';
+  if (matName !== 'LCD') return;
+  const selectedNames = new Set(
+    Array.isArray(disp && disp.features) ? disp.features.map((f) => String((f && f.name) || '')) : []
+  );
+  const allFeatureNames = Object.values(displayFeatureMap || {}).map((f) => String((f && f.name) || ''));
+  const hasAllFeatures = allFeatureNames.length > 0 && allFeatureNames.every((name) => selectedNames.has(name));
+  if (!hasAllFeatures) return;
+  state.topLcdAchievedNotified = true;
+  addAchievementCard('top_lcd', '顶级LCD？！', 'LCD材质并全屏幕额外功能成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把 LCD 的屏幕技术全拉满并成功发售，恭喜达成 <strong>顶级LCD？！</strong> 成就！<br>这波是“LCD 还能这样卷？参数党都沉默了”。'
+  );
+}
+
+function checkFlagshipLcdDemonAchievement(buildLike) {
+  if (state.ended || state.flagshipLcdDemonAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  if (!input) return;
+  const disp = input.disp || {};
+  const matName = disp.mat ? String(disp.mat.name || '') : '';
+  if (matName !== 'LCD') return;
+  const selectedNames = new Set(
+    Array.isArray(disp.features) ? disp.features.map((f) => String((f && f.name) || '')) : []
+  );
+  const allFeatureNames = Object.values(displayFeatureMap || {}).map((f) => String((f && f.name) || ''));
+  const hasAllDisplayFeatures = allFeatureNames.length > 0 && allFeatureNames.every((name) => selectedNames.has(name));
+  if (!hasAllDisplayFeatures) return;
+
+  const socTier = input.soc ? String(input.soc.tier || '') : '';
+  if (!socTier.includes('旗舰+')) return;
+
+  const skuList = Array.isArray(buildLike && buildLike.skuCosting) ? buildLike.skuCosting : [];
+  const has24G1T = skuList.some((sku) => sku && sku.ram && sku.rom && sku.ram.id === '24_lp5x' && sku.rom.id === '1t_ufs40');
+  if (!has24G1T) return;
+
+  const extraCount = Array.isArray(input.chosenExtras) ? input.chosenExtras.length : 0;
+  if (extraCount < 4) return;
+
+  state.flagshipLcdDemonAchievedNotified = true;
+  addAchievementCard('flagship_lcd_demon', '旗舰LCD魔王', 'LCD全特性+旗舰+SoC+24G1TB+4项额外功能成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把 LCD 全特性、旗舰+芯片、24G+1TB、以及一堆额外功能塞进同一台机子，恭喜达成 <strong>旗舰LCD魔王</strong> 成就！<br>这波是“配置单像战书，友商看完先沉默”。'
+  );
+}
+
+function checkThermalManiacAchievement(buildLike) {
+  if (state.ended || state.thermalManiacAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const extras = Array.isArray(input && input.chosenExtras) ? input.chosenExtras : [];
+  const hasVC = extras.some((x) => x && x.id === 'vc');
+  const hasFan = extras.some((x) => x && x.id === 'active_fan');
+  if (!(hasVC && hasFan)) return;
+  state.thermalManiacAchievedNotified = true;
+  addAchievementCard('thermal_maniac', '散热狂魔', 'VC均热板+散热风扇机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把 VC 均热板和散热风扇一起端上来了，恭喜达成 <strong>散热狂魔</strong> 成就！<br>这波是“性能先别急，先给温度上强度”。'
+  );
+}
+
+function checkSatelliteAchievement(buildLike) {
+  if (state.ended || state.satelliteAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const extras = Array.isArray(input && input.chosenExtras) ? input.chosenExtras : [];
+  const hasSatellite = extras.some((x) => x && x.id === 'satellite');
+  if (!hasSatellite) return;
+  state.satelliteAchievedNotified = true;
+  addAchievementCard('satellite', '天空属于？', '带卫星SOS通信机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把卫星 SOS 通信做进量产机了，恭喜达成 <strong>天空属于？</strong> 成就！<br>这波是“地面信号不稳？那就直接抬头找星星”。'
+  );
+}
+
+function checkBatteryTechAchievement(buildLike) {
+  if (state.ended || state.batteryTechAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const extras = Array.isArray(input && input.chosenExtras) ? input.chosenExtras : [];
+  const hasBatteryTech = extras.some((x) => x && x.id === 'battery_tech');
+  const hasFast120 = extras.some((x) => x && x.id === 'fast120');
+  if (!(hasBatteryTech && hasFast120)) return;
+  state.batteryTechAchievedNotified = true;
+  addAchievementCard('battery_tech', '电池科技', '高密度电池技术+超级快充机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把高密度电池和超级快充一起端上来了，恭喜达成 <strong>电池科技</strong> 成就！<br>这波是“续航和回血都要，充电头先冒汗”。'
+  );
+}
+
+function checkMagsafeAchievement(buildLike) {
+  if (state.ended || state.magsafeAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const extras = Array.isArray(input && input.chosenExtras) ? input.chosenExtras : [];
+  const hasMagsafe = extras.some((x) => x && x.id === 'magsafe');
+  if (!hasMagsafe) return;
+  state.magsafeAchievedNotified = true;
+  addAchievementCard('magsafe', '磁能科技', '磁吸生态配件机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把磁吸生态配件做进量产机了，恭喜达成 <strong>磁能科技</strong> 成就！<br>这波是“咔哒一吸，仪式感和生态位一起就位”。'
+  );
+}
+
+function checkSmallScreenAchievement(buildLike) {
+  if (state.ended || state.smallScreenAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const size = Number(input && input.disp ? input.disp.size : 0);
+  if (!(size > 0 && size < 6)) return;
+  state.smallScreenAchievedNotified = true;
+  addAchievementCard('small_screen', '小屏手机的理想', '屏幕小于6寸机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了小于 6 寸的小屏机，恭喜达成 <strong>小屏手机的理想</strong> 成就！<br>这波是“单手握持党狂喜，论坛瞬间开香槟”。'
+  );
+}
+
+function checkFlatBackAchievement(buildLike) {
+  if (state.ended || state.flatBackAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const extras = Array.isArray(input && input.chosenExtras) ? input.chosenExtras : [];
+  const hasFlatBack = extras.some((x) => x && x.id === 'flat_back');
+  if (!hasFlatBack) return;
+  state.flatBackAchievedNotified = true;
+  addAchievementCard('flat_back', '消灭矩阵', '纯平背板机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了纯平背板机型，恭喜达成 <strong>消灭矩阵</strong> 成就！<br>这波是“背面干净利落，视觉强迫症当场治愈”。'
+  );
+}
+
+function checkLargeScreenAchievement(buildLike) {
+  if (state.ended || state.largeScreenAchievedNotified) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const size = Number(input && input.disp ? input.disp.size : 0);
+  if (!(size > 8)) return;
+  state.largeScreenAchievedNotified = true;
+  addAchievementCard('large_screen', '大就是好', '屏幕大于8寸机型成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了大于 8 寸的机型，恭喜达成 <strong>大就是好</strong> 成就！<br>这波是“口袋先别想，观感先拉满”。'
+  );
+}
+
 function updateDesignRestartButtonState() {
   if (!el.restartDesign) return;
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) {
@@ -3539,12 +4267,205 @@ function updateDesignRestartButtonState() {
   el.restartDesign.classList.toggle('restart-alert', shouldAlert);
 }
 
+function snapshotDesignInputs() {
+  const valueIds = [
+    'soc', 'price', 'dispMat', 'dispVendor', 'dispSize', 'dispRatio', 'dispForm',
+    'body', 'battery', 'procurementPlan', 'camMain', 'camUltra', 'camTele', 'camFront',
+    'marketingFocus', 'campaignLevel', 'units', 'phoneH', 'phoneW', 'phoneT', 'backColor'
+  ];
+  const values = {};
+  valueIds.forEach((id) => {
+    const node = el[id];
+    if (!node) return;
+    values[id] = node.value;
+  });
+  const displayChecks = el.displayFeatures
+    ? [...el.displayFeatures.querySelectorAll('input[type="checkbox"]')].map((c) => ({ value: c.value, checked: c.checked }))
+    : [];
+  const extraChecks = el.extraChecks
+    ? [...el.extraChecks.querySelectorAll('input[type="checkbox"]')].map((c) => ({ value: c.value, checked: c.checked }))
+    : [];
+  const skuRows = el.skuList
+    ? [...el.skuList.querySelectorAll('.sku-row')].map((row) => ({
+      ram: row.querySelector('.sku-ram')?.value || '8_lp5x',
+      rom: row.querySelector('.sku-rom')?.value || '256_ufs31',
+      priceAdj: row.querySelector('.sku-price-adj')?.value || '0',
+      share: row.querySelector('.sku-share')?.value || '0'
+    }))
+    : [];
+  return { values, displayChecks, extraChecks, skuRows };
+}
+
+function restoreDesignInputs(snapshot) {
+  if (!snapshot) return;
+  Object.entries(snapshot.values || {}).forEach(([id, value]) => {
+    const node = el[id];
+    if (node) node.value = value;
+  });
+  if (el.displayFeatures) {
+    const checks = new Map((snapshot.displayChecks || []).map((x) => [x.value, x.checked]));
+    [...el.displayFeatures.querySelectorAll('input[type="checkbox"]')].forEach((c) => {
+      if (checks.has(c.value)) c.checked = Boolean(checks.get(c.value));
+    });
+  }
+  if (el.extraChecks) {
+    const checks = new Map((snapshot.extraChecks || []).map((x) => [x.value, x.checked]));
+    [...el.extraChecks.querySelectorAll('input[type="checkbox"]')].forEach((c) => {
+      if (checks.has(c.value)) c.checked = Boolean(checks.get(c.value));
+    });
+  }
+  if (el.skuList) {
+    const rows = snapshot.skuRows && snapshot.skuRows.length
+      ? snapshot.skuRows
+      : [{ ram: '8_lp5x', rom: '256_ufs31', priceAdj: '0', share: '100' }];
+    el.skuList.innerHTML = '';
+    rows.forEach((seed) => addSkuRow(seed));
+    refreshSkuButtons();
+    updateSkuShareValidation(false);
+  }
+}
+
+function getCheapestByCost(list) {
+  const arr = Array.isArray(list) ? list : [];
+  return arr.reduce((best, x) => {
+    if (!x) return best;
+    if (!best) return x;
+    return Number(x.cost || 0) < Number(best.cost || 0) ? x : best;
+  }, null);
+}
+
+function calcMinFeasibleDesignLaunchCost() {
+  if (!state.marketPick || !el.region) return null;
+  const cacheKey = [
+    state.marketPick.key || 'none',
+    el.region.value || 'none',
+    state.memoryMarket ? state.memoryMarket.id : 'stable'
+  ].join('|');
+  const cache = state.minDesignLaunchCostCache;
+  if (cache && cache.key === cacheKey && Number.isFinite(cache.cost)) {
+    return cache.cost;
+  }
+
+  const snapshot = snapshotDesignInputs();
+  let minCost = Number.POSITIVE_INFINITY;
+  try {
+    const cheapestSoc = getCheapestByCost(socs);
+    const cheapestBody = getCheapestByCost(bodyOptions);
+    const cheapestRam = getCheapestByCost(ramOptions);
+    const cheapestRom = getCheapestByCost(romOptions);
+    const planKeys = Object.keys(procurementPlans);
+    if (!cheapestSoc || !cheapestBody || !cheapestRam || !cheapestRom || !planKeys.length) {
+      state.minDesignLaunchCostCache = { key: cacheKey, cost: Number.POSITIVE_INFINITY };
+      return Number.POSITIVE_INFINITY;
+    }
+
+    if (el.soc) el.soc.value = cheapestSoc.id;
+    if (el.price) el.price.value = '999';
+    if (el.dispMat) el.dispMat.value = 'lcd';
+    if (el.dispVendor) el.dispVendor.value = 'low';
+    if (el.dispSize) el.dispSize.value = '3.0';
+    if (el.dispRatio) el.dispRatio.value = '18:9';
+    if (el.dispForm) el.dispForm.value = 'symmetry';
+    if (el.body) el.body.value = cheapestBody.id;
+    if (el.battery) el.battery.value = '1500';
+    if (el.camMain) el.camMain.value = 'none';
+    if (el.camUltra) el.camUltra.value = 'none';
+    if (el.camTele) el.camTele.value = 'none';
+    if (el.camFront) el.camFront.value = 'none';
+    if (el.marketingFocus) el.marketingFocus.value = 'balanced';
+    if (el.campaignLevel) el.campaignLevel.value = 'low';
+    if (el.units) el.units.value = '1000';
+    if (el.phoneH) el.phoneH.value = '120';
+    if (el.phoneW) el.phoneW.value = '60';
+    if (el.phoneT) el.phoneT.value = '8.0';
+
+    if (el.displayFeatures) {
+      [...el.displayFeatures.querySelectorAll('input[type="checkbox"]')].forEach((c) => { c.checked = false; });
+    }
+    if (el.extraChecks) {
+      [...el.extraChecks.querySelectorAll('input[type="checkbox"]')].forEach((c) => { c.checked = false; });
+    }
+
+    if (el.skuList) {
+      el.skuList.innerHTML = '';
+      addSkuRow({ ram: cheapestRam.id, rom: cheapestRom.id, priceAdj: 0, share: 100 });
+      refreshSkuButtons();
+      updateSkuShareValidation(false);
+    }
+
+    planKeys.forEach((key) => {
+      if (el.procurementPlan) el.procurementPlan.value = key;
+      const evalResult = evaluateBuild();
+      if (!evalResult.issues.length && Number.isFinite(evalResult.initialCost)) {
+        minCost = Math.min(minCost, evalResult.initialCost);
+      }
+    });
+  } catch (err) {
+    minCost = Number.POSITIVE_INFINITY;
+  } finally {
+    restoreDesignInputs(snapshot);
+  }
+
+  state.minDesignLaunchCostCache = { key: cacheKey, cost: minCost };
+  return minCost;
+}
+
+function checkDesignDeadEndByCash() {
+  if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) return;
+  if (state.ended || !state.marketPick) return;
+  const minCost = calcMinFeasibleDesignLaunchCost();
+  if (!Number.isFinite(minCost)) return;
+  if (Number(state.cash || 0) < minCost) {
+    if (!state.designDeadEndNotified) {
+      state.designDeadEndNotified = true;
+      endGame('现金不足以支持任何可行的最低 1000 台量产方案。');
+      openGameModal(
+        '游戏结束',
+        `现金已经不足以覆盖最低可行方案的 <strong>1000 台</strong>启动成本（约 ${RMB(minCost)}）。<br>这波属于“再生产失败，工厂连开机费都不够”。`,
+        'gameover'
+      );
+    }
+    return;
+  }
+  state.designDeadEndNotified = false;
+}
+
 function placeContinueNext(mode = 'auto') {
   if (!el.continueNext) return;
   const target = mode === 'manual' ? el.runStopRow : el.runPrimaryRow;
   if (target && el.continueNext.parentElement !== target) {
     target.appendChild(el.continueNext);
   }
+}
+
+function applyRatingDeltaByDifficulty(delta, diffName) {
+  if (diffName === '真实') {
+    return delta >= 0 ? delta * 1.2 : delta * 0.72;
+  }
+  return delta;
+}
+
+function resetRestockButtonState() {
+  if (!el.restock) return;
+  el.restock.classList.remove('restock-success', 'restock-fail');
+}
+
+function markRestockFailed() {
+  if (!el.restock) return;
+  el.restock.classList.remove('restock-success');
+  el.restock.classList.add('restock-fail');
+}
+
+function flashRestockSuccess() {
+  if (!el.restock) return;
+  el.restock.classList.remove('restock-fail', 'restock-success');
+  // Force reflow so repeated success clicks can replay animation.
+  void el.restock.offsetWidth;
+  el.restock.classList.add('restock-success');
+  window.setTimeout(() => {
+    if (!el.restock) return;
+    el.restock.classList.remove('restock-success');
+  }, 820);
 }
 
 function takeGenerationLoan() {
@@ -3578,7 +4499,9 @@ function takeGenerationLoan() {
   p.loanDecision = 'taken';
   p.loanId = loan.id;
   state.cash += GENERATION_LOAN_PRINCIPAL;
+  resetRestockButtonState();
   updateHeader();
+  checkCashMilestones();
   el.reportBox.innerHTML = '已使用本代贷款：现金已补充。到期时会自动扣款，请提前留足现金。';
 }
 
@@ -3612,6 +4535,7 @@ function nextMonth() {
 
   state.month += 1;
   state.companyMonthsTotal += 1;
+  resetRestockButtonState();
   const p = state.product;
   const dueLoans = state.loans.filter((x) => !x.settled && x.dueCompanyMonth <= state.companyMonthsTotal);
   const loanDueThisMonth = dueLoans.reduce((sum, x) => sum + x.repayAmount, 0);
@@ -3623,6 +4547,11 @@ function nextMonth() {
     if (state.cash <= 0) {
       el.reportBox.innerHTML = '本月触发贷款还款，扣款后现金为负。<br><span class="bad">企业破产。</span>';
       endGame('贷款到期扣款后资金链断裂，企业破产。');
+      openGameModal(
+        '游戏结束',
+        '现金已经为负，账本写着：<strong>破产</strong>。<br>这波是“销量未必输，现金流先走了”。',
+        'gameover'
+      );
       return;
     }
   }
@@ -3642,7 +4571,12 @@ function nextMonth() {
   const swanInstantKill = Boolean(swan && swan.instantKill);
   const oppDemandMul = opportunity ? (opportunity.demandMul || 1) : 1;
   const oppCostMul = opportunity ? (opportunity.costMul || 1) : 1;
-  const oppRatingDelta = opportunity ? (opportunity.ratingDelta || 0) : 0;
+  const oppRatingDelta = opportunity
+    ? scaleOpportunityRatingDeltaByDifficulty(
+      (opportunity.ratingDelta || 0),
+      p.input.startupDifficulty?.name || '真实'
+    )
+    : 0;
   const oppCashBoost = opportunity ? (opportunity.cashBoost || 0) : 0;
   const oppOnlineMul = opportunity ? (opportunity.onlineMul || 1) : 1;
 
@@ -3939,8 +4873,26 @@ function nextMonth() {
   const qualityDrift = (p.qualityScore - 65) / 85;
   const stalePenalty = (state.month > 12 && unsold > p.producedTotal * 0.35) ? -0.8 : 0;
   const returnPenalty = effectiveReturnRate * 34;
-  const ratingDelta = noise.rating + swanRatingDelta + oppRatingDelta + qualityDrift - returnPenalty - (effectiveStockoutRatio * 3.4) + stalePenalty + rnd(-0.9, 0.8);
+  const ratingDeltaRaw =
+    noise.rating
+    + swanRatingDelta
+    + oppRatingDelta
+    + qualityDrift
+    - returnPenalty
+    - (effectiveStockoutRatio * 3.4)
+    + stalePenalty
+    + rnd(-0.9, 0.8);
+  const ratingDelta = applyRatingDeltaByDifficulty(
+    ratingDeltaRaw,
+    p.input.startupDifficulty?.name || '真实'
+  );
   state.rating = clamp(state.rating + ratingDelta, 1, 100);
+  checkRatingMilestones();
+  if (state.ended) return;
+  checkCashMilestones();
+  if (state.ended) return;
+  checkTenYearVeteranMilestone();
+  if (state.ended) return;
   p.stockoutStress = clamp(
     (p.stockoutStress || 0) * 0.66
       + stockoutRatio * 0.78
@@ -4068,6 +5020,11 @@ function nextMonth() {
 
   if (state.cash <= 0) {
     endGame('资金链断裂，企业破产。');
+    openGameModal(
+      '游戏结束',
+      '现金已经为负，账本写着：<strong>破产</strong>。<br>这波是“销量未必输，现金流先走了”。',
+      'gameover'
+    );
     return;
   }
   if (swanInstantKill) {
@@ -4098,26 +5055,31 @@ function nextMonth() {
   }
 
   updateHeader();
+  checkCashMilestones();
 }
 
 function restock() {
   if (state.phaseEnded) {
+    markRestockFailed();
     el.reportBox.innerHTML = '旧机型已退市，无法补货。请进入下一代机型。';
     return;
   }
   if (!state.launched || state.ended) {
+    markRestockFailed();
     el.reportBox.innerHTML = '当前不可追加生产。';
     return;
   }
   const p = state.product;
   const add = Math.round(Number(el.restockUnits ? el.restockUnits.value : 0) || 0);
   if (add < 1000 || add > 200000) {
+    markRestockFailed();
     el.reportBox.innerHTML = '<span class="bad">补货数量需在 1000~200000 台。</span>';
     return;
   }
   const skuId = el.restockSku ? el.restockSku.value : '';
   const sku = (p.skuStats || []).find((x) => x.id === skuId);
   if (!sku) {
+    markRestockFailed();
     el.reportBox.innerHTML = '<span class="bad">请选择要补货的 SKU。</span>';
     return;
   }
@@ -4139,6 +5101,7 @@ function restock() {
   const skuCostBase = sku.unitCost || p.unitCost;
   const cost = add * skuCostBase * (state.marketPick.cost * 0.98) / p.supplyStability + 140_000 + renewalCost + lockCommitRenewCost;
   if (cost > state.cash) {
+    markRestockFailed();
     el.reportBox.innerHTML = '<span class="bad">追加失败：现金不足。</span>';
     return;
   }
@@ -4150,6 +5113,7 @@ function restock() {
   state.companyCostTotal += cost;
   p.producedTotal += add;
   p.pipeline.push({ skuId: sku.id, units: add, arriveMonth });
+  flashRestockSuccess();
   el.reportBox.innerHTML = `已追加生产 ${sku.name}（${sku.ramName}+${sku.romName}），库存将在后续月份分批到货。`;
   updateHeader();
 }
@@ -4277,6 +5241,7 @@ function finishProductPhase(reason, source = 'auto') {
   ].join('<br>');
   el.finalBox.innerHTML = '公司未结算：可继续下一代，或企业结算查看全流程成绩。';
   updateHeader();
+  checkCashMilestones();
 }
 
 function endGame(reason) {
@@ -4318,6 +5283,16 @@ function endGame(reason) {
 }
 
 function restart() {
+  resetRestockButtonState();
+  closePreviewLightbox();
+  closeBenchPage();
+  if (el.gameModalStack) el.gameModalStack.innerHTML = '';
+  if (el.gameModal) el.gameModal.classList.add('hidden');
+  gameoverCtaLatched = false;
+  celebrateCtaLatched = false;
+  applyRestartCtaState('none');
+  closeAchievementPanel();
+  refreshOverlayLockState();
   state.cash = state.initialCash;
   state.inventory = 0;
   state.inventoryBySku = {};
@@ -4342,6 +5317,32 @@ function restart() {
   state.timeline = [];
   state.loans = [];
   state.eventRerollUsed = false;
+  state.designDeadEndNotified = false;
+  state.minDesignLaunchCostCache = null;
+  state.rating100Notified = false;
+  state.cash1bNotified = false;
+  state.tenYearVeteranNotified = false;
+  state.screenMaterialsUsed = new Set();
+  state.screenCollectorNotified = false;
+  state.foldableAchievedNotified = false;
+  state.einkAchievedNotified = false;
+  state.futureEinkAchievedNotified = false;
+  state.ultraFlagshipAchievedNotified = false;
+  state.advancedAlloyAchievedNotified = false;
+  state.ceramicAchievedNotified = false;
+  state.noCameraAchievedNotified = false;
+  state.aramidAchievedNotified = false;
+  state.selfieAchievedNotified = false;
+  state.topLcdAchievedNotified = false;
+  state.flagshipLcdDemonAchievedNotified = false;
+  state.thermalManiacAchievedNotified = false;
+  state.satelliteAchievedNotified = false;
+  state.batteryTechAchievedNotified = false;
+  state.magsafeAchievedNotified = false;
+  state.smallScreenAchievedNotified = false;
+  state.flatBackAchievedNotified = false;
+  state.largeScreenAchievedNotified = false;
+  state.achievements = [];
   state.premiumPriceToleranceCarry = 1.0;
   state.premiumOnlineDemandCarry = 1.0;
   state.premiumOfflineDemandCarry = 1.0;
@@ -4358,6 +5359,8 @@ function restart() {
     el.rollEvents.textContent = '刷新随机情况';
   }
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
+  if (el.restart) el.restart.classList.remove('gameover-cta', 'celebrate-cta');
+  if (el.restartDesign) el.restartDesign.classList.remove('gameover-cta', 'celebrate-cta');
   updateModelNameHint();
   updateDisplayMaterialOptions();
   assignRandomRegion();
@@ -4366,6 +5369,7 @@ function restart() {
   if (el.continueNext) el.continueNext.classList.add('hidden');
   initSkuRows();
   rollThreeMarkets();
+  renderAchievementPanel();
   setStep(1);
   updateHeader();
 }
@@ -4373,10 +5377,12 @@ function restart() {
 function refreshDesignPanelsLive() {
   refreshBackColorControl();
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) return;
+  updateSkuShareValidation(false);
   updateDisplayQuickBox();
   try {
     renderPreview();
     updateDesignRestartButtonState();
+    checkDesignDeadEndByCash();
   } catch (err) {
     const detail = err && err.message ? `（${String(err.message)}）` : '';
     const msg = `<span class="bad">自动评估失败，请调整一个配置后重试。${detail}</span>`;
@@ -4428,7 +5434,20 @@ function enableButtonPressFeedback() {
 
 function bind() {
   enableButtonPressFeedback();
+  renderAchievementPanel();
+  refreshOverlayLockState();
   refreshBackColorControl();
+  if (el.achieveEntry) {
+    el.achieveEntry.addEventListener('click', openAchievementPanel);
+  }
+  if (el.achieveClose) {
+    el.achieveClose.addEventListener('click', closeAchievementPanel);
+  }
+  if (el.achievePanel) {
+    el.achievePanel.addEventListener('click', (evt) => {
+      if (evt.target === el.achievePanel) closeAchievementPanel();
+    });
+  }
   el.rollEvents.addEventListener('click', () => {
     if (state.eventRerollUsed) return;
     rollThreeMarkets();
@@ -4461,6 +5480,7 @@ function bind() {
   if (el.continueNext) {
     el.continueNext.addEventListener('click', () => {
       if (!state.phaseEnded || state.ended) return;
+      resetRestockButtonState();
       const roll = Math.random();
       state.memoryMarket = roll < 0.35
         ? memoryMarketLevels[0]
@@ -4499,6 +5519,7 @@ function bind() {
   if (el.addSku) {
     el.addSku.addEventListener('click', () => {
       addSkuRow({ ram: '12_lp5x', rom: '256_ufs31', priceAdj: 300, share: 0 });
+      updateSkuShareValidation(false);
       refreshDesignPanelsLive();
     });
   }
@@ -4511,10 +5532,21 @@ function bind() {
       if (!row) return;
       row.remove();
       refreshSkuButtons();
+      updateSkuShareValidation(false);
       refreshDesignPanelsLive();
     });
-    el.skuList.addEventListener('input', refreshDesignPanelsLive);
-    el.skuList.addEventListener('change', refreshDesignPanelsLive);
+    el.skuList.addEventListener('input', (evt) => {
+      const target = evt.target;
+      const flash = target instanceof HTMLElement && target.classList.contains('sku-share');
+      updateSkuShareValidation(Boolean(flash));
+      refreshDesignPanelsLive();
+    });
+    el.skuList.addEventListener('change', (evt) => {
+      const target = evt.target;
+      const flash = target instanceof HTMLElement && target.classList.contains('sku-share');
+      updateSkuShareValidation(Boolean(flash));
+      refreshDesignPanelsLive();
+    });
   }
   window.addEventListener('resize', () => {
     renderOpsChart();
@@ -4550,6 +5582,19 @@ function bind() {
   if (el.benchClose) {
     el.benchClose.addEventListener('click', closeBenchPage);
   }
+  if (el.gameModal) {
+    el.gameModal.addEventListener('click', (evt) => {
+      if (evt.target === el.gameModal) {
+        closeLastGameModal();
+        return;
+      }
+      const target = evt.target instanceof Element ? evt.target.closest('.game-modal-close') : null;
+      if (!(target instanceof HTMLElement)) return;
+      const card = target.closest('.game-modal-card');
+      const id = card ? card.getAttribute('data-modal-id') : '';
+      if (id) closeGameModalById(id);
+    });
+  }
   if (el.benchPage) {
     el.benchPage.addEventListener('click', (evt) => {
       if (evt.target === el.benchPage) closeBenchPage();
@@ -4562,8 +5607,10 @@ function bind() {
   }
   window.addEventListener('keydown', (evt) => {
     if (evt.key === 'Escape') {
+      closeAchievementPanel();
       closePreviewLightbox();
       closeBenchPage();
+      closeLastGameModal();
     }
   });
 }

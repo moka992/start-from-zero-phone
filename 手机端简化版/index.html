@@ -13,7 +13,10 @@
   <div class="bg"></div>
   <main class="app">
     <header class="top">
-      <h1>从零开始做手机</h1>
+      <div class="top-head">
+        <h1>从零开始做手机</h1>
+        <button id="achieveEntry" class="achieve-entry" type="button">成就 <span id="achieveCount">0</span></button>
+      </div>
       <p>选市场、做手机、每月推进，看你能活多久。</p>
       <div class="stats">
         <div class="cash-card">
@@ -148,6 +151,7 @@
           <div class="tiny">默认 1 个 SKU，可手动新增。首发配比总和需为 100%。</div>
           <button type="button" id="addSku">新增 SKU</button>
         </div>
+        <div id="skuShareHint" class="sku-share-hint hidden">请保证配额和是100%</div>
         <div id="skuList"></div>
       </div>
 
@@ -259,6 +263,20 @@
       <div class="tiny" id="sourceNote"></div>
     </section>
   </main>
+
+  <div id="achievePanel" class="achieve-panel hidden" role="dialog" aria-modal="true" aria-label="已达成成就">
+    <div class="achieve-panel-card">
+      <div class="achieve-panel-head">
+        <h3>已达成成就</h3>
+        <button id="achieveClose" type="button" class="low-freq-btn">关闭</button>
+      </div>
+      <div id="achieveList" class="achieve-list"></div>
+    </div>
+  </div>
+
+  <div id="gameModal" class="game-modal hidden" role="dialog" aria-modal="true" aria-label="游戏提示">
+    <div id="gameModalStack" class="game-modal-stack"></div>
+  </div>
 
   <div id="benchPage" class="bench-page hidden" role="dialog" aria-modal="true" aria-label="虚拟跑分">
     <div class="bench-wrap">
