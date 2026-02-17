@@ -16,7 +16,11 @@
       <h1>从零开始做手机</h1>
       <p>选市场、做手机、每月推进，看你能活多久。</p>
       <div class="stats">
-        <div><span>现金</span><strong id="cash">¥10,000,000</strong></div>
+        <div class="cash-card">
+          <span>现金</span>
+          <strong id="cash">¥10,000,000</strong>
+          <button id="takeLoan" class="cash-loan-btn">使用本代贷款</button>
+        </div>
         <div><span>库存</span><strong id="inv">0</strong></div>
         <div><span>口碑</span><strong id="rating">50</strong></div>
         <div><span>月数</span><strong id="month">0</strong></div>
@@ -24,10 +28,11 @@
     </header>
 
     <section id="stageEvent" class="panel">
-      <h2>第一步：抽本局市场</h2>
-      <div class="grid3">
-        <label>企业成立区域（系统随机）
-          <select id="region"></select>
+      <h2>随机市场区域</h2>
+      <div class="grid3 cfg-grid-3">
+        <label>随机企业成立区域
+          <input id="regionFixed" type="text" value="随机中..." disabled />
+          <select id="region" class="hidden"></select>
         </label>
         <label>企业名称（固定）
           <input type="text" value="StartPhone" disabled />
@@ -40,17 +45,20 @@
         </label>
       </div>
       <div class="row">
-        <button id="rollEvents" class="accent">刷新 3 个市场环境</button>
+        <button id="rollEvents" class="accent">刷新随机情况</button>
         <div id="eventHint" class="muted">请选择 1 个，它将影响整局。</div>
       </div>
       <div id="eventCards" class="cards"></div>
       <div class="row">
-        <button id="confirmEvent" disabled>产品经理请提需求。</button>
+        <button id="confirmEvent" disabled>产品经理请提需求</button>
       </div>
     </section>
 
     <section id="stageConfig" class="panel hidden">
-      <h2>第二步：设计你的手机</h2>
+      <div class="design-head">
+        <h2>设计你的手机</h2>
+        <button id="restartDesign" class="low-freq-btn">重开新局</button>
+      </div>
       <div id="designQuiz" class="quiz-box"></div>
       <div class="grid3">
         <label>SoC
@@ -65,7 +73,7 @@
       </div>
 
       <h3>屏幕系统</h3>
-      <div class="grid4">
+      <div class="grid4 cfg-grid-screen">
         <label>材质
           <select id="dispMat">
             <option value="lcd">LCD</option>
@@ -106,7 +114,7 @@
       </div>
       <div id="displayQuickBox" class="box">屏幕预览：等待计算。</div>
 
-      <div class="grid4">
+      <div class="grid4 cfg-grid-2">
         <label>机身材质
           <select id="body"></select>
         </label>
@@ -115,15 +123,8 @@
         </label>
       </div>
 
-      <h3>供应链采购方案（3档）</h3>
-      <div class="grid3">
-        <label>核心部件统一采购合约
-          <select id="procurementPlan"></select>
-        </label>
-      </div>
-
       <h3>摄像头系统（可选数量）</h3>
-      <div class="grid4">
+      <div class="grid4 cfg-grid-4">
         <label>主摄
           <select id="camMain"></select>
         </label>
@@ -141,8 +142,17 @@
       <h3>额外特色（影响成本/重量/销量）</h3>
       <div class="checks" id="extras"></div>
 
+      <h3>存储 SKU 配置</h3>
+      <div class="box" id="skuBox">
+        <div class="row">
+          <div class="tiny">默认 1 个 SKU，可手动新增。首发配比总和需为 100%。</div>
+          <button type="button" id="addSku">新增 SKU</button>
+        </div>
+        <div id="skuList"></div>
+      </div>
+
       <h3>营销策略（影响线上/爱好者转化）</h3>
-      <div class="grid3">
+      <div class="grid3 cfg-grid-2">
         <label>营销主打法
           <select id="marketingFocus"></select>
         </label>
@@ -151,10 +161,7 @@
         </label>
       </div>
 
-      <div class="grid4">
-        <label>首批产量（台）
-          <input id="units" type="number" min="1000" max="150000" step="1000" value="2000" />
-        </label>
+      <div class="grid4 cfg-grid-4">
         <label>机身高度（mm）
           <input id="phoneH" type="number" min="80" max="260" step="0.1" value="169.0" />
         </label>
@@ -166,63 +173,82 @@
         </label>
       </div>
 
-      <h3>存储 SKU 配置（放在设计末尾）</h3>
-      <div class="box" id="skuBox">
-        <div class="row">
-          <div class="tiny">默认 1 个 SKU，可手动新增。首发配比总和需为 100%。</div>
-          <button type="button" id="addSku">新增 SKU</button>
+      <div class="design-eval-grid">
+        <div class="box">
+          <div class="tiny">机型预览（背面 45° + 正面屏幕形态，点击可放大）</div>
+          <div class="phone-preview-grid">
+            <div class="phone-preview-item is-back">
+              <div class="preview-head">
+                <div class="tiny">背面 45°</div>
+                <label class="preview-color-control" title="后盖颜色">
+                  <span>后盖色</span>
+                  <span class="preview-color-dot">
+                    <input id="backColor" type="color" value="#2e4a66" aria-label="后盖颜色" />
+                  </span>
+                </label>
+              </div>
+              <canvas id="phoneRenderCanvas" class="phone-preview-canvas" height="280"></canvas>
+            </div>
+            <div class="phone-preview-item">
+              <div class="tiny">正面屏幕</div>
+              <canvas id="phoneFrontCanvas" class="phone-preview-canvas" height="280"></canvas>
+            </div>
+          </div>
         </div>
-        <div id="skuList"></div>
+        <div id="previewBox" class="box design-health-box">等待计算。</div>
       </div>
-
-      <div class="row">
-        <button id="preview">产品评估</button>
+      <div class="row action-row">
+        <button id="preview">跑个分吧</button>
         <button id="launch" class="accent">立项并开售</button>
+        <label class="units-inline">首批产量（台）
+          <input id="units" type="number" min="1000" max="150000" step="1000" value="2000" />
+        </label>
+        <label class="procurement-inline">供应链采购方案
+          <select id="procurementPlan"></select>
+        </label>
       </div>
-      <div class="box">
-        <div class="tiny">机型预览（背面 45° + 正面屏幕形态）</div>
-        <div class="phone-preview-grid">
-          <div>
-            <div class="tiny">背面 45°</div>
-            <label class="preview-color-control">后盖颜色
-              <input id="backColor" type="color" value="#2e4a66" />
-            </label>
-            <canvas id="phoneRenderCanvas" class="phone-preview-canvas" height="280"></canvas>
-          </div>
-          <div>
-            <div class="tiny">正面屏幕</div>
-            <canvas id="phoneFrontCanvas" class="phone-preview-canvas" height="280"></canvas>
-          </div>
-        </div>
-      </div>
-      <div id="previewBox" class="box">等待计算。</div>
+      <div id="previewDetailBox" class="box">详细评估：等待计算。</div>
     </section>
 
     <section id="stageRun" class="panel hidden">
-      <h2>第三步：运营与生存</h2>
-      <div id="runQuiz" class="quiz-box"></div>
-      <div class="row">
-        <button id="nextMonth" class="accent">推进 1 个月</button>
-        <button id="restock">追加生产</button>
-        <button id="takeLoan">使用本代贷款</button>
-        <button id="declineLoan">放弃本代贷款</button>
-        <button id="continueNext" class="hidden">进入下一代机型</button>
-        <button id="stop">产品停产结算</button>
-        <button id="endCompany">企业结算</button>
-        <button id="restart">重开新局</button>
+      <div class="run-head">
+        <h2>运营与生存</h2>
+        <button id="restart" class="low-freq-btn">重开新局</button>
       </div>
+      <div id="runQuiz" class="quiz-box"></div>
+      <div id="runPrimaryRow" class="row">
+        <button id="nextMonth" class="accent">推进 1 个月</button>
+        <button id="continueNext" class="hidden">进入下一代机型</button>
+      </div>
+      <div id="runBriefBox" class="box month-brief">本月重点：等待推进月份。</div>
       <div class="grid3">
         <label>补货 SKU
           <select id="restockSku"></select>
         </label>
         <label>补货数量（台）
-          <input id="restockUnits" type="number" min="1000" max="200000" step="1000" value="10000" />
+          <input id="restockUnits" type="number" min="1000" max="200000" step="1000" value="1000" />
         </label>
       </div>
+      <div class="row">
+        <button id="restock">追加生产</button>
+      </div>
       <div id="marketBox" class="box">等待开售。</div>
+      <div class="row">
+        <button id="endCompany">企业结算</button>
+      </div>
       <div class="box">
         <div class="tiny">公司趋势图（横轴：公司经营月）</div>
         <canvas id="opsChart" class="ops-chart" height="260"></canvas>
+        <div class="ops-legend" aria-label="企业趋势图例">
+          <span class="ops-legend-item"><i class="ops-dot cash"></i>现金</span>
+          <span class="ops-legend-item"><i class="ops-dot inv"></i>SKU库存</span>
+          <span class="ops-legend-item"><i class="ops-dot sold"></i>累计销量</span>
+          <span class="ops-legend-item"><i class="ops-dot rating"></i>口碑</span>
+        </div>
+        <div class="tiny ops-chart-tip">默认显示最近 6 个月，点击图表查看完整企业周期。</div>
+      </div>
+      <div id="runStopRow" class="row">
+        <button id="stop">产品停产结算</button>
       </div>
       <div id="reportBox" class="box">等待月报。</div>
       <div id="finalBox" class="box">结算后显示最终表现。</div>
@@ -233,6 +259,88 @@
       <div class="tiny" id="sourceNote"></div>
     </section>
   </main>
+
+  <div id="benchPage" class="bench-page hidden" role="dialog" aria-modal="true" aria-label="虚拟跑分">
+    <div class="bench-wrap">
+      <div class="bench-head">
+        <h2>GeekBeak G6 虚拟跑分</h2>
+        <button id="benchClose" type="button" class="bench-close-btn">关闭跑分</button>
+      </div>
+      <div class="bench-sub tiny">跑分图一乐</div>
+      <div class="bench-progress" aria-label="跑分进度">
+        <div class="bench-progress-top">
+          <span>当前进度</span>
+          <strong id="benchProgressText">0/5</strong>
+        </div>
+        <div class="bench-progress-track">
+          <div id="benchProgressFill" class="bench-progress-fill"></div>
+        </div>
+      </div>
+
+      <div id="benchSocCard" class="bench-card">
+        <div class="bench-card-title">SoC 性能测试</div>
+        <div class="bench-soc-grid">
+          <canvas id="benchSocGameCanvas" class="bench-soc-canvas" width="320" height="120"></canvas>
+          <div class="bench-soc-right">
+            <canvas id="benchSocTempCanvas" class="bench-temp-canvas" width="320" height="120"></canvas>
+            <div id="benchSocMeta" class="bench-meta">温度：26.0°C｜进行中...</div>
+          </div>
+          <div id="benchSocScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchDispCard" class="bench-card">
+        <div class="bench-card-title">屏幕测试</div>
+        <div class="bench-row-grid">
+          <div class="bench-visuals">
+            <div class="bench-chip color">色阶图</div>
+            <div class="bench-chip gray">灰阶图</div>
+            <div class="bench-chip ufo">UFO 刷新率</div>
+          </div>
+          <div id="benchDispScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchCamCard" class="bench-card">
+        <div class="bench-card-title">影像测试</div>
+        <div class="bench-row-grid">
+          <div id="benchCamInfo" class="bench-info">读取摄像头配置中...</div>
+          <div id="benchCamScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchStorageCard" class="bench-card">
+        <div class="bench-card-title">存储测试</div>
+        <div class="bench-row-grid">
+          <div>
+            <div id="benchStorageInfo" class="bench-info">读取 SKU 配置中...</div>
+            <div id="benchStorageBits" class="bench-bits">0101 0101 0101 ...</div>
+          </div>
+          <div id="benchStorageScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchBatteryCard" class="bench-card">
+        <div class="bench-card-title">续航测试</div>
+        <div class="bench-row-grid">
+          <div id="benchBatterySlide" class="bench-slide">模拟视频播放场景</div>
+          <div id="benchBatteryScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchFinal" class="bench-final hidden">
+        综合总分：<strong id="benchFinalScore">0</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="previewLightbox" class="preview-lightbox hidden" role="dialog" aria-modal="true" aria-label="机型预览放大图">
+    <div class="preview-lightbox-inner">
+      <button id="previewLightboxClose" class="preview-lightbox-close" type="button">关闭</button>
+      <div id="previewLightboxTitle" class="tiny">预览</div>
+      <img id="previewLightboxImage" alt="预览放大图" />
+    </div>
+  </div>
 
   <script src="game.js"></script>
 </body>

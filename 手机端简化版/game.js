@@ -76,28 +76,52 @@ const marketArchetypes = [
 ];
 
 const socs = [
+  { id: 's480', name: 'SnapDrake 480X', tier: '入门(老款)', score: 22, cost: 72, risk: 0.78 },
+  { id: 'g35', name: 'MedaTek Helioo G35X', tier: '入门(老款)', score: 24, cost: 78, risk: 0.8 },
   { id: 'g81', name: 'MedaTek Helioo G81X', tier: '入门', score: 28, cost: 95, risk: 0.82 },
   { id: 't7225', name: 'UniSil T7225', tier: '入门', score: 30, cost: 108, risk: 0.84 },
+  { id: 'dim6100', name: 'MedaTek DimeCity 6100+', tier: '中低端', score: 38, cost: 152, risk: 0.88 },
+  { id: 's4g2', name: 'SnapDrake 4 Gen2', tier: '中低端', score: 40, cost: 168, risk: 0.9 },
   { id: 'dim6300', name: 'MedaTek DimeCity 6300', tier: '中低端', score: 42, cost: 180, risk: 0.9 },
+  { id: 'g99', name: 'MedaTek Helioo G99X', tier: '中端(老款)', score: 46, cost: 210, risk: 0.92 },
   { id: 's6g4', name: 'SnapDrake 6 Gen4', tier: '中端', score: 50, cost: 260, risk: 0.95 },
+  { id: 's695', name: 'SnapDrake 695X', tier: '中端(老款)', score: 53, cost: 295, risk: 0.97 },
+  { id: 'dim7200', name: 'MedaTek DimeCity 7200', tier: '中端', score: 56, cost: 320, risk: 0.99 },
   { id: 'dim7300', name: 'MedaTek DimeCity 7300', tier: '中端', score: 58, cost: 340, risk: 1.0 },
+  { id: 's778g', name: 'SnapDrake 778G+X', tier: '中高端(老款)', score: 62, cost: 390, risk: 1.01 },
   { id: 's7sg3', name: 'SnapDrake 7s Gen3', tier: '中高端', score: 65, cost: 430, risk: 1.03 },
+  { id: 'dim8300', name: 'MedaTek DimeCity 8300', tier: '次旗舰', score: 74, cost: 560, risk: 1.07 },
   { id: 'dim8400', name: 'MedaTek DimeCity 8400', tier: '次旗舰', score: 78, cost: 620, risk: 1.1 },
   { id: 's8sg4', name: 'SnapDrake 8s Gen4', tier: '次旗舰', score: 83, cost: 760, risk: 1.14 },
+  { id: 's8g3', name: 'SnapDrake 8 Gen3', tier: '旗舰', score: 88, cost: 920, risk: 1.19 },
+  { id: 'dim9300', name: 'MedaTek DimeCity 9300+', tier: '旗舰', score: 90, cost: 980, risk: 1.22 },
+  { id: 'dim9400', name: 'MedaTek DimeCity 9400', tier: '旗舰+', score: 95, cost: 1210, risk: 1.3 },
   { id: 's8elite', name: 'SnapDrake 8 El1te', tier: '旗舰', score: 92, cost: 1080, risk: 1.24 },
   { id: 's8eliteg5', name: 'SnapDrake 8 El1te Gen5', tier: '旗舰+', score: 98, cost: 1380, risk: 1.35 }
 ];
 
 // Public benchmark anchors (representative values; some are inferred for gameplay continuity).
 const socBenchmarkAnchors = {
+  s480: { antutu10: 255000, geekbench6Single: 500, geekbench6Multi: 1550, inferred: true },
+  g35: { antutu10: 165000, geekbench6Single: 390, geekbench6Multi: 1280, inferred: true },
   g81: { antutu10: 260675, geekbench6Single: 420, geekbench6Multi: 1391, inferred: false },
   t7225: { antutu10: 290000, geekbench6Single: 450, geekbench6Multi: 1500, inferred: true },
+  dim6100: { antutu10: 405000, geekbench6Single: 930, geekbench6Multi: 2320, inferred: true },
+  s4g2: { antutu10: 445000, geekbench6Single: 980, geekbench6Multi: 2550, inferred: true },
   dim6300: { antutu10: 428365, geekbench6Single: 1009, geekbench6Multi: 2413, inferred: false },
+  g99: { antutu10: 421000, geekbench6Single: 720, geekbench6Multi: 1950, inferred: true },
   s6g4: { antutu10: 759266, geekbench6Single: 1200, geekbench6Multi: 3400, inferred: true },
+  s695: { antutu10: 448000, geekbench6Single: 890, geekbench6Multi: 2120, inferred: true },
+  dim7200: { antutu10: 742000, geekbench6Single: 1120, geekbench6Multi: 2650, inferred: true },
   dim7300: { antutu10: 671587, geekbench6Single: 1060, geekbench6Multi: 3000, inferred: true },
+  s778g: { antutu10: 612000, geekbench6Single: 1100, geekbench6Multi: 2930, inferred: true },
   s7sg3: { antutu10: 807253, geekbench6Single: 1178, geekbench6Multi: 3146, inferred: false },
+  dim8300: { antutu10: 1415000, geekbench6Single: 1520, geekbench6Multi: 5020, inferred: true },
   dim8400: { antutu10: 1633597, geekbench6Single: 1571, geekbench6Multi: 6033, inferred: false },
   s8sg4: { antutu10: 2054869, geekbench6Single: 2154, geekbench6Multi: 6880, inferred: false },
+  s8g3: { antutu10: 2125000, geekbench6Single: 2230, geekbench6Multi: 7150, inferred: true },
+  dim9300: { antutu10: 2120000, geekbench6Single: 2235, geekbench6Multi: 7600, inferred: true },
+  dim9400: { antutu10: 2770000, geekbench6Single: 2850, geekbench6Multi: 9200, inferred: true },
   s8elite: { antutu10: 2981542, geekbench6Single: 3122, geekbench6Multi: 9507, inferred: true },
   s8eliteg5: { antutu10: 3872080, geekbench6Single: 3621, geekbench6Multi: 11190, inferred: true }
 };
@@ -166,8 +190,13 @@ const cameraModules = [
   { id: 'none', name: '无', cost: 0, weight: 0, score: 0, type: 'none', volume: 0 },
   { id: 'basic13', name: '13MP 基础模组', cost: 22, weight: 4.5, score: 8, type: 'normal', volume: 0.85 },
   { id: 'ov13b10', name: 'OV13B1O 13MP 模组', cost: 30, weight: 5, score: 11, type: 'normal', volume: 1.0 },
+  { id: 'mx586_48', name: 'LumeX MX586 48MP 经典主摄', cost: 48, weight: 6.5, score: 18, type: 'normal', volume: 1.4 },
   { id: 'jn1_50', name: 'ISO-CELL JN1 50MP 模组', cost: 58, weight: 7.2, score: 20, type: 'normal', volume: 1.6 },
+  { id: 'ov64b_64', name: 'OV64B 64MP 主摄', cost: 72, weight: 8.5, score: 24, type: 'main', volume: 2.0 },
+  { id: 'mx766_50', name: 'LumeX MX766 50MP 大底主摄', cost: 98, weight: 11, score: 30, type: 'main', volume: 2.5 },
   { id: 'ov50h', name: 'OV5OH 50MP 大底主摄', cost: 105, weight: 12, score: 33, type: 'main', volume: 2.8 },
+  { id: 'gn3_50', name: 'ISO-CELL GN3 50MP 旗舰主摄', cost: 146, weight: 13.5, score: 39, type: 'main', volume: 3.1 },
+  { id: 'hp3_200', name: 'ISO-CELL HP3 200MP 旗舰主摄', cost: 188, weight: 16.5, score: 44, type: 'main', volume: 3.9 },
   { id: 'hp2_200', name: 'ISO-CELL HP2 200MP 旗舰主摄', cost: 210, weight: 18, score: 48, type: 'main', volume: 4.2 },
   { id: 'lyt900', name: '1英寸 LYT-9OO 旗舰主摄', cost: 238, weight: 21, score: 53, type: 'main', volume: 5.0 },
   { id: 'uw_50', name: '50MP 超广角模组', cost: 66, weight: 8, score: 20, type: 'ultra', volume: 1.8 },
@@ -180,6 +209,7 @@ const extras = [
   { id: 'usb3', name: 'USB 3.x 高速接口', cost: 15, weight: 1, space: 0.6, score: 3, demand: 0.01 },
   { id: 'gps_dual', name: '双频 GPS', cost: 12, weight: 0.5, space: 0.2, score: 2, demand: 0.005 },
   { id: 'dynamic_island', name: '灵动岛交互', cost: 8, weight: 0, space: 0.05, score: 2, demand: 0.008 },
+  { id: 'active_fan', name: '主动散热风扇', cost: 86, weight: 21, space: 8.4, score: 5, demand: 0.016 },
   { id: 'battery_tech', name: '新型高密度电池技术', cost: 180, weight: 0, space: 0.2, score: 3, demand: 0.006 },
   { id: 'flat_back', name: '纯平背板', cost: 22, weight: 2.5, space: 1.1, score: 5, demand: 0.018 },
   { id: 'magsafe', name: '磁吸生态配件', cost: 25, weight: 4, space: 1.2, score: 3, demand: 0.012 },
@@ -444,12 +474,14 @@ const state = {
   productHistory: [],
   timeline: [],
   loans: [],
+  eventRerollUsed: false,
   premiumPriceToleranceCarry: 1.0,
   premiumOnlineDemandCarry: 1.0,
   premiumOfflineDemandCarry: 1.0
 };
 
 const el = {
+  statsBar: document.querySelector('.stats'),
   cash: document.getElementById('cash'),
   inv: document.getElementById('inv'),
   rating: document.getElementById('rating'),
@@ -465,6 +497,7 @@ const el = {
   companyName: document.getElementById('companyName'),
   soc: document.getElementById('soc'),
   region: document.getElementById('region'),
+  regionFixed: document.getElementById('regionFixed'),
   modelBaseName: document.getElementById('modelBaseName'),
   modelNameHint: document.getElementById('modelNameHint'),
   designQuiz: document.getElementById('designQuiz'),
@@ -495,16 +528,20 @@ const el = {
   phoneW: document.getElementById('phoneW'),
   phoneT: document.getElementById('phoneT'),
   preview: document.getElementById('preview'),
+  restartDesign: document.getElementById('restartDesign'),
   launch: document.getElementById('launch'),
   previewBox: document.getElementById('previewBox'),
+  previewDetailBox: document.getElementById('previewDetailBox'),
   displayQuickBox: document.getElementById('displayQuickBox'),
   nextMonth: document.getElementById('nextMonth'),
   restock: document.getElementById('restock'),
   takeLoan: document.getElementById('takeLoan'),
-  declineLoan: document.getElementById('declineLoan'),
   continueNext: document.getElementById('continueNext'),
+  runPrimaryRow: document.getElementById('runPrimaryRow'),
+  runStopRow: document.getElementById('runStopRow'),
   restockSku: document.getElementById('restockSku'),
   restockUnits: document.getElementById('restockUnits'),
+  runBriefBox: document.getElementById('runBriefBox'),
   stop: document.getElementById('stop'),
   endCompany: document.getElementById('endCompany'),
   restart: document.getElementById('restart'),
@@ -515,8 +552,37 @@ const el = {
   sourceNote: document.getElementById('sourceNote'),
   opsChart: document.getElementById('opsChart'),
   phoneRenderCanvas: document.getElementById('phoneRenderCanvas'),
-  phoneFrontCanvas: document.getElementById('phoneFrontCanvas')
+  phoneFrontCanvas: document.getElementById('phoneFrontCanvas'),
+  previewLightbox: document.getElementById('previewLightbox'),
+  previewLightboxClose: document.getElementById('previewLightboxClose'),
+  previewLightboxTitle: document.getElementById('previewLightboxTitle'),
+  previewLightboxImage: document.getElementById('previewLightboxImage'),
+  benchPage: document.getElementById('benchPage'),
+  benchClose: document.getElementById('benchClose'),
+  benchProgressText: document.getElementById('benchProgressText'),
+  benchProgressFill: document.getElementById('benchProgressFill'),
+  benchFinal: document.getElementById('benchFinal'),
+  benchFinalScore: document.getElementById('benchFinalScore'),
+  benchSocCard: document.getElementById('benchSocCard'),
+  benchSocGameCanvas: document.getElementById('benchSocGameCanvas'),
+  benchSocTempCanvas: document.getElementById('benchSocTempCanvas'),
+  benchSocMeta: document.getElementById('benchSocMeta'),
+  benchSocScore: document.getElementById('benchSocScore'),
+  benchDispCard: document.getElementById('benchDispCard'),
+  benchDispScore: document.getElementById('benchDispScore'),
+  benchCamCard: document.getElementById('benchCamCard'),
+  benchCamInfo: document.getElementById('benchCamInfo'),
+  benchCamScore: document.getElementById('benchCamScore'),
+  benchStorageCard: document.getElementById('benchStorageCard'),
+  benchStorageInfo: document.getElementById('benchStorageInfo'),
+  benchStorageBits: document.getElementById('benchStorageBits'),
+  benchStorageScore: document.getElementById('benchStorageScore'),
+  benchBatteryCard: document.getElementById('benchBatteryCard'),
+  benchBatterySlide: document.getElementById('benchBatterySlide'),
+  benchBatteryScore: document.getElementById('benchBatteryScore')
 };
+
+let benchRunToken = 0;
 
 const designQuizPool = [
   '设计拷问：这代是要做 <strong>跑分战神</strong>，还是 <strong>屏幕卷王</strong>？',
@@ -554,6 +620,16 @@ function renderStageQuiz(step) {
   }
 }
 
+function updateStartupDifficultyStyle() {
+  if (!el.startupDifficulty) return;
+  el.startupDifficulty.classList.remove('diff-real', 'diff-hard');
+  if (el.startupDifficulty.value === 'hard') {
+    el.startupDifficulty.classList.add('diff-hard');
+    return;
+  }
+  el.startupDifficulty.classList.add('diff-real');
+}
+
 function shortNum(v) {
   const n = Number(v) || 0;
   if (Math.abs(n) >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
@@ -574,6 +650,15 @@ function hexToRgb(hex) {
 
 function rgbToCss(rgb, a = 1) {
   return `rgba(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}, ${a})`;
+}
+
+function refreshBackColorControl() {
+  if (!el.backColor) return;
+  const color = el.backColor.value || '#2e4a66';
+  const holder = el.backColor.closest('.preview-color-control');
+  if (holder) {
+    holder.style.setProperty('--picked-color', color);
+  }
 }
 
 function shiftRgb(rgb, delta) {
@@ -702,27 +787,33 @@ function pushTimelinePoint() {
   }
 }
 
-function renderOpsChart() {
-  const canvas = el.opsChart;
-  if (!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width < 20) return;
-  const dpr = window.devicePixelRatio || 1;
-  const cw = Math.floor(rect.width);
-  const ch = Math.floor(rect.height || 260);
-  canvas.width = Math.floor(cw * dpr);
-  canvas.height = Math.floor(ch * dpr);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, cw, ch);
+const OPS_CHART_SERIES = [
+  { key: 'cash', label: '现金', color: '#6ee7ff' },
+  { key: 'inv', label: 'SKU库存', color: '#ffb37a' },
+  { key: 'sold', label: '累计销量', color: '#8ee39d' },
+  { key: 'rating', label: '口碑', color: '#f8a5ff' }
+];
 
-  const pad = { l: 42, r: 14, t: 24, b: 24 };
+function getOpsChartBasePoints() {
+  if (state.timeline.length) return [...state.timeline];
+  return [{
+    m: 0,
+    cash: state.cash,
+    inv: computeTotalInventory(),
+    sold: state.companySoldTotal,
+    rating: state.rating
+  }];
+}
+
+function drawOpsChart(ctx, cw, ch, points, isFullView) {
+  const pad = { l: 42, r: 16, t: 26, b: 28 };
   const plotW = Math.max(10, cw - pad.l - pad.r);
   const plotH = Math.max(10, ch - pad.t - pad.b);
 
+  ctx.clearRect(0, 0, cw, ch);
   ctx.fillStyle = 'rgba(7,16,28,0.92)';
   ctx.fillRect(0, 0, cw, ch);
+
   ctx.strokeStyle = 'rgba(160,198,236,0.2)';
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i += 1) {
@@ -733,26 +824,13 @@ function renderOpsChart() {
     ctx.stroke();
   }
 
-  const points = state.timeline.length ? state.timeline : [{
-    m: 0,
-    cash: state.cash,
-    inv: computeTotalInventory(),
-    sold: state.companySoldTotal,
-    rating: state.rating
-  }];
   const months = points.map((p) => p.m);
   const minM = Math.min(...months);
   const maxM = Math.max(...months);
   const mSpan = Math.max(1, maxM - minM);
   const xAt = (m) => pad.l + ((m - minM) / mSpan) * plotW;
 
-  const series = [
-    { key: 'cash', label: '现金', color: '#6ee7ff' },
-    { key: 'inv', label: '库存', color: '#ffb37a' },
-    { key: 'sold', label: '累计销量', color: '#8ee39d' },
-    { key: 'rating', label: '口碑', color: '#f8a5ff' }
-  ];
-  series.forEach((s, i) => {
+  OPS_CHART_SERIES.forEach((s) => {
     const vals = points.map((p) => Number(p[s.key] || 0));
     let minV = Math.min(...vals);
     let maxV = Math.max(...vals);
@@ -762,7 +840,7 @@ function renderOpsChart() {
     }
     const yAt = (v) => pad.t + (1 - (v - minV) / (maxV - minV)) * plotH;
     ctx.strokeStyle = s.color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     points.forEach((p, idx) => {
       const x = xAt(p.m);
@@ -771,10 +849,14 @@ function renderOpsChart() {
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
-    const latest = vals[vals.length - 1];
+
+    const lastPoint = points[points.length - 1];
+    const lx = xAt(lastPoint.m);
+    const ly = yAt(Number(lastPoint[s.key] || 0));
+    ctx.beginPath();
+    ctx.arc(lx, ly, 2.4, 0, Math.PI * 2);
     ctx.fillStyle = s.color;
-    ctx.font = '12px "JetBrains Mono", monospace';
-    ctx.fillText(`${s.label}:${shortNum(latest)}`, pad.l + i * 118, 14);
+    ctx.fill();
   });
 
   ctx.strokeStyle = 'rgba(180,210,240,0.45)';
@@ -787,7 +869,46 @@ function renderOpsChart() {
   ctx.font = '11px "JetBrains Mono", monospace';
   ctx.fillText(`月 ${minM}`, pad.l, ch - 8);
   ctx.fillText(`月 ${Math.round((minM + maxM) / 2)}`, pad.l + plotW / 2 - 20, ch - 8);
-  ctx.fillText(`月 ${maxM}`, cw - pad.r - 44, ch - 8);
+  ctx.fillText(`月 ${maxM}`, cw - pad.r - 46, ch - 8);
+  ctx.fillStyle = 'rgba(166,198,228,0.88)';
+  ctx.font = '11px "Noto Sans SC", sans-serif';
+  ctx.fillText(isFullView ? '完整周期（独立刻度）' : '最近6个月（独立刻度）', pad.l, 14);
+}
+
+function renderOpsChart(options = {}) {
+  const canvas = el.opsChart;
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width < 20) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cw = Math.floor(rect.width);
+  const ch = Math.floor(rect.height || 260);
+  canvas.width = Math.floor(cw * dpr);
+  canvas.height = Math.floor(ch * dpr);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const fullCycle = Boolean(options.fullCycle);
+  const allPoints = getOpsChartBasePoints();
+  const points = fullCycle ? allPoints : allPoints.slice(-6);
+  drawOpsChart(ctx, cw, ch, points, fullCycle);
+}
+
+function openOpsChartFullView() {
+  if (!el.previewLightbox || !el.previewLightboxImage) return;
+  const points = getOpsChartBasePoints();
+  const fullCanvas = document.createElement('canvas');
+  fullCanvas.width = 1080;
+  fullCanvas.height = 620;
+  const ctx = fullCanvas.getContext('2d');
+  if (!ctx) return;
+  drawOpsChart(ctx, 1080, 620, points, true);
+  el.previewLightboxImage.src = fullCanvas.toDataURL('image/png');
+  if (el.previewLightboxTitle) {
+    el.previewLightboxTitle.textContent = '企业趋势图（完整周期）';
+  }
+  el.previewLightbox.classList.remove('hidden');
 }
 
 function roundedRectPath(ctx, x, y, w, h, r) {
@@ -822,19 +943,44 @@ function clearPhonePreview() {
   });
 }
 
-function drawFrontDisplayShape(ctx, v, sx, sy, sw, sh) {
+function openPreviewLightbox(canvas, title) {
+  if (!canvas || !el.previewLightbox || !el.previewLightboxImage) return;
+  const data = canvas.toDataURL('image/png');
+  el.previewLightboxImage.src = data;
+  if (el.previewLightboxTitle) {
+    el.previewLightboxTitle.textContent = title || '机型预览';
+  }
+  el.previewLightbox.classList.remove('hidden');
+}
+
+function closePreviewLightbox() {
+  if (!el.previewLightbox) return;
+  el.previewLightbox.classList.add('hidden');
+}
+
+function drawFrontDisplayShape(ctx, v, sx, sy, sw, sh, scale) {
   const formName = v.disp.form ? String(v.disp.form.name || '') : '';
   const islandEnabled = (Array.isArray(v.chosenExtras) ? v.chosenExtras : []).some((ex) => ex.id === 'dynamic_island');
+  const frontCamId = v.cams && v.cams.front ? String(v.cams.front.id || '') : 'none';
+  if (frontCamId === 'none') return;
+  const isSmallFrontModule = frontCamId === 'front_32';
+  // "前摄模组"走小尺寸（约2.5mm）；其他前摄模组走更大尺寸。
+  const frontHoleDiameterMm = isSmallFrontModule ? 2.5 : 4.8;
+  const baseR = clamp(
+    (frontHoleDiameterMm * Math.max(0.35, Number(scale) || 1)) / 2,
+    isSmallFrontModule ? 1.6 : 2.8,
+    isSmallFrontModule ? 3.4 : 6.2
+  );
   const topY = sy + Math.max(4, sh * 0.04);
   const centerX = sx + sw / 2;
   ctx.fillStyle = 'rgba(5,8,12,0.96)';
   if (formName.includes('刘海')) {
-    const nw = sw * 0.38;
-    const nh = Math.max(10, sh * 0.07);
+    const nw = Math.max(baseR * 7.6, Math.min(sw * 0.36, baseR * 10.2));
+    const nh = Math.max(baseR * 2.4, Math.min(sh * 0.07, baseR * 3.8));
     roundedRectPath(ctx, centerX - nw / 2, sy, nw, nh, nh * 0.35);
     ctx.fill();
   } else if (formName.includes('单挖孔')) {
-    const rr = Math.max(3.5, sw * 0.018);
+    const rr = baseR;
     ctx.beginPath();
     ctx.arc(centerX, topY + rr, rr, 0, Math.PI * 2);
     ctx.fill();
@@ -843,14 +989,14 @@ function drawFrontDisplayShape(ctx, v, sx, sy, sw, sh) {
       ctx.fill();
     }
   } else if (formName.includes('药丸')) {
-    const pw = Math.max(18, sw * 0.12);
-    const ph = Math.max(7, sh * 0.03);
+    const pw = Math.max(baseR * 5.4, Math.min(sw * 0.12, baseR * 7.2));
+    const ph = Math.max(baseR * 2.0, Math.min(sh * 0.03, baseR * 2.8));
     roundedRectPath(ctx, centerX - pw / 2, topY, pw, ph, ph / 2);
     ctx.fill();
   } else if (formName.includes('屏下')) {
     ctx.fillStyle = 'rgba(28,44,66,0.35)';
     ctx.beginPath();
-    ctx.arc(centerX, topY + 5, Math.max(4, sw * 0.02), 0, Math.PI * 2);
+    ctx.arc(centerX, topY + Math.max(3, baseR * 1.4), Math.max(baseR * 0.95, 1.5), 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -874,7 +1020,8 @@ function renderPhonePreview(buildEval) {
   const wMm = Math.max(35, Number(v.phoneW) || 76);
   const hMm = Math.max(80, Number(v.phoneH) || 160);
   const tMm = clamp(Number(v.phoneT) || 9.5, 6.5, 14);
-  const scale = Math.min((cw - 120) / 180, (ch - 70) / 260);
+  // Reduce safety margins so the phone occupies more canvas area.
+  const scale = Math.min((cw - 84) / 180, (ch - 46) / 260) * 1.06;
   const fw = wMm * scale;
   const fh = hMm * scale;
   const depthX = tMm * scale * 0.95;
@@ -901,14 +1048,22 @@ function renderPhonePreview(buildEval) {
   ctx.fillStyle = 'rgba(41,56,74,0.9)';
   ctx.fill();
 
-  // Side face
+  // Side face (rounded transitions to match front/back corner radius)
+  const sideR = clamp(radius * 0.78, 3.2, Math.max(3.2, Math.min(depthX * 0.95, fh * 0.09)));
   ctx.beginPath();
-  ctx.moveTo(x + fw, y);
-  ctx.lineTo(x + fw + depthX, y - depthY);
-  ctx.lineTo(x + fw + depthX, y + fh - depthY);
-  ctx.lineTo(x + fw, y + fh);
+  ctx.moveTo(x + fw, y + sideR);
+  ctx.quadraticCurveTo(x + fw, y, x + fw + sideR * 0.52, y - sideR * 0.32);
+  ctx.lineTo(x + fw + depthX - sideR * 0.52, y - depthY + sideR * 0.2);
+  ctx.quadraticCurveTo(x + fw + depthX, y - depthY, x + fw + depthX, y - depthY + sideR * 0.56);
+  ctx.lineTo(x + fw + depthX, y + fh - depthY - sideR * 0.56);
+  ctx.quadraticCurveTo(x + fw + depthX, y + fh - depthY, x + fw + depthX - sideR * 0.52, y + fh - depthY + sideR * 0.28);
+  ctx.lineTo(x + fw + sideR * 0.48, y + fh - sideR * 0.28);
+  ctx.quadraticCurveTo(x + fw, y + fh, x + fw, y + fh - sideR);
   ctx.closePath();
-  ctx.fillStyle = rgbToCss(frameDark, 0.9);
+  const sideGrad = ctx.createLinearGradient(x + fw, y, x + fw + depthX, y);
+  sideGrad.addColorStop(0, rgbToCss(frameMid, 0.82));
+  sideGrad.addColorStop(1, rgbToCss(frameDark, 0.92));
+  ctx.fillStyle = sideGrad;
   ctx.fill();
 
   // Top face
@@ -936,10 +1091,15 @@ function renderPhonePreview(buildEval) {
   const rearCams = [v.cams?.main, v.cams?.ultra, v.cams?.tele].filter((c) => c && c.id !== 'none');
   const camCount = rearCams.length;
   if (camCount > 0) {
-    const lensRadiusPx = Math.max(3, (9.2 * scale) / 2);
-    const gapPx = 14 * scale;
-    const baseX = x + depthX + fw * 0.05 + lensRadiusPx;
-    const baseY = y - depthY + fh * 0.1 + lensRadiusPx;
+    // Fixed physical camera ring size in mm so relative size changes with body dimensions.
+    const pxPerMm = fw / Math.max(1, wMm);
+    const fixedLensDiameterMm = 10.2;
+    const lensRadiusPx = Math.max(2, (fixedLensDiameterMm * pxPerMm) / 2);
+    const gapPx = 13.6 * pxPerMm;
+    const edgeOffsetPx = 4 * pxPerMm;
+    // Camera anchor should be measured from rear cover edges, not the 45° model bounds.
+    const baseX = x + edgeOffsetPx + lensRadiusPx;
+    const baseY = y + edgeOffsetPx + lensRadiusPx;
     const centers = [];
     for (let i = 0; i < Math.min(3, camCount); i += 1) {
       centers.push([baseX, baseY + i * gapPx]);
@@ -981,7 +1141,8 @@ function renderPhoneFrontPreview(buildEval) {
   const v = buildEval.input;
   const wMm = Math.max(35, Number(v.phoneW) || 76);
   const hMm = Math.max(80, Number(v.phoneH) || 160);
-  const scale = Math.min((cw - 70) / 180, (ch - 52) / 260);
+  // Reduce safety margins so the phone occupies more canvas area.
+  const scale = Math.min((cw - 52) / 180, (ch - 36) / 260) * 1.05;
   const fw = wMm * scale;
   const fh = hMm * scale;
   const x = (cw - fw) / 2;
@@ -1019,7 +1180,7 @@ function renderPhoneFrontPreview(buildEval) {
   screenGrad.addColorStop(1, 'rgba(14,28,58,0.88)');
   ctx.fillStyle = screenGrad;
   ctx.fill();
-  drawFrontDisplayShape(ctx, v, sx, sy, sw, sh);
+  drawFrontDisplayShape(ctx, v, sx, sy, sw, sh, scale);
   if (rawScreenW > maxScreenW + 0.5 || rawScreenH > maxScreenH + 0.5) {
     ctx.strokeStyle = 'rgba(255,94,108,0.92)';
     ctx.lineWidth = 1.2;
@@ -1049,7 +1210,13 @@ function setStep(step) {
   el.stageEvent.classList.toggle('hidden', !c1);
   el.stageConfig.classList.toggle('hidden', !c2);
   el.stageRun.classList.toggle('hidden', !c3);
+  if (el.statsBar) el.statsBar.classList.toggle('hidden', c1);
+  if (el.takeLoan) el.takeLoan.classList.toggle('hidden', !c3);
   renderStageQuiz(step);
+  if (c2) {
+    // Defer once so canvas/layout sizes are ready, then auto-evaluate.
+    requestAnimationFrame(() => refreshDesignPanelsLive());
+  }
 }
 
 function computeTotalInventory() {
@@ -1595,7 +1762,7 @@ function getDisplayLiveEstimate() {
 
 function fillOptions() {
   el.soc.innerHTML = socs
-    .map((s, idx) => `<option value="${s.id}" ${idx === 4 ? 'selected' : ''}>${s.name}（${s.tier}，估价 ${RMB(s.cost)}）</option>`)
+    .map((s) => `<option value="${s.id}" ${s.id === 'dim7300' ? 'selected' : ''}>${s.name}（${s.tier}，估价 ${RMB(s.cost)}）</option>`)
     .join('');
   updateDisplayMaterialOptions();
 
@@ -1643,6 +1810,7 @@ function fillOptions() {
   el.marketingFocus.value = 'balanced';
   el.campaignLevel.value = 'medium';
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
+  updateStartupDifficultyStyle();
   updateModelNameHint();
 }
 
@@ -1686,13 +1854,17 @@ function marketFactorLabel(type, factor) {
 }
 
 function rollThreeMarkets() {
+  const titleClassByKey = {
+    subsidy_boom: 'market-buff-strong',
+    super_competition: 'market-debuff-strong'
+  };
   const pool = [...marketArchetypes].sort(() => Math.random() - 0.5).slice(0, 3);
   state.marketPool = pool;
   state.marketPick = null;
   updateEventGateState();
   el.eventCards.innerHTML = pool.map((m, i) => `
     <article class="card" data-idx="${i}">
-      <h4>${m.name}</h4>
+      <h4 class="${titleClassByKey[m.key] || ''}">${m.name}</h4>
       <p>${m.text}</p>
       <p>需求：${marketFactorLabel('demand', m.demand)} / 成本：${marketFactorLabel('cost', m.cost)} / 口碑偏移 ${m.rating > 0 ? '+' : ''}${m.rating}</p>
     </article>
@@ -1714,6 +1886,9 @@ function assignRandomRegion() {
   const key = keys[Math.floor(Math.random() * keys.length)];
   el.region.value = key;
   el.region.disabled = true;
+  if (el.regionFixed) {
+    el.regionFixed.value = chinaRegions[key].name;
+  }
 }
 
 function updateEventGateState() {
@@ -1723,12 +1898,11 @@ function updateEventGateState() {
   el.confirmEvent.disabled = !ready;
 
   if (!hasMarket) {
-    const regionText = hasRegion ? `（本局成立区域：${chinaRegions[el.region.value].name}，系统随机）` : '';
-    el.eventHint.textContent = `请选择 1 个市场环境。${regionText}`;
+    el.eventHint.textContent = '请选择 1 个市场环境。';
     return;
   }
   if (!hasRegion) return;
-  el.eventHint.textContent = `已选：${state.marketPick.name}；企业：${FIXED_COMPANY_NAME}；成立区域：${chinaRegions[el.region.value].name}（系统随机）`;
+  el.eventHint.textContent = `已选环境：${state.marketPick.name}`;
 }
 
 function selectedValues() {
@@ -1788,7 +1962,9 @@ function selectedValues() {
 
 function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraScore, batteryLabScore) {
   const socRef = socBenchmarkAnchors[v.soc.id] || socBenchmarkAnchors.dim7300;
-  const socLabScore = clamp(
+  const hasActiveFan = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'active_fan');
+  const hasVCBoost = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'vc');
+  const socLabScoreRaw = clamp(
     50
       + socRef.antutu10 / 40_000
       + socRef.geekbench6Single / 90
@@ -1796,6 +1972,8 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     55,
     215
   );
+  const socBoostMul = 1 + (hasActiveFan ? 0.1 : 0) + (hasVCBoost ? 0.1 : 0);
+  const socLabScore = clamp(socLabScoreRaw * socBoostMul, 55, 236);
 
   const storageSpeedMap = {
     '64_emmc': { read: 250, write: 125 },
@@ -1878,6 +2056,13 @@ function benchmarkRatioText(ratio) {
   return `${Math.round(pct)}%`;
 }
 
+function baselineBandClass(ratio) {
+  const v = Number(ratio) || 0;
+  if (v > 1.3) return 'perf-high';
+  if (v < 0.9) return 'perf-low';
+  return 'perf-mid';
+}
+
 function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
   const batteryWh = v.battery * 3.85 / 1000;
   const baselineDim = getScreenDimensionsMm(6.67, '20:9');
@@ -1900,14 +2085,26 @@ function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
   const screenRel = matRel * sizeRel * highRefreshRel * ltpoRel * highResRel * colorRel;
 
   const socPowerRel = {
+    s480: 0.98,
+    g35: 0.95,
     g81: 0.92,
     t7225: 0.96,
+    dim6100: 0.96,
+    s4g2: 0.97,
     dim6300: 1.01,
+    g99: 0.99,
     s6g4: 0.98,
+    s695: 0.99,
+    dim7200: 0.97,
     dim7300: 0.95,
+    s778g: 1.01,
+    dim8300: 1.04,
     s7sg3: 1.0,
     dim8400: 1.06,
     s8sg4: 1.12,
+    s8g3: 1.14,
+    dim9300: 1.17,
+    dim9400: 1.21,
     s8elite: 1.18,
     s8eliteg5: 1.24
   };
@@ -2063,12 +2260,22 @@ function evaluateBuild() {
   }
 
   const batteryWh = v.battery * 3.85 / 1000;
-  const effectiveEnergyDensity = 640;
-  const batteryVolume = (batteryWh / effectiveEnergyDensity * 1000) * (hasBatteryTech ? 0.7 : 1.0);
+  // Mild integration uplift: keep model behavior, slightly improve packing efficiency.
+  const integrationUplift = {
+    battery: 0.96,
+    camera: 0.96,
+    display: 0.95,
+    board: 0.95,
+    base: 0.95,
+    body: 0.96,
+    extras: 0.95
+  };
+  const effectiveEnergyDensity = 655;
+  const batteryVolume = (batteryWh / effectiveEnergyDensity * 1000) * (hasBatteryTech ? 0.7 : 1.0) * integrationUplift.battery;
   const batteryWeight = v.battery * 0.011 + 6;
   const batteryCost = v.battery * 0.048 + 35;
   const extVolume = (v.phoneH * v.phoneW * v.phoneT) / 1000;
-  const internalRatio = clamp(0.56 - (v.phoneT < 7.6 ? 0.06 : 0) + (v.phoneT > 9.5 ? 0.03 : 0), 0.47, 0.62);
+  const internalRatio = clamp(0.57 - (v.phoneT < 7.6 ? 0.055 : 0) + (v.phoneT > 9.5 ? 0.035 : 0), 0.48, 0.63);
   const effectiveInternalVolume = extVolume * internalRatio;
   const displayAreaCm2 = (screenMm.widthMm * screenMm.heightMm) / 100;
   const frontAreaCm2 = (v.phoneH * v.phoneW) / 100;
@@ -2087,6 +2294,28 @@ function evaluateBuild() {
   const ratioBandWarning = (screenToBodyRatio < ratioBand.min || screenToBodyRatio > ratioBand.max)
     ? `屏占比 ${(screenToBodyRatio * 100).toFixed(1)}% 偏离建议区间 ${(ratioBand.min * 100).toFixed(0)}%-${(ratioBand.max * 100).toFixed(0)}%，会影响销量与成本。`
     : '';
+  const screenRatioOvershoot = Math.max(0, screenToBodyRatio - ratioBand.max);
+  const screenRatioExtremeOvershoot = Math.max(0, screenToBodyRatio - 0.95);
+  // Screen-to-body above band max increases研发难度线性上升；
+  // above 95% enters a steeper linear zone.
+  const screenRatioRndMul = clamp(
+    1 + screenRatioOvershoot * 4.8 + screenRatioExtremeOvershoot * 8.6,
+    1.0,
+    1.95
+  );
+  const screenRatioPremiumGain = clamp(
+    screenRatioOvershoot * 0.32 + screenRatioExtremeOvershoot * 0.56,
+    0,
+    0.22
+  );
+  const screenRatioRepGain = clamp(
+    screenRatioOvershoot * 13.5 + screenRatioExtremeOvershoot * 18.0,
+    0,
+    2.4
+  );
+  const screenRatioChallengeTag = screenRatioOvershoot > 0
+    ? `高屏占比工艺（研发系数 x${screenRatioRndMul.toFixed(2)}）`
+    : '屏占比工艺常规';
   const foldableSizeMul = el.dispMat.value === 'foldable' ? getFoldableSizeCostFactor(v.disp.size) : 1.0;
   const displayCost = ((v.disp.mat.baseCost * sizeFactor * ratioFactor + featureCost + formCost) * foldableSizeMul) * v.disp.vendor.costFactor * ratioCostFactor * bezelCostFactor * ratioNoveltyCostMul;
   const volumePerInch = extVolume / Math.max(3.0, v.disp.size);
@@ -2118,8 +2347,8 @@ function evaluateBuild() {
     mainstreamSizeDemandFactor = clamp(1 - (v.disp.size - 7.0) * 0.9, 0.82, 1.0);
     mainstreamSizeTag = '超大尺寸小众惩罚';
   }
-  const displayThickness = ({ lcd: 1.2, oled: 0.95, dual_oled: 1.3, eink: 1.45, foldable: 1.7 })[el.dispMat.value] || 1.0;
-  const displayVolume = displayAreaCm2 * displayThickness / 10;
+  const displayThickness = ({ lcd: 1.15, oled: 0.92, dual_oled: 1.25, eink: 1.38, foldable: 1.62 })[el.dispMat.value] || 1.0;
+  const displayVolume = (displayAreaCm2 * displayThickness / 10) * integrationUplift.display;
   const avgRamScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.ram.score * (x.share / 100), 0) : 0;
   const avgRomScore = v.skuPlans.length ? v.skuPlans.reduce((s, x) => s + x.rom.score * (x.share / 100), 0) : 0;
   const batteryEval = calcBatteryEndurance(v, screenMm, displayFeatureKeys);
@@ -2141,10 +2370,17 @@ function evaluateBuild() {
       return sum + tier * (sku.share / 100);
     }, 0)
     : 1.0;
-  const memoryPackageVolume = 1.45 * weightedRomSpaceTier * weightedRamSpaceTier;
-  const boardVolume = 8.1 + (v.soc.risk * 1.6) + memoryPackageVolume;
-  const mandatoryBaseVolume = 7.8;
-  const occupiedVolume = batteryVolume + cameraVolume + displayVolume + boardVolume + mandatoryBaseVolume + v.body.structVolume + extraSpace;
+  const memoryPackageVolume = 1.38 * weightedRomSpaceTier * weightedRamSpaceTier;
+  const boardVolume = (7.9 + (v.soc.risk * 1.52) + memoryPackageVolume) * integrationUplift.board;
+  const mandatoryBaseVolume = 7.5 * integrationUplift.base;
+  const occupiedVolume =
+    batteryVolume
+    + cameraVolume * integrationUplift.camera
+    + displayVolume
+    + boardVolume
+    + mandatoryBaseVolume
+    + v.body.structVolume * integrationUplift.body
+    + extraSpace * integrationUplift.extras;
   const remainingVolume = effectiveInternalVolume - occupiedVolume;
   if (remainingVolume < 0) {
     issues.push(`体积超限：机身有效内部体积约 ${effectiveInternalVolume.toFixed(1)}cm³，但当前组件占用约 ${occupiedVolume.toFixed(1)}cm³。`);
@@ -2184,13 +2420,55 @@ function evaluateBuild() {
 
   const complexity = (v.soc.risk + camList.length * 0.08 + v.chosenExtras.length * 0.05 + (displayScore > 85 ? 0.08 : 0));
   const rdCostFactor = clamp(1.12 - (v.region.rdTalent - 1) * 0.58, 0.86, 1.18);
-  const rndCost = (1_050_000 * complexity + (displayCost + cameraCost) * 400) * rdCostFactor;
+  const rndCost = (1_050_000 * complexity + (displayCost + cameraCost) * 400) * rdCostFactor * screenRatioRndMul;
   const firstBatchCost = unitCost * v.units;
   const initialCost = rndCost + firstBatchCost + procurementUpfront + lockCommitCost + v.campaign.launchCost;
 
   const boardWeight = 68;
   const totalWeight = boardWeight + displayWeight + v.body.weight + batteryWeight + cameraWeight + extraWeight;
 
+  const geekExtras = new Set(['usb3', 'vc', 'satellite', 'fast120', 'magsafe']);
+  const geekBonus = v.chosenExtras.reduce((s, x) => s + (geekExtras.has(x.id) ? 1 : 0), 0) * 2.2;
+  const hasFlagshipSoc = v.soc.tier.includes('旗舰');
+  const isUltraFlagshipSoc = v.soc.tier.includes('旗舰+');
+  const hasOneInchMain = ['lyt900'].includes(v.cams.main.id);
+  const hasLargeMain = ['mx766_50', 'ov50h', 'gn3_50', 'hp3_200', 'hp2_200', 'lyt900'].includes(v.cams.main.id);
+  const hasCameraMatrix = v.cams.main.id !== 'none' && v.cams.ultra.id !== 'none' && v.cams.tele.id !== 'none';
+  const hasUsb3 = v.chosenExtras.some((x) => x.id === 'usb3');
+  const hasVC = v.chosenExtras.some((x) => x.id === 'vc');
+  const hasActiveFan = v.chosenExtras.some((x) => x.id === 'active_fan');
+  const socThermalMap = {
+    s480: 0.78, g35: 0.72, g81: 0.74, t7225: 0.76, dim6100: 0.8, s4g2: 0.82,
+    dim6300: 0.84, g99: 0.85, s6g4: 0.92, s695: 0.9, dim7200: 0.95, dim7300: 0.96,
+    s778g: 0.98, dim8300: 1.06, s7sg3: 1.02, dim8400: 1.12, s8sg4: 1.2, s8g3: 1.28,
+    dim9300: 1.3, dim9400: 1.38, s8elite: 1.36, s8eliteg5: 1.48
+  };
+  const mainCamThermalMap = {
+    none: 0.0, basic13: 0.06, ov13b10: 0.08, mx586_48: 0.12, jn1_50: 0.14, ov64b_64: 0.18,
+    mx766_50: 0.2, ov50h: 0.24, gn3_50: 0.3, hp3_200: 0.36, hp2_200: 0.38, lyt900: 0.46
+  };
+  const socThermal = socThermalMap[v.soc.id] || 1.0;
+  const mainCamThermal = mainCamThermalMap[v.cams.main.id] || 0.14;
+  const bodyThermalFactor = v.body.id === 'plastic' ? 1.08 : v.body.id === 'ceramic' ? 0.95 : 1.0;
+  // Thermal dissipation is tied to exposed body surface area (mm^2).
+  const bodySurfaceAreaMm2 = 2 * (v.phoneH * v.phoneW + v.phoneH * v.phoneT + v.phoneW * v.phoneT);
+  const baselineSurfaceAreaMm2 = 2 * (161 * 75 + 161 * 8.6 + 75 * 8.6);
+  const surfaceAreaThermalFactor = clamp(
+    Math.pow(baselineSurfaceAreaMm2 / Math.max(1, bodySurfaceAreaMm2), 0.55),
+    0.82,
+    1.24
+  );
+  const thermalPressure = clamp(
+    (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
+      * (hasVC ? 0.7 : 1.0)
+      * (hasActiveFan ? 0.58 : 1.0)
+      * bodyThermalFactor
+      * surfaceAreaThermalFactor,
+    0.65,
+    2.2
+  );
+  const thermalDemandMul = clamp(1.03 - Math.max(0, thermalPressure - 1) * 0.22, 0.74, 1.03);
+  const thermalQualityPenalty = clamp(Math.max(0, thermalPressure - 1) * 8, 0, 9);
   const qualityScore = clamp(
     0.34 * v.soc.score
       + 0.18 * displayScore
@@ -2201,20 +2479,16 @@ function evaluateBuild() {
       + (v.battery >= 5000 ? 4 : -1)
       + (batteryEval.endurancePct - 100) * 0.05
       + (virtualBench.total - 100) * 0.05
+      - thermalQualityPenalty
       + (v.region.rdTalent - 1) * 8.5,
     15,
     100
   );
-
-  const geekExtras = new Set(['usb3', 'vc', 'satellite', 'fast120', 'magsafe']);
-  const geekBonus = v.chosenExtras.reduce((s, x) => s + (geekExtras.has(x.id) ? 1 : 0), 0) * 2.2;
-  const hasFlagshipSoc = v.soc.tier.includes('旗舰');
-  const isUltraFlagshipSoc = v.soc.tier.includes('旗舰+');
-  const hasOneInchMain = ['lyt900'].includes(v.cams.main.id);
-  const hasLargeMain = ['ov50h', 'hp2_200', 'lyt900'].includes(v.cams.main.id);
-  const hasCameraMatrix = v.cams.main.id !== 'none' && v.cams.ultra.id !== 'none' && v.cams.tele.id !== 'none';
-  const hasUsb3 = v.chosenExtras.some((x) => x.id === 'usb3');
-  const hasVC = v.chosenExtras.some((x) => x.id === 'vc');
+  const thermalTag = thermalPressure >= 1.45
+    ? '高热风险（建议 VC + 更大机身表面积）'
+    : thermalPressure >= 1.15
+      ? '散热压力中等'
+      : '散热压力可控';
   const manyDisplayFeatures = v.disp.features.length >= 3;
   const isSmallScreen = v.disp.size < 5.5;
   const geekSpecialBonus =
@@ -2227,6 +2501,7 @@ function evaluateBuild() {
     + (el.dispMat.value === 'dual_oled' ? 8 : 0)
     + (hasUsb3 ? 6 : 0)
     + (hasVC ? 5 : 0)
+    + (hasActiveFan ? 6 : 0)
     + (isUltraFlagshipSoc ? 12 : hasFlagshipSoc ? 8 : 0);
   const geekAttraction = clamp(
     v.soc.score * 0.4 + cameraScore * 0.24 + (featureScore + v.disp.form.score) * 0.32 + geekBonus + geekSpecialBonus + virtualBench.benchmarkGeekBonus,
@@ -2306,6 +2581,7 @@ function evaluateBuild() {
       * Math.pow(clamp(priceFit, 0.45, 1.5), 1.55)
       * Math.pow(clamp(appearanceDemandFactor * ratioDemandFactor * bezelDemandFactor, 0.45, 1.3), 1.2)
       * cameraDemandFactor
+      * thermalDemandMul
       * mainstreamSizeDemandFactor
       * ratioNoveltyDemandMul
       * v.startupDifficulty.designElasticity,
@@ -2357,6 +2633,12 @@ function evaluateBuild() {
     remainingVolume,
     ratioBand,
     ratioBandWarning,
+    screenRatioOvershoot,
+    screenRatioExtremeOvershoot,
+    screenRatioRndMul,
+    screenRatioPremiumGain,
+    screenRatioRepGain,
+    screenRatioChallengeTag,
     ratioCostFactor,
     ratioDemandFactor,
     bezel,
@@ -2370,6 +2652,9 @@ function evaluateBuild() {
     mainstreamSizeTag,
     cameraDemandFactor,
     cameraDemandTag,
+    thermalPressure,
+    thermalDemandMul,
+    thermalTag,
     ratioNoveltyCostMul,
     ratioNoveltyDemandMul,
     ratioNoveltyNonFoldable,
@@ -2425,50 +2710,343 @@ function renderPreview() {
   const e = evaluateBuild();
   renderPhonePreview(e);
   renderPhoneFrontPreview(e);
-  if (e.issues.length) {
-    el.previewBox.innerHTML = `<span class="bad">${e.issues.join('<br>')}</span>`;
-    return;
-  }
-
   const volumeOk = e.remainingVolume >= 0;
-  const launchStockTension = clamp((Math.round(e.baseDemand) - e.input.units) / Math.max(1, Math.round(e.baseDemand)), -0.6, 0.95);
-  const returnProfile = calcQualityReturnProfile(e);
-  const reputationHints = [];
-  if (e.qualityScore < 70) reputationHints.push('提升产品力评分（优先 SoC/屏幕/主摄），可抬高“品质漂移”项。');
-  if (launchStockTension > 0.12) reputationHints.push('首批量偏低，缺货率可能抬升并拖累口碑；建议增加首批或提前补货。');
-  if (e.grossMargin < 0.08) reputationHints.push('毛利过薄会限制营销和售后投入，长期口碑维护难度上升。');
-  if (!e.input.disp.features.some((x) => x.name === '护眼认证')) reputationHints.push('线下用户更看重护眼认证，补上可改善线下反馈。');
-  if (e.input.marketing.name.includes('直播')) reputationHints.push('直播冲量能提销量，但需关注售后争议事件对口碑的放大。');
-  if (!reputationHints.length) reputationHints.push('当前口碑路径较健康：保持供货稳定并规避黑天鹅即可稳步上行。');
-
-  const skuMixText = e.skuCosting
-    .map((s) => `${s.name} ${s.ram.name}+${s.rom.name}`)
-    .join(' / ');
   const maxScreenW = e.input.phoneW - 2 * e.bezel.sideBezel;
   const maxScreenH = e.input.phoneH - (e.bezel.topBezel + e.bezel.bottomBezel);
   const screenFit = e.screenMm.widthMm <= maxScreenW && e.screenMm.heightMm <= maxScreenH;
+  const benchmarkClass = baselineBandClass(e.virtualBench.baselineRatio);
+  const enduranceRatio = (e.batteryEval.endurancePct || 0) / 100;
+  const enduranceClass = baselineBandClass(enduranceRatio);
+  const issueItems = [
+    ...e.issues,
+    ...(screenFit ? [] : ['屏幕开口与机身可容纳空间不匹配。']),
+    ...(volumeOk ? [] : ['机内空间不足，请缩减部件体积或增大机身。'])
+  ];
+  const uniqIssues = Array.from(new Set(issueItems));
+  const issueHtml = uniqIssues.length
+    ? `<ul class="health-list">${uniqIssues.map((x) => `<li class="bad">${x}</li>`).join('')}</ul>`
+    : '<div class="good">未发现硬性设计冲突，可以立项开售。</div>';
+
+  const compactRows = [
+    { t: '机型', b: `<strong>${e.modelName || 'Neo Gen?'}</strong>` },
+    { t: `${BENCHMARK_NAME} 得分`, b: `<span class="${benchmarkClass}"><strong>${e.virtualBench.total}</strong>（基线 ${benchmarkRatioText(e.virtualBench.baselineRatio)}）</span>` },
+    { t: '续航评测', b: `<span class="${enduranceClass}"><strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（基线 ${Math.round(e.batteryEval.endurancePct)}%）</span>` },
+    { t: '屏幕-机身关系', b: `屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm｜机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm｜${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}` },
+    { t: '设计问题检查', b: issueHtml }
+  ];
+  el.previewBox.innerHTML = compactRows
+    .map((row) => `<div class="overview-item"><div class="overview-title">${row.t}</div><div class="overview-body">${row.b}</div></div>`)
+    .join('');
+
+  const launchStockTension = clamp((Math.round(e.baseDemand) - e.input.units) / Math.max(1, Math.round(e.baseDemand)), -0.6, 0.95);
+  const returnProfile = calcQualityReturnProfile(e);
+  const skuMixText = e.skuCosting
+    .map((s) => `${s.name} ${s.ram.name}+${s.rom.name}`)
+    .join(' / ');
   const stockAdvice = launchStockTension > 0.12
     ? '<span class="risk-warn">首发备货偏保守，容易断货</span>'
     : launchStockTension < -0.25
       ? '<span class="risk-warn">首发备货偏激进，注意压货</span>'
       : '<span class="good">首发备货节奏平衡</span>';
-  el.previewBox.innerHTML = [
-    `机型：<strong>${e.modelName || '命名未通过'}</strong>｜定位：<strong>${e.strategy}</strong>`,
-    `市场氛围：${state.marketPick ? state.marketPick.name : '常态竞争'}。${state.marketPick ? state.marketPick.text : ''}`,
-    `区域画像：${regionNarrative(e.input.region)}`,
-    `渠道建议：${channelNarrative(e.onlineShare)}`,
-    `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
-    `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
-    `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
-    `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
-    `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
-    `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
-    `采购影响：${e.input.procurement.name}（单价系数 x${e.input.procurement.factor.toFixed(2)}｜锁量首付 ${RMB(e.procurementUpfront)}｜锁量承诺 ${e.lockCommitUnits > 0 ? `${e.lockCommitUnits.toLocaleString('zh-CN')} 台 / ${RMB(e.lockCommitCost)}` : '无'}｜补货交期约 ${e.input.procurement.leadMonths} 月）`,
-    `体积可行性：${volumeOk ? '<span class="good">可以量产</span>' : '<span class="bad">内部空间过载，需重做</span>'}`,
-    `售后风险：${returnNarrative(returnProfile.rate)}`,
-    `首发节奏：${stockAdvice}`,
-    `SKU 阵容：${skuMixText}`
-  ].join('<br>');
+  const screenRatioBenefitParts = [];
+  if ((e.screenRatioRepGain || 0) > 0) screenRatioBenefitParts.push(`口碑 +${(e.screenRatioRepGain || 0).toFixed(1)}`);
+  if ((e.screenRatioPremiumGain || 0) > 0) screenRatioBenefitParts.push(`下代高价接受度 +${((e.screenRatioPremiumGain || 0) * 100).toFixed(1)}%`);
+
+  if (el.previewDetailBox) {
+    el.previewDetailBox.innerHTML = [
+      `机型：<strong>${e.modelName || 'Neo Gen?'}</strong>｜定位：<strong>${e.strategy}</strong>`,
+      `市场氛围：${state.marketPick ? state.marketPick.name : '常态竞争'}。${state.marketPick ? state.marketPick.text : ''}`,
+      `区域画像：${regionNarrative(e.input.region)}`,
+      `渠道建议：${channelNarrative(e.onlineShare)}`,
+      `${BENCHMARK_NAME}：综合 <strong>${e.virtualBench.total}</strong>｜SoC ${e.virtualBench.socLabScore}｜存储 ${e.virtualBench.storageLabScore}｜屏幕 ${e.virtualBench.displayLabScore}｜影像 ${e.virtualBench.cameraLabScore}｜续航 ${e.virtualBench.batteryLabScore}`,
+      `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
+      `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
+      `散热评估：${e.thermalPressure <= 1.12 ? '<span class="good">散热压力可控</span>' : e.thermalPressure <= 1.38 ? `<span class="risk-warn">${e.thermalTag}</span>` : `<span class="bad">${e.thermalTag}</span>`}`,
+      `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
+      `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
+      `资金关键项：单台制造成本 <strong>${RMB(e.unitCost)}</strong>｜研发成本 <strong>${RMB(e.rndCost)}</strong>｜总启动成本 <strong>${RMB(e.initialCost)}</strong>`,
+      ...(screenRatioBenefitParts.length ? [`高屏占比收益：${screenRatioBenefitParts.join('｜')}`] : []),
+      `采购影响：${e.input.procurement.name}（单价系数 x${e.input.procurement.factor.toFixed(2)}｜锁量首付 ${RMB(e.procurementUpfront)}｜锁量承诺 ${e.lockCommitUnits > 0 ? `${e.lockCommitUnits.toLocaleString('zh-CN')} 台 / ${RMB(e.lockCommitCost)}` : '无'}｜补货交期约 ${e.input.procurement.leadMonths} 月）`,
+      `体积可行性：${volumeOk ? '<span class="good">可以量产</span>' : '<span class="bad">内部空间过载，需重做</span>'}`,
+      `售后风险：${returnNarrative(returnProfile.rate)}`,
+      `首发节奏：${stockAdvice}`,
+      `SKU 阵容：${skuMixText}`
+    ].join('<br>');
+  }
+}
+
+function benchIsAlive(token) {
+  return token === benchRunToken && !!el.benchPage && !el.benchPage.classList.contains('hidden');
+}
+
+function benchSleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function setBenchCardActive(node) {
+  [el.benchSocCard, el.benchDispCard, el.benchCamCard, el.benchStorageCard, el.benchBatteryCard]
+    .forEach((card) => {
+      if (!card) return;
+      card.classList.toggle('active', card === node);
+    });
+}
+
+function setBenchScore(node, score, done = false) {
+  if (!node) return;
+  node.textContent = done ? `${Math.round(score)} 分` : '等待测试';
+  node.classList.remove('pending', 'done');
+  node.classList.add(done ? 'done' : 'pending');
+}
+
+function updateBenchProgress(step, total = 5) {
+  const s = clamp(Math.round(Number(step) || 0), 0, total);
+  const pct = Math.round((s / Math.max(1, total)) * 100);
+  if (el.benchProgressText) el.benchProgressText.textContent = `${s}/${total}`;
+  if (el.benchProgressFill) el.benchProgressFill.style.width = `${pct}%`;
+}
+
+function fitCanvas(canvas) {
+  if (!canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return null;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(rect.width * dpr);
+  canvas.height = Math.floor(rect.height * dpr);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: Math.floor(rect.width), h: Math.floor(rect.height) };
+}
+
+function drawBenchSocGame(t, temp) {
+  const pack = fitCanvas(el.benchSocGameCanvas);
+  if (!pack) return;
+  const { ctx, w, h } = pack;
+  ctx.clearRect(0, 0, w, h);
+  const bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, 'rgba(7,16,28,0.96)');
+  bg.addColorStop(1, 'rgba(12,34,56,0.92)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  const laneY = h * 0.56;
+  ctx.strokeStyle = 'rgba(109,180,232,0.35)';
+  ctx.beginPath();
+  ctx.moveTo(10, laneY);
+  ctx.lineTo(w - 10, laneY);
+  ctx.stroke();
+  const shipX = 18 + ((t * 95) % Math.max(20, w - 50));
+  const shipY = laneY - 20 + Math.sin(t * 4.1) * 6;
+  ctx.fillStyle = 'rgba(118,240,191,0.9)';
+  ctx.fillRect(shipX, shipY, 18, 12);
+  ctx.fillStyle = 'rgba(255,130,120,0.92)';
+  ctx.fillRect(shipX - 5, shipY + 3, 4, 6);
+  for (let i = 0; i < 8; i += 1) {
+    const bx = w - ((t * 130 + i * 72) % (w + 20));
+    const bh = 8 + ((i * 13 + Math.floor(t * 10)) % 30);
+    ctx.fillStyle = 'rgba(96,150,198,0.52)';
+    ctx.fillRect(bx, laneY + 2, 10, bh);
+  }
+  ctx.fillStyle = 'rgba(186,214,244,0.9)';
+  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.fillText(`GPU Scene · ${temp.toFixed(1)}°C`, 10, 14);
+}
+
+function drawBenchTempChart(temps) {
+  const pack = fitCanvas(el.benchSocTempCanvas);
+  if (!pack) return;
+  const { ctx, w, h } = pack;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(8,15,26,0.95)';
+  ctx.fillRect(0, 0, w, h);
+  const pad = { l: 28, r: 8, t: 10, b: 18 };
+  const pw = Math.max(20, w - pad.l - pad.r);
+  const ph = Math.max(20, h - pad.t - pad.b);
+  ctx.strokeStyle = 'rgba(136,182,224,0.26)';
+  for (let i = 0; i <= 4; i += 1) {
+    const y = pad.t + (ph * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(w - pad.r, y);
+    ctx.stroke();
+  }
+  const minT = 20;
+  const maxT = 100;
+  ctx.strokeStyle = 'rgba(255,136,132,0.95)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  temps.forEach((temp, idx) => {
+    const x = pad.l + (idx / Math.max(1, temps.length - 1)) * pw;
+    const y = pad.t + (1 - (temp - minT) / (maxT - minT)) * ph;
+    if (idx === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(198,220,244,0.86)';
+  ctx.font = '10px "JetBrains Mono", monospace';
+  ctx.fillText('Temp °C', 4, 12);
+}
+
+async function runBenchSocTest(e, token) {
+  setBenchCardActive(el.benchSocCard);
+  setBenchScore(el.benchSocScore, 0, false);
+  let temp = 26;
+  const temps = [temp];
+  const start = performance.now();
+  while (benchIsAlive(token)) {
+    const t = (performance.now() - start) / 1000;
+    drawBenchSocGame(t, temp);
+    drawBenchTempChart(temps);
+    if (el.benchSocMeta) el.benchSocMeta.textContent = `温度：${temp.toFixed(1)}°C｜进行中...`;
+    if (temp >= 95 || t >= 8) break;
+    await benchSleep(120);
+    if (!benchIsAlive(token)) return false;
+    const rise = (0.34 + e.thermalPressure * 0.56 + e.virtualBench.socLabScore / 420) * (1 + Math.sin(t * 1.9) * 0.06);
+    temp = clamp(temp + rise, 26, 99.5);
+    temps.push(temp);
+  }
+  if (!benchIsAlive(token)) return false;
+  drawBenchSocGame(8, temp);
+  drawBenchTempChart(temps);
+  if (el.benchSocMeta) {
+    const endTag = temp >= 95 ? '达到温度上限，测试终止' : '达到时长上限，测试终止';
+    el.benchSocMeta.textContent = `温度：${temp.toFixed(1)}°C｜${endTag}`;
+  }
+  setBenchScore(el.benchSocScore, e.virtualBench.socLabScore, true);
+  await benchSleep(260);
+  return benchIsAlive(token);
+}
+
+async function runBenchDisplayTest(e, token) {
+  setBenchCardActive(el.benchDispCard);
+  setBenchScore(el.benchDispScore, 0, false);
+  const start = performance.now();
+  while (benchIsAlive(token) && performance.now() - start < 3000) {
+    if (el.benchDispScore) el.benchDispScore.textContent = `测试中 ${'.'.repeat(1 + (Math.floor((performance.now() - start) / 480) % 3))}`;
+    await benchSleep(150);
+  }
+  if (!benchIsAlive(token)) return false;
+  setBenchScore(el.benchDispScore, e.virtualBench.displayLabScore, true);
+  await benchSleep(220);
+  return benchIsAlive(token);
+}
+
+async function runBenchCameraTest(e, token) {
+  setBenchCardActive(el.benchCamCard);
+  setBenchScore(el.benchCamScore, 0, false);
+  const cams = [e.input.cams.main, e.input.cams.ultra, e.input.cams.tele, e.input.cams.front].filter((x) => x && x.id !== 'none');
+  if (el.benchCamInfo) {
+    el.benchCamInfo.textContent = cams.length
+      ? `启用 ${cams.length} 颗摄像头：${cams.map((x) => x.name).join('｜')}`
+      : '无摄像头模组';
+  }
+  await benchSleep(2000);
+  if (!benchIsAlive(token)) return false;
+  setBenchScore(el.benchCamScore, e.virtualBench.cameraLabScore, true);
+  await benchSleep(220);
+  return benchIsAlive(token);
+}
+
+async function runBenchStorageTest(e, token) {
+  setBenchCardActive(el.benchStorageCard);
+  setBenchScore(el.benchStorageScore, 0, false);
+  if (el.benchStorageInfo) {
+    el.benchStorageInfo.innerHTML = e.skuCosting
+      .map((s) => `${s.name}：${s.ram.name} + ${s.rom.name}`)
+      .join('<br>');
+  }
+  const start = performance.now();
+  while (benchIsAlive(token) && performance.now() - start < 3000) {
+    if (el.benchStorageBits) {
+      const bits = Array.from({ length: 48 }, () => (Math.random() > 0.5 ? '1' : '0')).join('');
+      el.benchStorageBits.textContent = bits.replace(/(.{8})/g, '$1 ').trim();
+    }
+    await benchSleep(110);
+  }
+  if (!benchIsAlive(token)) return false;
+  setBenchScore(el.benchStorageScore, e.virtualBench.storageLabScore, true);
+  await benchSleep(220);
+  return benchIsAlive(token);
+}
+
+async function runBenchBatteryTest(e, token) {
+  setBenchCardActive(el.benchBatteryCard);
+  setBenchScore(el.benchBatteryScore, 0, false);
+  const slides = ['模拟视频播放场景', '模拟表格浏览场景', '模拟游戏渲染场景'];
+  const start = performance.now();
+  while (benchIsAlive(token) && performance.now() - start < 5000) {
+    const idx = Math.floor((performance.now() - start) / 1600) % slides.length;
+    if (el.benchBatterySlide) el.benchBatterySlide.textContent = slides[idx];
+    await benchSleep(150);
+  }
+  if (!benchIsAlive(token)) return false;
+  setBenchScore(el.benchBatteryScore, e.virtualBench.batteryLabScore, true);
+  await benchSleep(220);
+  return benchIsAlive(token);
+}
+
+function resetBenchPage(e) {
+  if (el.benchFinal) el.benchFinal.classList.add('hidden');
+  if (el.benchFinalScore) el.benchFinalScore.textContent = '0';
+  updateBenchProgress(0, 5);
+  setBenchCardActive(null);
+  setBenchScore(el.benchSocScore, 0, false);
+  setBenchScore(el.benchDispScore, 0, false);
+  setBenchScore(el.benchCamScore, 0, false);
+  setBenchScore(el.benchStorageScore, 0, false);
+  setBenchScore(el.benchBatteryScore, 0, false);
+  if (el.benchSocMeta) el.benchSocMeta.textContent = '温度：26.0°C｜进行中...';
+  if (el.benchCamInfo) el.benchCamInfo.textContent = '读取摄像头配置中...';
+  if (el.benchStorageInfo) el.benchStorageInfo.textContent = '读取 SKU 配置中...';
+  if (el.benchStorageBits) el.benchStorageBits.textContent = '0101 0101 0101 ...';
+  if (el.benchBatterySlide) el.benchBatterySlide.textContent = '模拟视频播放场景';
+  if (e && el.benchStorageInfo) {
+    el.benchStorageInfo.innerHTML = e.skuCosting.map((s) => `${s.name}：${s.ram.name} + ${s.rom.name}`).join('<br>');
+  }
+}
+
+function closeBenchPage() {
+  benchRunToken += 1;
+  if (el.benchPage) el.benchPage.classList.add('hidden');
+  document.body.classList.remove('bench-page-open');
+}
+
+async function openBenchPage() {
+  let e = null;
+  try {
+    e = evaluateBuild();
+    renderPreview();
+  } catch (err) {
+    const detail = err && err.message ? `（${String(err.message)}）` : '';
+    const msg = `<span class="bad">跑分初始化失败，请调整一个配置后重试。${detail}</span>`;
+    if (el.previewBox) el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
+    return;
+  }
+  if (!el.benchPage) return;
+  el.benchPage.classList.remove('hidden');
+  document.body.classList.add('bench-page-open');
+  const token = benchRunToken + 1;
+  benchRunToken = token;
+  resetBenchPage(e);
+  updateBenchProgress(1, 5);
+  const okSoc = await runBenchSocTest(e, token);
+  if (!okSoc) return;
+  updateBenchProgress(2, 5);
+  const okDisp = await runBenchDisplayTest(e, token);
+  if (!okDisp) return;
+  updateBenchProgress(3, 5);
+  const okCam = await runBenchCameraTest(e, token);
+  if (!okCam) return;
+  updateBenchProgress(4, 5);
+  const okStorage = await runBenchStorageTest(e, token);
+  if (!okStorage) return;
+  updateBenchProgress(5, 5);
+  const okBattery = await runBenchBatteryTest(e, token);
+  if (!okBattery) return;
+  if (!benchIsAlive(token)) return;
+  setBenchCardActive(null);
+  if (el.benchFinalScore) el.benchFinalScore.textContent = String(Math.round(e.virtualBench.total));
+  if (el.benchFinal) el.benchFinal.classList.remove('hidden');
 }
 
 function updateDisplayQuickBox() {
@@ -2482,7 +3060,17 @@ function updateDisplayQuickBox() {
     el.displayQuickBox.innerHTML = '<span class="bad">折叠屏需在第二代产品解锁后才能使用。</span>';
     return;
   }
-  const est = getDisplayLiveEstimate();
+  let est = null;
+  try {
+    est = getDisplayLiveEstimate();
+  } catch (err) {
+    el.displayQuickBox.innerHTML = '<span class="bad">屏幕参数暂时无法计算，请检查材质/供应商/形态设置。</span>';
+    return;
+  }
+  if (!est || !est.mat || !est.vendor || !est.form || !est.bezel || !est.dim) {
+    el.displayQuickBox.innerHTML = '<span class="bad">屏幕参数不完整，请重新选择屏幕配置。</span>';
+    return;
+  }
   const phoneH = Number(el.phoneH.value);
   const phoneW = Number(el.phoneW.value);
   const maxW = phoneW - 2 * est.bezel.sideBezel;
@@ -2500,11 +3088,15 @@ function updateDisplayQuickBox() {
 function launch() {
   const e = evaluateBuild();
   if (e.issues.length) {
-    el.previewBox.innerHTML = `<span class="bad">${e.issues.join('<br>')}</span>`;
+    const msg = `<span class="bad">${e.issues.join('<br>')}</span>`;
+    el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
     return;
   }
   if (e.initialCost > state.cash) {
-    el.previewBox.innerHTML = `<span class="bad">资金不足：需要 ${RMB(e.initialCost)}，当前 ${RMB(state.cash)}。</span>`;
+    const msg = `<span class="bad">资金不足：需要 ${RMB(e.initialCost)}，当前 ${RMB(state.cash)}。</span>`;
+    el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
     return;
   }
 
@@ -2552,7 +3144,7 @@ function launch() {
   state.companyCostTotal += e.initialCost;
   const isFoldableModel = e.input.disp.mat.name === '折叠屏';
   const isFlagshipSoc = e.input.soc.tier.includes('旗舰');
-  const isFlagshipCamera = ['hp2_200', 'lyt900'].includes(e.input.cams.main.id);
+  const isFlagshipCamera = ['gn3_50', 'hp3_200', 'hp2_200', 'lyt900'].includes(e.input.cams.main.id);
   const hasTopRamSku = (e.skuCosting || []).some((s) => ['16_lp5x', '24_lp5x'].includes(s.ram.id));
   let premiumSignalScore = 0;
   if (isFoldableModel) premiumSignalScore += 1.3;
@@ -2564,12 +3156,12 @@ function launch() {
   const nextPriceTolGain = premiumSignalScore * 0.055;
   const nextOnlineDemandGain = premiumSignalScore * 0.05;
   const nextOfflineDemandGain = premiumSignalScore * (isFoldableModel ? 0.085 : 0.05);
-  state.premiumPriceToleranceCarry = clamp((state.premiumPriceToleranceCarry || 1) + nextPriceTolGain, 1.0, 1.65);
+  state.premiumPriceToleranceCarry = clamp((state.premiumPriceToleranceCarry || 1) + nextPriceTolGain + (e.screenRatioPremiumGain || 0), 1.0, 1.65);
   state.premiumOnlineDemandCarry = clamp((state.premiumOnlineDemandCarry || 1) + nextOnlineDemandGain, 1.0, 1.65);
   state.premiumOfflineDemandCarry = clamp((state.premiumOfflineDemandCarry || 1) + nextOfflineDemandGain, 1.0, 1.75);
 
   state.rating = clamp(
-    state.rating + (state.marketPick.rating || 0) + e.input.campaign.rating + (e.qualityScore - 55) * 0.08 + premiumImmediateRating,
+    state.rating + (state.marketPick.rating || 0) + e.input.campaign.rating + (e.qualityScore - 55) * 0.08 + premiumImmediateRating + (e.screenRatioRepGain || 0),
     1,
     100
   );
@@ -2607,6 +3199,7 @@ function launch() {
       : '<span class="risk-warn">高端形象未建立，建议后续靠产品力拉口碑。</span>',
     '操作建议：先推进月份看市场反馈，再决定是否补货和贷款。'
   ].join('<br>');
+  renderRunBrief('本月重点：等待推进月份。');
   el.finalBox.innerHTML = '结算后显示最终表现。';
   updateHeader();
 }
@@ -2920,6 +3513,40 @@ function calcGenerationLoanRepayAmount() {
   );
 }
 
+function renderRunBrief(html, options = {}) {
+  if (!el.runBriefBox) return;
+  el.runBriefBox.innerHTML = html;
+  el.runBriefBox.classList.toggle('is-end', Boolean(options.highlightEnd));
+}
+
+function updateDesignRestartButtonState() {
+  if (!el.restartDesign) return;
+  if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) {
+    el.restartDesign.classList.remove('restart-alert');
+    return;
+  }
+  const oldUnits = el.units ? el.units.value : '';
+  let shouldAlert = false;
+  try {
+    if (el.units) el.units.value = '1000';
+    const minEval = evaluateBuild();
+    shouldAlert = Boolean(minEval && Number(minEval.initialCost || 0) > Number(state.cash || 0));
+  } catch (err) {
+    shouldAlert = false;
+  } finally {
+    if (el.units) el.units.value = oldUnits;
+  }
+  el.restartDesign.classList.toggle('restart-alert', shouldAlert);
+}
+
+function placeContinueNext(mode = 'auto') {
+  if (!el.continueNext) return;
+  const target = mode === 'manual' ? el.runStopRow : el.runPrimaryRow;
+  if (target && el.continueNext.parentElement !== target) {
+    target.appendChild(el.continueNext);
+  }
+}
+
 function takeGenerationLoan() {
   if (!state.product || !state.launched || state.phaseEnded || state.ended) {
     el.reportBox.innerHTML = '当前没有可申请贷款的在售机型。';
@@ -3215,12 +3842,14 @@ function nextMonth() {
   });
   const sold = Object.values(soldBySku).reduce((sum, x) => sum + x, 0);
   const unmetDemandUnits = Object.values(unmetBySku).reduce((sum, x) => sum + x, 0);
+  const preorderCreatedBySku = {};
   let preorderUnitsNew = 0;
   let preorderCashIn = 0;
   if (state.month <= PREORDER_MONTH_LIMIT && unmetDemandUnits > 0) {
     (p.skuStats || []).forEach((s) => {
       const qty = unmetBySku[s.id] || 0;
       if (qty <= 0) return;
+      preorderCreatedBySku[s.id] = qty;
       p.preorderBacklogBySku[s.id] = (p.preorderBacklogBySku[s.id] || 0) + qty;
       preorderUnitsNew += qty;
       preorderCashIn += qty * s.price * PREORDER_PAY_RATIO;
@@ -3407,6 +4036,25 @@ function nextMonth() {
   const monthState = monthNet >= 0 ? '<span class="good">本月经营是赚钱的</span>' : '<span class="bad">本月经营在亏损</span>';
   const hypeState = dynamicOnlineShare >= 0.62 ? '讨论热度偏线上' : dynamicOnlineShare <= 0.4 ? '成交更依赖线下' : '线上线下热度均衡';
   const reputationState = ratingDelta >= 0 ? '<span class="good">口碑在回升</span>' : '<span class="bad">口碑在下滑</span>';
+
+  const keyEventText = swan
+    ? `<span class="${swanLevelClass}">黑天鹅：${swan.name}</span>`
+    : opportunity
+      ? `<span class="good">机遇：${opportunity.name}</span>`
+      : `<span class="risk-info">常规波动：${noise.name}</span>`;
+  const preorderSkuText = Object.keys(preorderCreatedBySku).length
+    ? Object.entries(preorderCreatedBySku).map(([skuId, units]) => {
+      const s = (p.skuStats || []).find((x) => x.id === skuId);
+      return `${s ? s.name : skuId} ${units.toLocaleString('zh-CN')}台`;
+    }).join('；')
+    : '无新增预订';
+  renderRunBrief([
+    `<strong>本月重点（M${state.month}）</strong>`,
+    `重要事件：${keyEventText}`,
+    `本月销量：<strong>${sold.toLocaleString('zh-CN')} 台</strong>（线上 ${soldOnline.toLocaleString('zh-CN')} / 线下 ${soldOffline.toLocaleString('zh-CN')}）`,
+    `预订SKU单量：${preorderSkuText}`
+  ].join('<br>'));
+
   el.reportBox.innerHTML = [
     eventLine,
     `市场节奏：${demandNarrative(dynamicPhaseState.phase, dynamicPhaseState.growth, stockoutRatio, demandTarget, p.baseDemand)}`,
@@ -3590,7 +4238,7 @@ function liquidateLegacyInventory(product) {
   return { revenue, units };
 }
 
-function finishProductPhase(reason) {
+function finishProductPhase(reason, source = 'auto') {
   if (!state.product || state.phaseEnded) return;
   const p = state.product;
   const preorderBacklogTotal = Object.values(p.preorderBacklogBySku || {}).reduce((sum, x) => sum + (Number(x) || 0), 0);
@@ -3612,7 +4260,14 @@ function finishProductPhase(reason) {
   state.soldTotal = 0;
   state.revenueTotal = 0;
   state.costTotal = 0;
+  placeContinueNext(source === 'manual' ? 'manual' : 'auto');
   if (el.continueNext) el.continueNext.classList.remove('hidden');
+  const statusLabel = source === 'manual' ? '玩家手动停产结算' : '产品生命周期自动结束';
+  renderRunBrief([
+    '<strong>本月重点（状态变更）</strong>',
+    `<span class="bad">已触发：${statusLabel}</span>`,
+    `原因：${reason}`
+  ].join('<br>'), { highlightEnd: true });
   el.reportBox.innerHTML = [
     `<strong>${reason}</strong>`,
     `机型：<strong>${archived && archived.modelName ? archived.modelName : '未知机型'}</strong> 已退市并清仓。`,
@@ -3686,20 +4341,28 @@ function restart() {
   state.productHistory = [];
   state.timeline = [];
   state.loans = [];
+  state.eventRerollUsed = false;
   state.premiumPriceToleranceCarry = 1.0;
   state.premiumOnlineDemandCarry = 1.0;
   state.premiumOfflineDemandCarry = 1.0;
 
   el.reportBox.innerHTML = '等待月报。';
+  renderRunBrief('本月重点：等待推进月份。');
   el.finalBox.innerHTML = '结算后显示最终表现。';
   el.previewBox.innerHTML = '等待计算。';
+  if (el.previewDetailBox) el.previewDetailBox.innerHTML = '详细评估：等待计算。';
   clearPhonePreview();
   el.eventHint.textContent = '请选择 1 个，它将影响整局。';
+  if (el.rollEvents) {
+    el.rollEvents.disabled = false;
+    el.rollEvents.textContent = '刷新随机情况';
+  }
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   updateModelNameHint();
   updateDisplayMaterialOptions();
   assignRandomRegion();
   if (el.restockSku) el.restockSku.innerHTML = '';
+  placeContinueNext('auto');
   if (el.continueNext) el.continueNext.classList.add('hidden');
   initSkuRows();
   rollThreeMarkets();
@@ -3708,14 +4371,71 @@ function restart() {
 }
 
 function refreshDesignPanelsLive() {
-  updateDisplayQuickBox();
-  if (!state.marketPick) return;
+  refreshBackColorControl();
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) return;
-  renderPreview();
+  updateDisplayQuickBox();
+  try {
+    renderPreview();
+    updateDesignRestartButtonState();
+  } catch (err) {
+    const detail = err && err.message ? `（${String(err.message)}）` : '';
+    const msg = `<span class="bad">自动评估失败，请调整一个配置后重试。${detail}</span>`;
+    el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
+    if (el.restartDesign) el.restartDesign.classList.remove('restart-alert');
+  }
+}
+
+function enableButtonPressFeedback() {
+  const clearPressed = (btn) => {
+    if (!(btn instanceof HTMLButtonElement)) return;
+    btn.classList.remove('is-pressing');
+  };
+
+  document.addEventListener('pointerdown', (evt) => {
+    const btn = evt.target instanceof Element ? evt.target.closest('button') : null;
+    if (!(btn instanceof HTMLButtonElement) || btn.disabled) return;
+    btn.classList.add('is-pressing');
+  }, true);
+
+  document.addEventListener('pointerup', (evt) => {
+    const btn = evt.target instanceof Element ? evt.target.closest('button') : null;
+    clearPressed(btn);
+  }, true);
+
+  document.addEventListener('pointercancel', (evt) => {
+    const btn = evt.target instanceof Element ? evt.target.closest('button') : null;
+    clearPressed(btn);
+  }, true);
+
+  document.addEventListener('pointerleave', (evt) => {
+    const btn = evt.target instanceof Element ? evt.target.closest('button') : null;
+    clearPressed(btn);
+  }, true);
+
+  document.addEventListener('keyup', (evt) => {
+    if (!(evt.target instanceof HTMLButtonElement)) return;
+    evt.target.classList.remove('is-pressing');
+  }, true);
+
+  document.addEventListener('keydown', (evt) => {
+    if (!(evt.target instanceof HTMLButtonElement)) return;
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    evt.target.classList.add('is-pressing');
+    window.setTimeout(() => evt.target.classList.remove('is-pressing'), 140);
+  }, true);
 }
 
 function bind() {
-  el.rollEvents.addEventListener('click', rollThreeMarkets);
+  enableButtonPressFeedback();
+  refreshBackColorControl();
+  el.rollEvents.addEventListener('click', () => {
+    if (state.eventRerollUsed) return;
+    rollThreeMarkets();
+    state.eventRerollUsed = true;
+    el.rollEvents.disabled = true;
+    el.rollEvents.textContent = '已刷新';
+  });
   if (el.modelBaseName) el.modelBaseName.addEventListener('input', updateModelNameHint);
   el.confirmEvent.addEventListener('click', () => {
     if (!state.marketPick) return;
@@ -3727,17 +4447,17 @@ function bind() {
       : roll < 0.8
         ? memoryMarketLevels[1]
         : memoryMarketLevels[2];
-    el.eventHint.textContent = `已选：${state.marketPick.name}；企业：${state.companyName}；成立区域：${chinaRegions[el.region.value].name}；本局存储行情：${state.memoryMarket.name}（x${state.memoryMarket.factor.toFixed(2)}）`;
+    el.eventHint.textContent = `已选环境：${state.marketPick.name}`;
     setStep(2);
     refreshDesignPanelsLive();
   });
 
-  el.preview.addEventListener('click', renderPreview);
+  el.preview.addEventListener('click', openBenchPage);
   el.launch.addEventListener('click', launch);
   el.nextMonth.addEventListener('click', nextMonth);
   el.restock.addEventListener('click', restock);
+  if (el.restartDesign) el.restartDesign.addEventListener('click', restart);
   if (el.takeLoan) el.takeLoan.addEventListener('click', takeGenerationLoan);
-  if (el.declineLoan) el.declineLoan.addEventListener('click', declineGenerationLoan);
   if (el.continueNext) {
     el.continueNext.addEventListener('click', () => {
       if (!state.phaseEnded || state.ended) return;
@@ -3748,8 +4468,10 @@ function bind() {
           ? memoryMarketLevels[1]
           : memoryMarketLevels[2];
       state.phaseEnded = false;
+      placeContinueNext('auto');
       if (el.continueNext) el.continueNext.classList.add('hidden');
       el.reportBox.innerHTML = `已进入下一代机型研发阶段。现金与口碑会继承，本代市场记忆也会延续。<br>当前存储行情：${state.memoryMarket.name}。`;
+      renderRunBrief('本月重点：等待推进月份。');
       setStep(2);
       updateModelNameHint();
       updateDisplayMaterialOptions();
@@ -3762,7 +4484,7 @@ function bind() {
       el.reportBox.innerHTML = '当前没有在售机型可做产品停产结算。';
       return;
     }
-    finishProductPhase('玩家主动对当前机型执行停产结算。');
+    finishProductPhase('玩家主动对当前机型执行停产结算。', 'manual');
   });
   if (el.endCompany) {
     el.endCompany.addEventListener('click', () => {
@@ -3810,15 +4532,54 @@ function bind() {
   });
   if (el.displayFeatures) el.displayFeatures.addEventListener('change', refreshDesignPanelsLive);
   if (el.extras) el.extras.addEventListener('change', refreshDesignPanelsLive);
+  if (el.startupDifficulty) {
+    el.startupDifficulty.addEventListener('change', updateStartupDifficultyStyle);
+  }
+  if (el.phoneRenderCanvas) {
+    el.phoneRenderCanvas.addEventListener('click', () => openPreviewLightbox(el.phoneRenderCanvas, '背面 45° 放大预览'));
+  }
+  if (el.phoneFrontCanvas) {
+    el.phoneFrontCanvas.addEventListener('click', () => openPreviewLightbox(el.phoneFrontCanvas, '正面屏幕 放大预览'));
+  }
+  if (el.opsChart) {
+    el.opsChart.addEventListener('click', openOpsChartFullView);
+  }
+  if (el.previewLightboxClose) {
+    el.previewLightboxClose.addEventListener('click', closePreviewLightbox);
+  }
+  if (el.benchClose) {
+    el.benchClose.addEventListener('click', closeBenchPage);
+  }
+  if (el.benchPage) {
+    el.benchPage.addEventListener('click', (evt) => {
+      if (evt.target === el.benchPage) closeBenchPage();
+    });
+  }
+  if (el.previewLightbox) {
+    el.previewLightbox.addEventListener('click', (evt) => {
+      if (evt.target === el.previewLightbox) closePreviewLightbox();
+    });
+  }
+  window.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Escape') {
+      closePreviewLightbox();
+      closeBenchPage();
+    }
+  });
 }
 
 function fillSources() {
   const links = [
     ['Qualcomm 8 Elite 产品页', 'https://www.qualcomm.com/products/mobile/snapdragon/smartphones/snapdragon-8-series-mobile-platforms/snapdragon-8-elite-mobile-platform'],
+    ['Qualcomm 8 Gen 3 产品页', 'https://www.qualcomm.com/products/mobile/snapdragon/smartphones/snapdragon-8-series-mobile-platforms/snapdragon-8-gen-3-mobile-platform'],
+    ['Qualcomm 4 Gen 2 产品页', 'https://www.qualcomm.com/products/mobile/snapdragon/smartphones/snapdragon-4-series-mobile-platforms/snapdragon-4-gen-2-mobile-platform'],
     ['Qualcomm 8 Elite Gen 5 产品简述', 'https://www.qualcomm.com/content/dam/qcomm-martech/dm-assets/documents/snapdragon-8-elite-gen-5-product-brief.pdf'],
     ['Qualcomm 7s Gen 3 产品简述', 'https://www.qualcomm.com/content/dam/qcomm-martech/dm-assets/documents/snapdragon-7s-gen-3-product-brief.pdf'],
+    ['MediaTek Helio G35 官方页', 'https://www.mediatek.com/products/smartphones-2/mediatek-helio-g35'],
+    ['MediaTek Dimensity 6100+ 官方页', 'https://www.mediatek.com/products/smartphones-2/mediatek-dimensity-6100-plus'],
     ['MediaTek Helio G81 官方页', 'https://www.mediatek.com/products/smartphones-2/mediatek-helio-g81'],
     ['MediaTek Dimensity 7300 官方页', 'https://www.mediatek.com/products/smartphones-2/mediatek-dimensity-7300'],
+    ['MediaTek Dimensity 9400 官方页', 'https://www.mediatek.com/products/smartphones-2/mediatek-dimensity-9400'],
     ['UNISOC T7225 官方页', 'https://www.unisoc.com/en_us/home/TZNSQYCP/about/38/1742'],
     ['TechInsights 转述：Galaxy S25 Ultra 组件成本', 'https://electronics360.globalspec.com/article/21108/galaxy-s25-ultra-material-costs-estimated-at-528'],
     ['TechInsights 转述：Mate 60 Pro+ 组件成本', 'https://electronics360.globalspec.com/article/20319/huawei-mate-60-pro-material-costs-revealed'],
@@ -3827,7 +4588,10 @@ function fillSources() {
     ['Tianma 中小尺寸显示业务', 'https://www.tianma.com/en/products/small-medium-size-display/'],
     ['OV50H 产品页', 'https://www.ovt.com/products/ov50h40/'],
     ['OV13B10 产品页', 'https://www.ovt.com/products/ov13b10/'],
+    ['OV64B 产品页', 'https://www.ovt.com/products/ov64b40/'],
     ['Samsung ISOCELL HP2 产品页', 'https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp2/'],
+    ['Samsung ISOCELL HP3 产品页', 'https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-hp3/'],
+    ['Samsung ISOCELL GN3 产品页', 'https://semiconductor.samsung.com/image-sensor/mobile-image-sensor/isocell-gn3/'],
     ['NanoReview SoC 基准库（AnTuTu / Geekbench）', 'https://nanoreview.net/en/soc-list/rating'],
     ['GSMArena：Smartisan Nut R2 规格', 'https://www.gsmarena.com/smartisan_nut_r2-10445.php'],
     ['Notebookcheck：Snapdragon 865 功耗与性能评测', 'https://www.notebookcheck.net/Qualcomm-Snapdragon-865-5G-Processor-Benchmarks-and-Specs.443773.0.html'],
