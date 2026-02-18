@@ -634,6 +634,9 @@ const el = {
   runStopRow: document.getElementById('runStopRow'),
   restockSku: document.getElementById('restockSku'),
   restockUnits: document.getElementById('restockUnits'),
+  runMobileDock: document.getElementById('runMobileDock'),
+  runMobileDockQuote: document.getElementById('runMobileDockQuote'),
+  runMobileDockAction: document.getElementById('runMobileDockAction'),
   runBriefBox: document.getElementById('runBriefBox'),
   stop: document.getElementById('stop'),
   endCompany: document.getElementById('endCompany'),
@@ -695,6 +698,7 @@ const runQuizPool = [
 const QUICK_GUIDE_HTML = [
   '目标：活得久、赚得多、口碑高；可持续做多代机，也可企业结算看总成绩。',
   '玩法：先抽市场与难度，再做配置（屏幕/SoC/影像/SKU/营销），立项后按月运营。',
+  '经营本质：企业经营是“客观机制 + 主观判断”的组合。市场与周期按规则运行，但你的定价、补货、换代与资源取舍，才是决定结局的关键。',
   '关键：体积能装下、现金别断、定价别离谱、库存别失控；缺货会伤生命周期，压货会拖现金流。',
   '进阶：换代要有变化（屏幕/摄像头/SKU/机身/额外功能），否则会有换代疲劳惩罚。',
   '彩蛋：游戏内有成就系统，欢迎自行探索解锁。'
@@ -1460,6 +1464,7 @@ function updateHeader() {
   el.rating.textContent = Math.round(state.rating).toString();
   el.month.textContent = String(state.month);
   renderOpsChart();
+  renderMobileRunDockQuote();
 }
 
 function setStep(step) {
@@ -1471,6 +1476,7 @@ function setStep(step) {
   el.stageRun.classList.toggle('hidden', !c3);
   if (el.statsBar) el.statsBar.classList.toggle('hidden', c1);
   if (el.takeLoan) el.takeLoan.classList.toggle('hidden', !c3);
+  refreshMobileRunDock();
   renderStageQuiz(step);
   if (c2) {
     // Defer once so canvas/layout sizes are ready, then auto-evaluate.
@@ -4776,6 +4782,8 @@ function launch() {
   ].join('<br>');
   renderRunBrief('本月重点：等待推进月份。');
   el.finalBox.innerHTML = '结算后显示最终表现。';
+  showMobileRunDockAction('已开售，等待运营操作', 'neutral');
+  renderMobileRunDockQuote();
   updateHeader();
 }
 
@@ -5879,6 +5887,83 @@ function applyRatingDeltaByDifficulty(delta, diffName) {
   return delta;
 }
 
+function calcRestockQuote() {
+  const p = state.product;
+  if (!p || !state.launched || state.phaseEnded || state.ended) return null;
+  const add = Math.round(Number(el.restockUnits ? el.restockUnits.value : 0) || 0);
+  const skuId = el.restockSku ? el.restockSku.value : '';
+  const sku = (p.skuStats || []).find((x) => x.id === skuId);
+  if (!sku || add < 1000 || add > 200000) return null;
+  let renewalCost = 0;
+  let lockCommitRenewCost = 0;
+  const nextProduced = p.producedTotal + add;
+  if (p.input.procurement.coverageMultiplier > 0 && nextProduced > p.contractUnits) {
+    renewalCost = p.input.procurement.renewUpfront;
+    const extendUnits = Math.ceil(add * Math.max(0.8, p.input.procurement.coverageMultiplier));
+    const extraCommitUnits = Math.max(0, extendUnits - add);
+    lockCommitRenewCost = extraCommitUnits * (sku.unitCost || p.unitCost) * (p.input.procurement.lockCommitRate || 0);
+  }
+  const skuCostBase = sku.unitCost || p.unitCost;
+  const totalCost = add * skuCostBase * (state.marketPick.cost * 0.98) / p.supplyStability + 140_000 + renewalCost + lockCommitRenewCost;
+  return {
+    sku,
+    add,
+    totalCost,
+    affordable: totalCost <= Number(state.cash || 0)
+  };
+}
+
+function renderMobileRunDockQuote(options = {}) {
+  if (!el.runMobileDockQuote) return;
+  const quote = calcRestockQuote();
+  if (!quote) {
+    el.runMobileDockQuote.textContent = state.launched ? '请选择补货 SKU 与数量' : '等待开售';
+    el.runMobileDockQuote.classList.remove('is-good', 'is-bad', 'is-bump');
+    return;
+  }
+  el.runMobileDockQuote.textContent = `${quote.sku.name} ${quote.add.toLocaleString('zh-CN')} 台 · ${RMB(quote.totalCost)}`;
+  el.runMobileDockQuote.classList.toggle('is-good', quote.affordable);
+  el.runMobileDockQuote.classList.toggle('is-bad', !quote.affordable);
+  if (options.bump) {
+    el.runMobileDockQuote.classList.remove('is-bump');
+    void el.runMobileDockQuote.offsetWidth;
+    el.runMobileDockQuote.classList.add('is-bump');
+    window.setTimeout(() => {
+      if (!el.runMobileDockQuote) return;
+      el.runMobileDockQuote.classList.remove('is-bump');
+    }, 520);
+  }
+}
+
+function isMobileViewportForRunDock() {
+  try {
+    return window.matchMedia('(max-width: 760px)').matches;
+  } catch {
+    return window.innerWidth <= 760;
+  }
+}
+
+function showMobileRunDockAction(message, type = 'neutral') {
+  if (!el.runMobileDockAction) return;
+  el.runMobileDockAction.textContent = message;
+  el.runMobileDockAction.classList.remove('is-good', 'is-bad', 'is-neutral', 'is-pop');
+  el.runMobileDockAction.classList.add(type === 'good' ? 'is-good' : type === 'bad' ? 'is-bad' : 'is-neutral');
+  void el.runMobileDockAction.offsetWidth;
+  el.runMobileDockAction.classList.add('is-pop');
+  window.setTimeout(() => {
+    if (!el.runMobileDockAction) return;
+    el.runMobileDockAction.classList.remove('is-pop');
+  }, 420);
+}
+
+function refreshMobileRunDock() {
+  if (!el.runMobileDock) return;
+  const shouldShow = isMobileViewportForRunDock() && !el.stageRun.classList.contains('hidden');
+  el.runMobileDock.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) return;
+  renderMobileRunDockQuote();
+}
+
 function resetRestockButtonState() {
   if (!el.restock) return;
   el.restock.classList.remove('restock-success', 'restock-fail');
@@ -5905,15 +5990,18 @@ function flashRestockSuccess() {
 function takeGenerationLoan() {
   if (!state.product || !state.launched || state.phaseEnded || state.ended) {
     el.reportBox.innerHTML = '当前没有可申请贷款的在售机型。';
+    showMobileRunDockAction('贷款操作失败（当前不可申请）', 'bad');
     return;
   }
   const p = state.product;
   if (p.loanDecision === 'taken') {
     el.reportBox.innerHTML = '本代贷款已使用，无法重复申请。';
+    showMobileRunDockAction('贷款操作失败（已使用）', 'bad');
     return;
   }
   if (p.loanDecision === 'declined') {
     el.reportBox.innerHTML = '你已放弃本代贷款，不能再次申请。';
+    showMobileRunDockAction('贷款操作失败（已放弃）', 'bad');
     return;
   }
   const repayAmount = calcGenerationLoanRepayAmount();
@@ -5937,6 +6025,8 @@ function takeGenerationLoan() {
   updateHeader();
   checkCashMilestones();
   el.reportBox.innerHTML = '已使用本代贷款：现金已补充。到期时会自动扣款，请提前留足现金。';
+  showMobileRunDockAction('已使用本代贷款', 'good');
+  renderMobileRunDockQuote({ bump: true });
 }
 
 function declineGenerationLoan() {
@@ -5960,10 +6050,12 @@ function declineGenerationLoan() {
 function nextMonth() {
   if (state.phaseEnded) {
     el.reportBox.innerHTML = '当前机型周期已结束，请选择“进入下一代机型”或“企业结算”。';
+    showMobileRunDockAction('推进失败（当前机型已结束）', 'bad');
     return;
   }
   if (!state.launched || state.ended) {
     el.reportBox.innerHTML = '请先开售。';
+    showMobileRunDockAction('推进失败（尚未开售）', 'bad');
     return;
   }
 
@@ -5990,6 +6082,7 @@ function nextMonth() {
         '现金已经为负，账本写着：<strong>破产</strong>。<br>这波是“销量未必输，现金流先走了”。',
         'gameover'
       );
+      showMobileRunDockAction('已推进下一月（触发破产）', 'bad');
       return;
     }
   }
@@ -6496,6 +6589,7 @@ function nextMonth() {
       '现金已经为负，账本写着：<strong>破产</strong>。<br>这波是“销量未必输，现金流先走了”。',
       'gameover'
     );
+    showMobileRunDockAction('已推进下一月（触发破产）', 'bad');
     return;
   }
   if (swanInstantKill) {
@@ -6505,6 +6599,7 @@ function nextMonth() {
       `黑天鹅来了：<strong>${swan.name}</strong>。<br>${swan.reason || '市场突发极端冲击，企业直接被抬走。'}<br>这波属于“不是你不会运营，是天上先掉了个陨石”。`,
       'gameover'
     );
+    showMobileRunDockAction('已推进下一月（黑天鹅致命）', 'bad');
     return;
   }
   if (swanForcePhaseEnd) {
@@ -6532,33 +6627,35 @@ function nextMonth() {
 
   updateHeader();
   checkCashMilestones();
+  showMobileRunDockAction('已推进下一月', 'good');
+  renderMobileRunDockQuote({ bump: true });
 }
 
 function restock() {
   if (state.phaseEnded) {
     markRestockFailed();
     el.reportBox.innerHTML = '旧机型已退市，无法补货。请进入下一代机型。';
+    showMobileRunDockAction('补货失败（机型已退市）', 'bad');
+    renderMobileRunDockQuote({ bump: true });
     return;
   }
   if (!state.launched || state.ended) {
     markRestockFailed();
     el.reportBox.innerHTML = '当前不可追加生产。';
+    showMobileRunDockAction('补货失败（当前不可追加）', 'bad');
+    renderMobileRunDockQuote({ bump: true });
     return;
   }
   const p = state.product;
-  const add = Math.round(Number(el.restockUnits ? el.restockUnits.value : 0) || 0);
-  if (add < 1000 || add > 200000) {
+  const quote = calcRestockQuote();
+  if (!quote) {
     markRestockFailed();
     el.reportBox.innerHTML = '<span class="bad">补货数量需在 1000~200000 台。</span>';
+    showMobileRunDockAction('补货失败（数量或 SKU 无效）', 'bad');
+    renderMobileRunDockQuote({ bump: true });
     return;
   }
-  const skuId = el.restockSku ? el.restockSku.value : '';
-  const sku = (p.skuStats || []).find((x) => x.id === skuId);
-  if (!sku) {
-    markRestockFailed();
-    el.reportBox.innerHTML = '<span class="bad">请选择要补货的 SKU。</span>';
-    return;
-  }
+  const { sku, add } = quote;
   let renewalCost = 0;
   let lockCommitRenewCost = 0;
   let coverageInfo = '合约覆盖内';
@@ -6574,11 +6671,12 @@ function restock() {
     coverageInfo = `触发续约 +${extendUnits.toLocaleString('zh-CN')} 台覆盖`;
   }
 
-  const skuCostBase = sku.unitCost || p.unitCost;
-  const cost = add * skuCostBase * (state.marketPick.cost * 0.98) / p.supplyStability + 140_000 + renewalCost + lockCommitRenewCost;
+  const cost = quote.totalCost;
   if (cost > state.cash) {
     markRestockFailed();
     el.reportBox.innerHTML = '<span class="bad">追加失败：现金不足。</span>';
+    showMobileRunDockAction('补货失败（现金不足）', 'bad');
+    renderMobileRunDockQuote({ bump: true });
     return;
   }
 
@@ -6591,6 +6689,8 @@ function restock() {
   p.pipeline.push({ skuId: sku.id, units: add, arriveMonth });
   flashRestockSuccess();
   el.reportBox.innerHTML = `已追加生产 ${sku.name}（${sku.ramName}+${sku.romName}），库存将在后续月份分批到货。`;
+  showMobileRunDockAction(`成功补货 ${add.toLocaleString('zh-CN')} 台`, 'good');
+  renderMobileRunDockQuote({ bump: true });
   updateHeader();
 }
 
@@ -6725,6 +6825,12 @@ function finishProductPhase(reason, source = 'auto') {
     '你可以选择“进入下一代机型”继续经营，或点击“企业结算”结束公司。'
   ].join('<br>');
   el.finalBox.innerHTML = '公司未结算：可继续下一代，或企业结算查看全流程成绩。';
+  if (source === 'manual') {
+    showMobileRunDockAction('已完成产品停产结算', 'good');
+  } else {
+    showMobileRunDockAction('产品生命周期结束', 'bad');
+  }
+  renderMobileRunDockQuote();
   updateHeader();
   checkCashMilestones();
 }
@@ -6764,6 +6870,12 @@ function endGame(reason) {
     ...productLines
   ].join('<br>');
 
+  if (String(reason || '').includes('玩家主动企业结算')) {
+    showMobileRunDockAction('已完成企业结算', 'good');
+  } else {
+    showMobileRunDockAction('游戏结束，请重开新局', 'bad');
+  }
+  renderMobileRunDockQuote();
   updateHeader();
 }
 
@@ -6873,6 +6985,8 @@ function restart() {
   if (el.continueNext) el.continueNext.classList.add('hidden');
   rollThreeMarkets();
   renderAchievementPanel();
+  showMobileRunDockAction('等待操作', 'neutral');
+  renderMobileRunDockQuote();
   setStep(1);
   updateHeader();
 }
@@ -6994,11 +7108,22 @@ function bind() {
   el.launch.addEventListener('click', launch);
   el.nextMonth.addEventListener('click', nextMonth);
   el.restock.addEventListener('click', restock);
+  if (el.restockSku) {
+    el.restockSku.addEventListener('change', () => renderMobileRunDockQuote({ bump: true }));
+  }
+  if (el.restockUnits) {
+    const onRestockUnitsInput = () => renderMobileRunDockQuote({ bump: true });
+    el.restockUnits.addEventListener('input', onRestockUnitsInput);
+    el.restockUnits.addEventListener('change', onRestockUnitsInput);
+  }
   if (el.restartDesign) el.restartDesign.addEventListener('click', restart);
   if (el.takeLoan) el.takeLoan.addEventListener('click', takeGenerationLoan);
   if (el.continueNext) {
     el.continueNext.addEventListener('click', () => {
-      if (!state.phaseEnded || state.ended) return;
+      if (!state.phaseEnded || state.ended) {
+        showMobileRunDockAction('进入下一代失败（当前不可用）', 'bad');
+        return;
+      }
       resetRestockButtonState();
       const roll = Math.random();
       state.memoryMarket = roll < 0.35
@@ -7016,6 +7141,8 @@ function bind() {
       maybeRefreshDisplayScoreProgress('generation');
       maybeRefreshExtraCosts('generation');
       setStep(2);
+      showMobileRunDockAction('进入下一代机型研发', 'neutral');
+      renderMobileRunDockQuote();
       updateModelNameHint();
       updateDisplayMaterialOptions();
       refreshDesignPanelsLive();
@@ -7025,6 +7152,7 @@ function bind() {
   el.stop.addEventListener('click', () => {
     if (!state.product || state.phaseEnded || state.ended || !state.launched) {
       el.reportBox.innerHTML = '当前没有在售机型可做产品停产结算。';
+      showMobileRunDockAction('停产失败（当前无在售机型）', 'bad');
       return;
     }
     finishProductPhase('玩家主动对当前机型执行停产结算。', 'manual');
@@ -7033,8 +7161,10 @@ function bind() {
     el.endCompany.addEventListener('click', () => {
       if (state.ended) {
         el.reportBox.innerHTML = '企业已结算。';
+        showMobileRunDockAction('企业结算失败（已结算）', 'bad');
         return;
       }
+      showMobileRunDockAction('企业结算中…', 'neutral');
       endGame('玩家主动企业结算。');
     });
   }
@@ -7073,6 +7203,7 @@ function bind() {
   }
   window.addEventListener('resize', () => {
     renderOpsChart();
+    refreshMobileRunDock();
     refreshDesignPanelsLive();
   });
 
@@ -7178,6 +7309,9 @@ function fillSources() {
 }
 
 async function boot() {
+  const instantWelcome = document.getElementById('instantWelcome');
+  if (instantWelcome) instantWelcome.classList.add('hidden');
+  if (el.bootLoading) el.bootLoading.classList.remove('hidden');
   if (el.bootReload) {
     el.bootReload.addEventListener('click', () => window.location.reload());
   }

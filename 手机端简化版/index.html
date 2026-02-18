@@ -8,6 +8,24 @@
     /* Critical boot styles: render loading UI immediately before external CSS arrives */
     html, body { margin: 0; min-height: 100%; background: #07111e; color: #edf4ff; }
     .hidden { display: none !important; }
+    .instant-welcome {
+      position: fixed; inset: 0; z-index: 130;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      background:
+        radial-gradient(120% 150% at 0% 50%, rgba(9, 75, 141, 0.18), rgba(7, 17, 30, 0)),
+        #07111e;
+    }
+    .instant-welcome-card {
+      width: min(380px, 92vw);
+      border: 1px solid rgba(154, 206, 244, 0.28);
+      border-radius: 16px;
+      background: rgba(8, 20, 34, 0.9);
+      padding: 14px 14px 12px;
+      text-align: center;
+    }
+    .instant-welcome-title { font-size: 1.03rem; font-weight: 800; color: #e6f6ff; }
+    .instant-welcome-sub { margin-top: 6px; font-size: 0.86rem; color: #b8d1ea; }
     .boot-loading {
       position: fixed; inset: 0; z-index: 120;
       display: flex; align-items: center; justify-content: center;
@@ -32,12 +50,20 @@
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
+  <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="styles.css"></noscript>
 </head>
 <body>
+  <div id="instantWelcome" class="instant-welcome" role="status" aria-live="polite">
+    <div class="instant-welcome-card">
+      <div class="instant-welcome-title">欢迎来到《从零开始做手机》</div>
+      <div class="instant-welcome-sub">正在极速进入，请稍候…</div>
+    </div>
+  </div>
   <div class="bg"></div>
-  <div id="bootLoading" class="boot-loading" role="status" aria-live="polite">
+  <div id="bootLoading" class="boot-loading hidden" role="status" aria-live="polite">
     <div class="boot-loading-card">
       <div class="boot-loading-spinner"></div>
       <div class="boot-loading-title">已进入游戏</div>
@@ -295,6 +321,13 @@
       </div>
       <div id="reportBox" class="box">等待月报。</div>
       <div id="finalBox" class="box">结算后显示最终表现。</div>
+      <div id="runMobileDock" class="run-mobile-dock hidden" aria-live="polite">
+        <div class="run-mobile-dock-row">
+          <span class="run-mobile-dock-label">补货预估</span>
+          <strong id="runMobileDockQuote">等待开售</strong>
+        </div>
+        <div id="runMobileDockAction" class="run-mobile-dock-action">等待操作</div>
+      </div>
     </section>
 
     <section class="panel source hidden">
@@ -399,6 +432,22 @@
     </div>
   </div>
 
+  <script>
+    (function () {
+      var welcome = document.getElementById('instantWelcome');
+      var boot = document.getElementById('bootLoading');
+      if (!welcome || !boot) return;
+      var switched = false;
+      function switchToBoot() {
+        if (switched) return;
+        switched = true;
+        welcome.classList.add('hidden');
+        boot.classList.remove('hidden');
+      }
+      window.setTimeout(switchToBoot, 420);
+      window.addEventListener('load', switchToBoot, { once: true });
+    })();
+  </script>
   <script src="game.js"></script>
 </body>
 </html>
