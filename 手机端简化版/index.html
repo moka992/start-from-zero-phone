@@ -131,6 +131,7 @@
       <div class="row">
         <button id="quickGuideBtn" class="quick-guide-btn" type="button">玩法说明（新手必看）</button>
       </div>
+      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v1.0.1</span></div>
     </section>
 
     <section id="stageConfig" class="panel hidden">
@@ -332,13 +333,6 @@
       </div>
       <div id="reportBox" class="box">等待月报。</div>
       <div id="finalBox" class="box">结算后显示最终表现。</div>
-      <div id="runMobileDock" class="run-mobile-dock hidden" aria-live="polite">
-        <div class="run-mobile-dock-row">
-          <span class="run-mobile-dock-label">补货预估</span>
-          <strong id="runMobileDockQuote">等待开售</strong>
-        </div>
-        <div id="runMobileDockAction" class="run-mobile-dock-action">等待操作</div>
-      </div>
     </section>
 
     <section class="panel source hidden">
@@ -346,6 +340,14 @@
       <div class="tiny" id="sourceNote"></div>
     </section>
   </main>
+
+  <div id="runMobileDock" class="run-mobile-dock hidden" aria-live="polite">
+    <div class="run-mobile-dock-row">
+      <span class="run-mobile-dock-label">补货预估</span>
+      <strong id="runMobileDockQuote">等待开售</strong>
+    </div>
+    <div id="runMobileDockAction" class="run-mobile-dock-action">等待操作</div>
+  </div>
 
   <div id="achievePanel" class="achieve-panel hidden" role="dialog" aria-modal="true" aria-label="已达成成就">
     <div class="achieve-panel-card">

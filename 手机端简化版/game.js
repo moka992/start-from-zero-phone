@@ -581,6 +581,7 @@ const el = {
   eventHint: document.getElementById('eventHint'),
   confirmEvent: document.getElementById('confirmEvent'),
   quickGuideBtn: document.getElementById('quickGuideBtn'),
+  inlineGuideVersion: document.getElementById('inlineGuideVersion'),
   bootLoading: document.getElementById('bootLoading'),
   bootLoadingText: document.getElementById('bootLoadingText'),
   bootLoadingProgress: document.getElementById('bootLoadingProgress'),
@@ -729,6 +730,12 @@ function refreshQuickGuideButtonState() {
   const seen = readQuickGuideSeen();
   el.quickGuideBtn.classList.toggle('guide-unseen', !seen);
   el.quickGuideBtn.classList.toggle('guide-seen', seen);
+}
+
+function renderGameVersionUI() {
+  if (el.inlineGuideVersion) {
+    el.inlineGuideVersion.textContent = `v${GAME_VERSION}`;
+  }
 }
 
 function pickRandom(arr) {
@@ -5951,9 +5958,13 @@ function updateRunDockViewportAnchor() {
   let extra = 0;
   if (isMobileViewportForRunDock() && window.visualViewport) {
     const vv = window.visualViewport;
-    const layoutHeight = window.innerHeight || 0;
+    const layoutHeight = Math.max(
+      window.innerHeight || 0,
+      document.documentElement ? (document.documentElement.clientHeight || 0) : 0
+    );
     const visualBottom = (vv.offsetTop || 0) + (vv.height || 0);
-    extra = Math.max(0, layoutHeight - visualBottom);
+    // Positive gap means browser UI / viewport contraction is eating bottom space.
+    extra = Math.max(0, Math.round(layoutHeight - visualBottom));
   }
   el.runMobileDock.style.setProperty('--run-dock-bottom', `calc(${Math.round(base + extra)}px + env(safe-area-inset-bottom, 0px))`);
 }
@@ -7223,6 +7234,10 @@ function bind() {
     refreshMobileRunDock();
     refreshDesignPanelsLive();
   });
+  window.addEventListener('scroll', () => {
+    updateRunDockViewportAnchor();
+    refreshMobileRunDock();
+  }, { passive: true });
   window.addEventListener('orientationchange', () => {
     updateRunDockViewportAnchor();
     refreshMobileRunDock();
@@ -7357,6 +7372,7 @@ async function boot() {
     fillOptions();
     assignRandomRegion();
     bind();
+    renderGameVersionUI();
     fillSources();
     rollThreeMarkets();
     updateHeader();
