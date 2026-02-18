@@ -580,6 +580,11 @@ const el = {
   eventHint: document.getElementById('eventHint'),
   confirmEvent: document.getElementById('confirmEvent'),
   quickGuideBtn: document.getElementById('quickGuideBtn'),
+  bootLoading: document.getElementById('bootLoading'),
+  bootLoadingText: document.getElementById('bootLoadingText'),
+  bootLoadingProgress: document.getElementById('bootLoadingProgress'),
+  bootLoadingFill: document.getElementById('bootLoadingFill'),
+  bootReload: document.getElementById('bootReload'),
   companyNameHint: document.getElementById('companyNameHint'),
   companyName: document.getElementById('companyName'),
   soc: document.getElementById('soc'),
@@ -1082,6 +1087,26 @@ function closePreviewLightbox() {
   if (!el.previewLightbox) return;
   el.previewLightbox.classList.add('hidden');
   refreshOverlayLockState();
+}
+
+function setBootLoading(text, isError = false, step = 0, total = 0) {
+  if (!el.bootLoading) return;
+  el.bootLoading.classList.remove('hidden');
+  if (el.bootLoadingText) el.bootLoadingText.textContent = text || '正在加载中，请稍候…';
+  if (el.bootReload) el.bootReload.classList.toggle('hidden', !isError);
+  if (el.bootLoadingProgress) {
+    if (step > 0 && total > 0) el.bootLoadingProgress.textContent = `${step}/${total}`;
+    else el.bootLoadingProgress.textContent = '';
+  }
+  if (el.bootLoadingFill) {
+    const pct = (step > 0 && total > 0) ? Math.max(0, Math.min(100, (step / total) * 100)) : 0;
+    el.bootLoadingFill.style.width = `${pct}%`;
+  }
+}
+
+function hideBootLoading() {
+  if (!el.bootLoading) return;
+  el.bootLoading.classList.add('hidden');
 }
 
 function recoverStageAfterRuntimeError() {
@@ -7153,18 +7178,34 @@ function fillSources() {
 }
 
 async function boot() {
-  resetTechPoolsToBase();
-  await loadForbiddenNameDictionary();
-  fillOptions();
-  assignRandomRegion();
-  bind();
-  fillSources();
-  rollThreeMarkets();
-  updateHeader();
-  setStep(1);
-  updateDisplayQuickBox();
-  updateEventGateState();
-  refreshQuickGuideButtonState();
+  if (el.bootReload) {
+    el.bootReload.addEventListener('click', () => window.location.reload());
+  }
+  const totalSteps = 5;
+  setBootLoading('已进入游戏，正在初始化…', false, 1, totalSteps);
+  try {
+    setBootLoading('正在加载系统组件…', false, 2, totalSteps);
+    resetTechPoolsToBase();
+    setBootLoading('正在加载词典与配置…', false, 3, totalSteps);
+    await loadForbiddenNameDictionary();
+    setBootLoading('正在构建设计与运营面板…', false, 4, totalSteps);
+    fillOptions();
+    assignRandomRegion();
+    bind();
+    fillSources();
+    rollThreeMarkets();
+    updateHeader();
+    setStep(1);
+    updateDisplayQuickBox();
+    updateEventGateState();
+    refreshQuickGuideButtonState();
+    setBootLoading('加载完成，准备开玩…', false, 5, totalSteps);
+    window.setTimeout(hideBootLoading, 180);
+  } catch (err) {
+    reportRuntimeError('boot', err);
+    const msg = err && err.message ? String(err.message) : '未知错误';
+    setBootLoading(`加载失败：${msg}。请点击“刷新重试”。`, true, 0, totalSteps);
+  }
 }
 
 boot();

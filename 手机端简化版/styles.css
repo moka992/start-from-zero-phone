@@ -39,6 +39,85 @@ body.overlay-open {
   overscroll-behavior: none;
 }
 
+.boot-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 11, 19, 0.86);
+  backdrop-filter: blur(6px);
+}
+
+.boot-loading-card {
+  width: min(420px, 92vw);
+  border: 1px solid rgba(161, 207, 248, 0.34);
+  border-radius: 16px;
+  background: rgba(9, 19, 32, 0.96);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+  padding: 14px 14px 12px;
+  text-align: center;
+}
+
+.boot-loading-spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  border: 3px solid rgba(129, 188, 235, 0.3);
+  border-top-color: rgba(116, 232, 255, 0.95);
+  animation: bootspin .9s linear infinite;
+}
+
+.boot-loading-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #def4ff;
+}
+
+.boot-loading-text {
+  margin-top: 4px;
+  font-size: 0.88rem;
+  color: #bdd3ea;
+  line-height: 1.55;
+}
+
+.boot-loading-progress {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #8fd9ff;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.boot-loading-track {
+  margin-top: 8px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(120, 156, 188, 0.35);
+  overflow: hidden;
+}
+
+.boot-loading-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(110, 231, 255, 0.95), rgba(124, 255, 210, 0.95));
+  transition: width .22s ease;
+}
+
+.boot-reload {
+  margin-top: 10px;
+  min-height: 36px;
+  height: 36px;
+  padding: 6px 12px;
+}
+
+@keyframes bootspin {
+  to { transform: rotate(360deg); }
+}
+
 .bg {
   position: fixed;
   inset: 0;

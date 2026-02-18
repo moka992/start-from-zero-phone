@@ -4,6 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>从零开始做手机</title>
+  <style>
+    /* Critical boot styles: render loading UI immediately before external CSS arrives */
+    html, body { margin: 0; min-height: 100%; background: #07111e; color: #edf4ff; }
+    .hidden { display: none !important; }
+    .boot-loading {
+      position: fixed; inset: 0; z-index: 120;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; background: rgba(4, 11, 19, 0.9);
+    }
+    .boot-loading-card {
+      width: min(420px, 92vw); border: 1px solid rgba(161, 207, 248, 0.34);
+      border-radius: 16px; background: rgba(9, 19, 32, 0.96); padding: 14px 14px 12px;
+      text-align: center;
+    }
+    .boot-loading-spinner {
+      width: 34px; height: 34px; margin: 0 auto 8px; border-radius: 999px;
+      border: 3px solid rgba(129, 188, 235, 0.3); border-top-color: rgba(116, 232, 255, 0.95);
+      animation: bootspin .9s linear infinite;
+    }
+    .boot-loading-title { font-size: 1rem; font-weight: 800; color: #def4ff; }
+    .boot-loading-text { margin-top: 4px; font-size: .88rem; color: #bdd3ea; line-height: 1.55; }
+    .boot-loading-progress { margin-top: 6px; font-size: .82rem; color: #8fd9ff; font-family: "JetBrains Mono", monospace; }
+    .boot-loading-track { margin-top: 8px; height: 7px; border-radius: 999px; background: rgba(120, 156, 188, 0.35); overflow: hidden; }
+    .boot-loading-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, rgba(110,231,255,.95), rgba(124,255,210,.95)); transition: width .22s ease; }
+    @keyframes bootspin { to { transform: rotate(360deg); } }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -11,6 +37,16 @@
 </head>
 <body>
   <div class="bg"></div>
+  <div id="bootLoading" class="boot-loading" role="status" aria-live="polite">
+    <div class="boot-loading-card">
+      <div class="boot-loading-spinner"></div>
+      <div class="boot-loading-title">已进入游戏</div>
+      <div id="bootLoadingText" class="boot-loading-text">正在加载中，请稍候…</div>
+      <div id="bootLoadingProgress" class="boot-loading-progress">1/5</div>
+      <div class="boot-loading-track"><div id="bootLoadingFill" class="boot-loading-fill"></div></div>
+      <button id="bootReload" class="boot-reload hidden" type="button">刷新重试</button>
+    </div>
+  </div>
   <main class="app">
     <header class="top">
       <div class="top-head">
