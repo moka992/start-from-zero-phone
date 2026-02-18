@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>从零开始做手机</title>
+  <script>
+    (function (d) {
+      var s = d.createElement('style');
+      s.textContent = '#preSeed{position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;background:#07111e;color:#dff2ff;font:600 14px/1.2 sans-serif}#preSeed i{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:#79e7ff;animation:preSeedDot .9s infinite alternate}@keyframes preSeedDot{to{opacity:.25;transform:translateY(-2px)}}';
+      d.head.appendChild(s);
+      var n = d.createElement('div');
+      n.id = 'preSeed';
+      n.innerHTML = '正在进入游戏<i></i>';
+      d.documentElement.appendChild(n);
+    })(document);
+  </script>
   <style>
     /* Critical boot styles: render loading UI immediately before external CSS arrives */
     html, body { margin: 0; min-height: 100%; background: #07111e; color: #edf4ff; }
@@ -434,6 +445,7 @@
 
   <script>
     (function () {
+      var preSeed = document.getElementById('preSeed');
       var welcome = document.getElementById('instantWelcome');
       var boot = document.getElementById('bootLoading');
       if (!welcome || !boot) return;
@@ -441,6 +453,7 @@
       function switchToBoot() {
         if (switched) return;
         switched = true;
+        if (preSeed) preSeed.remove();
         welcome.classList.add('hidden');
         boot.classList.remove('hidden');
       }

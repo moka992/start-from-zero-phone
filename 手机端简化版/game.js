@@ -7309,6 +7309,8 @@ function fillSources() {
 }
 
 async function boot() {
+  const preSeed = document.getElementById('preSeed');
+  if (preSeed) preSeed.remove();
   const instantWelcome = document.getElementById('instantWelcome');
   if (instantWelcome) instantWelcome.classList.add('hidden');
   if (el.bootLoading) el.bootLoading.classList.remove('hidden');
