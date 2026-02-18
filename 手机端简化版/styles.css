@@ -1886,24 +1886,6 @@ button.accent {
   background: rgba(21, 39, 60, 0.6);
 }
 
-.run-mobile-dock-inv {
-  flex: 0 0 auto;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.74rem;
-  color: #b8cde3;
-  border: 1px solid rgba(146, 182, 214, 0.26);
-  border-radius: 999px;
-  padding: 2px 8px;
-  background: rgba(17, 33, 52, 0.58);
-  white-space: nowrap;
-}
-
-.run-mobile-dock-inv.is-empty {
-  color: #ffb8c4;
-  border-color: rgba(255, 140, 162, 0.44);
-  background: rgba(63, 22, 33, 0.52);
-}
-
 .run-mobile-dock strong {
   font-family: "JetBrains Mono", monospace;
   font-size: 0.83rem;
@@ -1932,16 +1914,24 @@ button.accent {
   animation: runDockQuoteBump 0.48s ease;
 }
 
+.run-mobile-dock-meta,
 .run-mobile-dock-action {
   margin-top: 6px;
   font-size: 0.79rem;
   color: #b7cae0;
-  min-height: 2.6em;
+  min-height: 1.3em;
   line-height: 1.33;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-mobile-dock-action {
+  min-height: 2.6em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: normal;
   padding-top: 1px;
   border-top: 1px dashed rgba(142, 176, 208, 0.2);
 }
@@ -2603,13 +2593,10 @@ button.accent {
   .run-mobile-dock-label {
     font-size: 0.72rem;
   }
-  .run-mobile-dock-inv {
-    font-size: 0.71rem;
-    padding: 2px 7px;
-  }
   .run-mobile-dock strong {
     font-size: 0.79rem;
   }
+  .run-mobile-dock-meta,
   .run-mobile-dock-action {
     font-size: 0.75rem;
   }

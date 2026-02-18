@@ -1490,9 +1490,7 @@ function updateHeader() {
   el.cash.textContent = RMB(state.cash);
   el.inv.textContent = state.inventory.toLocaleString('zh-CN');
   if (el.invTransit) {
-    const inTransit = state.product && Array.isArray(state.product.pipeline)
-      ? state.product.pipeline.reduce((sum, x) => sum + (Number(x && x.units) || 0), 0)
-      : 0;
+    const inTransit = calcInTransitUnits();
     el.invTransit.textContent = `在途 ${inTransit.toLocaleString('zh-CN')}`;
   }
   el.rating.textContent = Math.round(state.rating).toString();
@@ -1525,6 +1523,16 @@ function computeTotalInventory() {
 
 function syncInventoryTotal() {
   state.inventory = computeTotalInventory();
+}
+
+function calcInTransitUnits() {
+  if (!state.product || !Array.isArray(state.product.pipeline)) return 0;
+  return state.product.pipeline.reduce((sum, x) => {
+    const units = Number(
+      (x && (x.units ?? x.add ?? x.qty)) || 0
+    ) || 0;
+    return sum + Math.max(0, Math.round(units));
+  }, 0);
 }
 
 const MAX_SKU_COUNT = 6;
@@ -6006,7 +6014,6 @@ function renderMobileRunDockInventory() {
   if (!el.runMobileDockInv) return;
   const inv = Number(state.inventory || 0);
   el.runMobileDockInv.textContent = `库存 ${inv.toLocaleString('zh-CN')}`;
-  el.runMobileDockInv.classList.toggle('is-empty', inv <= 0);
 }
 
 function isMobileViewportForRunDock() {
@@ -6780,6 +6787,9 @@ function restock() {
   state.companyCostTotal += cost;
   p.producedTotal += add;
   p.pipeline.push({ skuId: sku.id, units: add, arriveMonth });
+  if (el.invTransit) {
+    el.invTransit.textContent = `在途 ${calcInTransitUnits().toLocaleString('zh-CN')}`;
+  }
   flashRestockSuccess();
   el.reportBox.innerHTML = `已追加生产 ${sku.name}（${sku.ramName}+${sku.romName}），库存将在后续月份分批到货。`;
   showMobileRunDockAction(`成功补货 ${add.toLocaleString('zh-CN')} 台`, 'good');
