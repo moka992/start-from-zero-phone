@@ -136,6 +136,7 @@ const displayMaterials = {
   eink: { name: '墨水屏', baseCost: 210, baseWeight: 18, score: 40, powerPenalty: -8 },
   foldable: { name: '折叠屏', baseCost: 980, baseWeight: 42, score: 94, powerPenalty: 4 }
 };
+const baseDisplayMaterials = JSON.parse(JSON.stringify(displayMaterials));
 
 const displayVendors = {
   high: { name: '高端供应链', costFactor: 1.1, scoreAdj: 2.2, bezelBase: 1.5 },
@@ -179,6 +180,32 @@ const romOptions = [
   { id: '512_ufs40', name: '512GB UFS 4.0', cost: 620, score: 27 },
   { id: '1t_ufs40', name: '1TB UFS 4.0', cost: 1050, score: 35 }
 ];
+
+const baseRamOptions = JSON.parse(JSON.stringify(ramOptions));
+const baseRomOptions = JSON.parse(JSON.stringify(romOptions));
+const baseRamCapById = {
+  '4_lp4x': 4,
+  '6_lp4x': 6,
+  '8_lp4x': 8,
+  '8_lp5x': 8,
+  '12_lp5x': 12,
+  '16_lp5x': 16,
+  '24_lp5x': 24
+};
+const baseRomCapById = {
+  '64_emmc': 64,
+  '128_ufs22': 128,
+  '256_ufs31': 256,
+  '512_ufs40': 512,
+  '1t_ufs40': 1024
+};
+const baseRomSpeedById = {
+  '64_emmc': { read: 250, write: 125 },
+  '128_ufs22': { read: 1200, write: 600 },
+  '256_ufs31': { read: 2100, write: 1200 },
+  '512_ufs40': { read: 4000, write: 2800 },
+  '1t_ufs40': { read: 4200, write: 3000 }
+};
 
 const bodyOptions = [
   { id: 'plastic', name: '工程塑料', cost: 35, weight: 26, score: 2, structVolume: 4.8 },
@@ -226,6 +253,7 @@ const extras = [
   { id: 'vc', name: '大面积 VC 散热', cost: 35, weight: 8, space: 5.5, score: 4, demand: 0.015 },
   { id: 'satellite', name: '卫星 SOS 通信', cost: 40, weight: 2, space: 1.0, score: 4, demand: 0.007 }
 ];
+const baseExtras = JSON.parse(JSON.stringify(extras));
 
 const chinaRegions = {
   east_core: {
@@ -485,8 +513,17 @@ const state = {
   loans: [],
   eventRerollUsed: false,
   techCycle: 0,
+  memoryCycle: 0,
+  displayCycle: 0,
+  extraCostCycle: 0,
   lastTechRefreshMonth: 0,
   lastTechRefreshGeneration: 1,
+  lastMemoryRefreshMonth: 0,
+  lastMemoryRefreshGeneration: 1,
+  lastDisplayRefreshMonth: 0,
+  lastDisplayRefreshGeneration: 1,
+  lastExtraRefreshMonth: 0,
+  lastExtraRefreshGeneration: 1,
   designDeadEndNotified: false,
   minDesignLaunchCostCache: null,
   rating100Notified: false,
@@ -1047,7 +1084,59 @@ function closePreviewLightbox() {
   refreshOverlayLockState();
 }
 
+function recoverStageAfterRuntimeError() {
+  if (state.ended) {
+    setStep(3);
+    return;
+  }
+  if (state.launched) {
+    setStep(3);
+    return;
+  }
+  if (state.chosenMarket) {
+    setStep(2);
+    return;
+  }
+  setStep(1);
+}
+
+function reportRuntimeError(context, errLike) {
+  if (runtimeErrorHandling) return;
+  runtimeErrorHandling = true;
+  const err = errLike instanceof Error ? errLike : new Error(String(errLike || 'unknown'));
+  const msg = String(err && err.message ? err.message : errLike || 'unknown error');
+  const stackLine = err && err.stack ? String(err.stack).split('\n')[1] || '' : '';
+  try {
+    // Keep diagnostics for local debugging.
+    // eslint-disable-next-line no-console
+    console.error(`[RuntimeError][${context}]`, err);
+  } catch {
+    // ignore
+  }
+  if (el.reportBox) {
+    el.reportBox.innerHTML = `<span class="bad">运行异常：${msg}</span><br>已尝试自动恢复界面，请继续操作或重开新局。`;
+  }
+  if (el.gameModal && el.gameModalStack) {
+    const detail = stackLine ? `<br><span class="tiny">定位：${stackLine.replace(/[<>&]/g, '')}</span>` : '';
+    openGameModal(
+      '运行异常',
+      `检测到异常并已尝试恢复界面。<br><span class="risk-warn">错误：${msg.replace(/[<>&]/g, '')}</span>${detail}`
+    );
+  }
+  recoverStageAfterRuntimeError();
+  refreshOverlayLockState();
+  runtimeErrorHandling = false;
+}
+
 function refreshOverlayLockState() {
+  if (
+    el.gameModal
+    && el.gameModalStack
+    && !el.gameModal.classList.contains('hidden')
+    && el.gameModalStack.children.length === 0
+  ) {
+    el.gameModal.classList.add('hidden');
+  }
   const hasOverlayOpen = Boolean(
     (el.achievePanel && !el.achievePanel.classList.contains('hidden'))
     || (el.gameModal && !el.gameModal.classList.contains('hidden'))
@@ -1139,12 +1228,24 @@ function renderPhonePreview(buildEval) {
   const y = (ch - fh + depthY) / 2;
   const radius = clamp(Math.min(fw, fh) * 0.08, 8, 24);
   const backRgb = hexToRgb(el.backColor ? el.backColor.value : '#2e4a66');
+  const bodyId = String(v.body && v.body.id ? v.body.id : '');
   const frameRgb = hexToRgb('#1a232f');
   const backLight = shiftRgb(backRgb, 18);
   const backDark = shiftRgb(backRgb, -24);
-  const frameMid = shiftRgb(frameRgb, -2);
-  const frameDark = shiftRgb(frameRgb, -28);
-  const frameLight = shiftRgb(frameRgb, 22);
+  let frameMid = shiftRgb(frameRgb, -2);
+  let frameDark = shiftRgb(frameRgb, -28);
+  let frameLight = shiftRgb(frameRgb, 22);
+  if (bodyId === 'glass') {
+    // Bright chrome-like stainless frame.
+    frameMid = hexToRgb('#aebfce');
+    frameDark = hexToRgb('#5f7389');
+    frameLight = hexToRgb('#e6f1fb');
+  } else if (bodyId === 'ceramic') {
+    // Ceramic body: frame blends with rear shell, with glossy glaze feel.
+    frameMid = shiftRgb(backRgb, 6);
+    frameDark = shiftRgb(backRgb, -14);
+    frameLight = shiftRgb(backRgb, 30);
+  }
 
   const bgGrad = ctx.createLinearGradient(0, 0, cw, ch);
   bgGrad.addColorStop(0, 'rgba(16,32,50,0.78)');
@@ -1170,10 +1271,30 @@ function renderPhonePreview(buildEval) {
   ctx.quadraticCurveTo(x + fw, y + fh, x + fw, y + fh - sideR);
   ctx.closePath();
   const sideGrad = ctx.createLinearGradient(x + fw, y, x + fw + depthX, y);
-  sideGrad.addColorStop(0, rgbToCss(frameMid, 0.82));
-  sideGrad.addColorStop(1, rgbToCss(frameDark, 0.92));
+  if (bodyId === 'glass') {
+    sideGrad.addColorStop(0, rgbToCss(shiftRgb(frameLight, 8), 0.95));
+    sideGrad.addColorStop(0.46, rgbToCss(frameMid, 0.9));
+    sideGrad.addColorStop(1, rgbToCss(frameDark, 0.9));
+  } else if (bodyId === 'ceramic') {
+    sideGrad.addColorStop(0, rgbToCss(frameLight, 0.9));
+    sideGrad.addColorStop(0.52, rgbToCss(frameMid, 0.88));
+    sideGrad.addColorStop(1, rgbToCss(frameDark, 0.9));
+  } else {
+    sideGrad.addColorStop(0, rgbToCss(frameMid, 0.82));
+    sideGrad.addColorStop(1, rgbToCss(frameDark, 0.92));
+  }
   ctx.fillStyle = sideGrad;
   ctx.fill();
+  if (bodyId === 'glass' || bodyId === 'ceramic') {
+    // Specular highlight stripe to emphasize reflective frame materials.
+    const stripeX = x + fw + depthX * 0.22;
+    const stripeGrad = ctx.createLinearGradient(stripeX, y, stripeX + depthX * 0.24, y);
+    stripeGrad.addColorStop(0, 'rgba(242,250,255,0)');
+    stripeGrad.addColorStop(0.5, bodyId === 'glass' ? 'rgba(244,252,255,0.34)' : 'rgba(245,251,255,0.24)');
+    stripeGrad.addColorStop(1, 'rgba(242,250,255,0)');
+    ctx.fillStyle = stripeGrad;
+    ctx.fillRect(x + fw, y - depthY * 0.25, depthX, fh + depthY * 0.55);
+  }
 
   // Top face
   ctx.beginPath();
@@ -1182,7 +1303,11 @@ function renderPhonePreview(buildEval) {
   ctx.lineTo(x + fw + depthX, y - depthY);
   ctx.lineTo(x + depthX, y - depthY);
   ctx.closePath();
-  ctx.fillStyle = rgbToCss(frameLight, 0.66);
+  ctx.fillStyle = bodyId === 'glass'
+    ? rgbToCss(shiftRgb(frameLight, 6), 0.86)
+    : bodyId === 'ceramic'
+      ? rgbToCss(shiftRgb(frameLight, 2), 0.78)
+      : rgbToCss(frameLight, 0.66);
   ctx.fill();
 
   // Pure rear cover (no front screen on this view)
@@ -1370,6 +1495,56 @@ function addSkuRow(seed = {}) {
   row.querySelector('.sku-ram').value = seed.ram || '8_lp5x';
   row.querySelector('.sku-rom').value = seed.rom || '256_ufs31';
   refreshSkuButtons();
+}
+
+function getRamCapacityGb(ramLike) {
+  if (!ramLike) return 0;
+  if (Number.isFinite(Number(ramLike.capacityGb))) return Number(ramLike.capacityGb);
+  return Number(baseRamCapById[ramLike.id] || 0);
+}
+
+function getRomCapacityGb(romLike) {
+  if (!romLike) return 0;
+  if (Number.isFinite(Number(romLike.capacityGb))) return Number(romLike.capacityGb);
+  return Number(baseRomCapById[romLike.id] || 0);
+}
+
+function getRelativeTierByOptionId(optionId, optionList) {
+  const list = Array.isArray(optionList) ? optionList : [];
+  const n = list.length;
+  if (!optionId || n <= 0) return 'mid';
+  const idx = list.findIndex((x) => x && x.id === optionId);
+  if (idx < 0) return 'mid';
+  if (n === 1) return 'mid';
+  if (n === 2) return idx === 0 ? 'small' : 'large';
+  // Prefer "middle three = mid".
+  // This project uses fixed replacement updates (no option-count growth),
+  // so this keeps stable tiering across iterations.
+  const midCount = n >= 5 ? 3 : Math.max(1, n - 2);
+  const midStart = Math.floor((n - midCount) / 2);
+  const midEnd = midStart + midCount - 1;
+  if (idx < midStart) return 'small';
+  if (idx > midEnd) return 'large';
+  return 'mid';
+}
+
+function refreshMemorySelectableOptions() {
+  if (!el.skuList) return;
+  const ramOptionsHtml = ramOptions.map((x) => `<option value="${x.id}">${x.name}（${RMB(x.cost)}）</option>`).join('');
+  const romOptionsHtml = romOptions.map((x) => `<option value="${x.id}">${x.name}（${RMB(x.cost)}）</option>`).join('');
+  [...el.skuList.querySelectorAll('.sku-row')].forEach((row) => {
+    const ramSel = row.querySelector('.sku-ram');
+    const romSel = row.querySelector('.sku-rom');
+    if (!ramSel || !romSel) return;
+    const oldRam = ramSel.value;
+    const oldRom = romSel.value;
+    ramSel.innerHTML = ramOptionsHtml;
+    romSel.innerHTML = romOptionsHtml;
+    if ([...ramSel.options].some((o) => o.value === oldRam)) ramSel.value = oldRam;
+    else ramSel.value = '8_lp5x';
+    if ([...romSel.options].some((o) => o.value === oldRom)) romSel.value = oldRom;
+    else romSel.value = '256_ufs31';
+  });
 }
 
 function refreshSkuButtons() {
@@ -2254,9 +2429,7 @@ function fillOptions() {
   el.camTele.value = hasCam(prevTele) ? prevTele : 'none';
   el.camFront.value = hasCam(prevFront) ? prevFront : (hasCam('front_32') ? 'front_32' : 'none');
 
-  el.extras.innerHTML = extras.map((x, idx) => `
-    <label><input type="checkbox" value="${x.id}" /> ${x.name}（+${RMB(x.cost)}，+${x.weight}g）</label>
-  `).join('');
+  refreshExtrasSelectableOptions();
 
   el.marketingFocus.innerHTML = Object.entries(marketingProfiles)
     .map(([key, m]) => `<option value="${key}">${m.name}</option>`)
@@ -2269,6 +2442,17 @@ function fillOptions() {
   if (el.modelBaseName) el.modelBaseName.value = FIXED_MODEL_BASE_NAME;
   updateStartupDifficultyStyle();
   updateModelNameHint();
+}
+
+function refreshExtrasSelectableOptions() {
+  if (!el.extras) return;
+  const checked = new Set(
+    [...el.extras.querySelectorAll('input:checked')]
+      .map((i) => i.value)
+  );
+  el.extras.innerHTML = extras.map((x) => `
+    <label><input type="checkbox" value="${x.id}" ${checked.has(x.id) ? 'checked' : ''} /> ${x.name}（+${RMB(x.cost)}，+${x.weight}g）</label>
+  `).join('');
 }
 
 function refreshTechSelectableOptions() {
@@ -2315,7 +2499,10 @@ function refreshTechSelectableOptions() {
 }
 
 function estimateSocBenchmarkByScore(score) {
-  const s = clamp(Number(score || 0), 20, 130) / 100;
+  // Keep growing with tech cycles: no fixed ceiling for benchmark anchors.
+  const techRound = Math.max(0, Number(state.techCycle || 0));
+  const dynamicScoreCap = 130 + techRound * 9;
+  const s = clamp(Number(score || 0), 20, dynamicScoreCap) / 100;
   const antutu10 = Math.round(120_000 + Math.pow(s, 2.4) * 3_850_000);
   const geekbench6Single = Math.round(320 + Math.pow(s, 2.1) * 3_500);
   const geekbench6Multi = Math.round(1_150 + Math.pow(s, 2.05) * 10_600);
@@ -2616,6 +2803,129 @@ function addNewGenerationCamera(addQuota = 3) {
   return added;
 }
 
+function formatRomCapacityLabel(capGb) {
+  const n = Number(capGb || 0);
+  if (n >= 1024) {
+    const tb = n / 1024;
+    const txt = Number.isInteger(tb) ? String(tb) : tb.toFixed(2).replace(/\.?0+$/, '');
+    return `${txt}TB`;
+  }
+  return `${Math.round(n)}GB`;
+}
+
+function evolveMemoryPools() {
+  // Safety guard: memory evolution is replacement-only; keep option counts stable.
+  if (ramOptions.length !== baseRamOptions.length) {
+    ramOptions.splice(0, ramOptions.length, ...JSON.parse(JSON.stringify(baseRamOptions)));
+  }
+  if (romOptions.length !== baseRomOptions.length) {
+    romOptions.splice(0, romOptions.length, ...JSON.parse(JSON.stringify(baseRomOptions)));
+  }
+  const cycle = Math.max(0, Number(state.memoryCycle || 0));
+  const ramTechByCycleLow = ['LPDDR4X', 'LPDDR5', 'LPDDR5X', 'LPDDR6', 'LPDDR6X', 'LPDDR7'];
+  const ramTechByCycleHigh = ['LPDDR5X', 'LPDDR6', 'LPDDR6X', 'LPDDR7', 'LPDDR7X'];
+  const romTechSeq = ['eMMC', 'UFS 2.2', 'UFS 3.1', 'UFS 4.0', 'UFS 4.1', 'UFS 5.0'];
+  const romBaseTechIndex = {
+    '64_emmc': 0,
+    '128_ufs22': 1,
+    '256_ufs31': 2,
+    '512_ufs40': 3,
+    '1t_ufs40': 3
+  };
+
+  ramOptions.forEach((opt) => {
+    const base = baseRamOptions.find((x) => x.id === opt.id) || opt;
+    const baseCap = Number(baseRamCapById[opt.id] || getRamCapacityGb(base) || 0);
+    const cap = baseCap + cycle * 4;
+    const isLowTier = String(opt.id || '').includes('lp4x');
+    const techPool = isLowTier ? ramTechByCycleLow : ramTechByCycleHigh;
+    const tech = techPool[Math.min(cycle, techPool.length - 1)];
+    opt.capacityGb = cap;
+    opt.name = `${cap}GB ${tech}`;
+    opt.cost = Math.round(Number(base.cost || 0) * (1 + cycle * 0.06) + cycle * 14 + Math.max(0, (cap - baseCap)) * 2.6);
+    opt.score = Math.round(Number(base.score || 0) + cycle * 3 + Math.max(0, (cap - baseCap)) * 0.35);
+  });
+
+  romOptions.forEach((opt) => {
+    const base = baseRomOptions.find((x) => x.id === opt.id) || opt;
+    const baseCap = Number(baseRomCapById[opt.id] || getRomCapacityGb(base) || 0);
+    const cap = baseCap + cycle * 16;
+    const baseIo = baseRomSpeedById[opt.id] || { read: 2100, write: 1200 };
+    const baseTechIdx = Number(romBaseTechIndex[opt.id] || 2);
+    const tech = romTechSeq[Math.min(baseTechIdx + cycle, romTechSeq.length - 1)];
+    opt.capacityGb = cap;
+    opt.name = `${formatRomCapacityLabel(cap)} ${tech}`;
+    opt.cost = Math.round(Number(base.cost || 0) * (1 + cycle * 0.055) + cycle * 22 + Math.max(0, (cap - baseCap)) * 0.35);
+    opt.read = Math.round(baseIo.read * Math.pow(1.11, cycle));
+    opt.write = Math.round(baseIo.write * Math.pow(1.115, cycle));
+    opt.score = Math.round(Number(base.score || 0) + cycle * 3.4 + Math.max(0, (cap - baseCap)) * 0.03);
+  });
+}
+
+function maybeRefreshMemoryPools(trigger = 'time') {
+  const nextGen = getNextGenerationIndex();
+  const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
+  if (!unlocked) return false;
+  const timeDue = (state.companyMonthsTotal - (state.lastMemoryRefreshMonth || 0)) >= 24;
+  const genDue = trigger === 'generation' && (nextGen - (state.lastMemoryRefreshGeneration || 1)) >= 2;
+  if (!timeDue && !genDue) return false;
+  state.memoryCycle = (state.memoryCycle || 0) + 1;
+  evolveMemoryPools();
+  refreshMemorySelectableOptions();
+  if (el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+    refreshDesignPanelsLive();
+  }
+  state.lastMemoryRefreshMonth = state.companyMonthsTotal;
+  state.lastMemoryRefreshGeneration = nextGen;
+  openGameModal(
+    '存储代际更新',
+    `存储供应链进入新周期：内存与存储规格整体迭代。<br>本次已更新（第 <strong>${state.memoryCycle}</strong> 轮），建议重新检查 SKU 组合与定价。`
+  );
+  return true;
+}
+
+function maybeRefreshDisplayScoreProgress(trigger = 'time') {
+  const nextGen = getNextGenerationIndex();
+  const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
+  if (!unlocked) return false;
+  const timeDue = (state.companyMonthsTotal - (state.lastDisplayRefreshMonth || 0)) >= 24;
+  const genDue = trigger === 'generation' && (nextGen - (state.lastDisplayRefreshGeneration || 1)) >= 2;
+  if (!timeDue && !genDue) return false;
+  state.displayCycle = (state.displayCycle || 0) + 1;
+  Object.values(displayMaterials).forEach((mat) => {
+    if (!mat) return;
+    mat.baseCost = Math.max(0, Number(mat.baseCost || 0) + 5);
+  });
+  state.lastDisplayRefreshMonth = state.companyMonthsTotal;
+  state.lastDisplayRefreshGeneration = nextGen;
+  updateDisplayMaterialOptions();
+  if (el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+    refreshDesignPanelsLive();
+  }
+  return true;
+}
+
+function maybeRefreshExtraCosts(trigger = 'time') {
+  const nextGen = getNextGenerationIndex();
+  const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
+  if (!unlocked) return false;
+  const timeDue = (state.companyMonthsTotal - (state.lastExtraRefreshMonth || 0)) >= 12;
+  const genDue = trigger === 'generation' && nextGen > (state.lastExtraRefreshGeneration || 1);
+  if (!timeDue && !genDue) return false;
+
+  extras.forEach((x) => {
+    x.cost = Math.max(0, Number(x.cost || 0) + 1);
+  });
+  state.extraCostCycle = (state.extraCostCycle || 0) + 1;
+  state.lastExtraRefreshMonth = state.companyMonthsTotal;
+  state.lastExtraRefreshGeneration = nextGen;
+  refreshExtrasSelectableOptions();
+  if (el.stageConfig && !el.stageConfig.classList.contains('hidden')) {
+    refreshDesignPanelsLive();
+  }
+  return true;
+}
+
 function maybeRefreshTechComponentPool(trigger = 'time') {
   const nextGen = getNextGenerationIndex();
   const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
@@ -2657,8 +2967,15 @@ function maybeRefreshTechComponentPool(trigger = 'time') {
 }
 
 function resetTechPoolsToBase() {
+  Object.keys(displayMaterials).forEach((k) => {
+    if (!baseDisplayMaterials[k]) return;
+    displayMaterials[k] = JSON.parse(JSON.stringify(baseDisplayMaterials[k]));
+  });
   socs.splice(0, socs.length, ...JSON.parse(JSON.stringify(baseSocs)));
   cameraModules.splice(0, cameraModules.length, ...JSON.parse(JSON.stringify(baseCameraModules)));
+  ramOptions.splice(0, ramOptions.length, ...JSON.parse(JSON.stringify(baseRamOptions)));
+  romOptions.splice(0, romOptions.length, ...JSON.parse(JSON.stringify(baseRomOptions)));
+  extras.splice(0, extras.length, ...JSON.parse(JSON.stringify(baseExtras)));
   Object.keys(dynamicSocThermalMap).forEach((k) => { delete dynamicSocThermalMap[k]; });
   Object.keys(dynamicMainCamThermalMap).forEach((k) => { delete dynamicMainCamThermalMap[k]; });
   Object.keys(socBenchmarkAnchors).forEach((k) => { delete socBenchmarkAnchors[k]; });
@@ -2836,28 +3153,33 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     const m = String(id || '').match(/_(?:x)?(\d+)$/i);
     return m ? Math.max(0, Number(m[1]) || 0) : 0;
   };
-  const techRound = clamp(Number(state.techCycle || 0), 0, 24);
-  const socGen = parseGenFromId(v.soc.id);
-  const socEra = clamp(techRound + socGen * 0.65, 0, 24);
-  const socDynamicUpper = Math.round(clamp(236 * Math.pow(1.09, socEra), 236, 980));
+  const techRound = Math.max(0, Number(state.techCycle || 0));
   const hasActiveFan = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'active_fan');
   const hasVCBoost = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'vc');
-  const socLabScoreRaw = clamp(
+  const hasSemiBoost = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'semi_cooler');
+  const socLabScoreRaw = Math.max(
+    55,
     50
       + socRef.antutu10 / 40_000
       + socRef.geekbench6Single / 90
-      + socRef.geekbench6Multi / 220,
-    55,
-    socDynamicUpper
+      + socRef.geekbench6Multi / 220
   );
-  const socBoostMul = 1 + (hasActiveFan ? 0.1 : 0) + (hasVCBoost ? 0.1 : 0);
-  const socLabScoreForHeat = clamp(socLabScoreRaw * socBoostMul, 55, socDynamicUpper);
-  const socOverheatSec = estimateSocOverheatSeconds(thermalPressure, socLabScoreForHeat);
+  const socBoostMul = 1 + (hasActiveFan ? 0.1 : 0) + (hasVCBoost ? 0.1 : 0) + (hasSemiBoost ? 0.2 : 0);
+  const socLabScoreForHeat = Math.max(55, socLabScoreRaw * socBoostMul);
+  // Cooling extras scale with heat load so they can keep up with long-term SoC growth.
+  const coolingFollowFactor =
+    (hasVCBoost ? (0.55 + techRound * 0.06) : 0)
+    + (hasActiveFan ? (0.8 + techRound * 0.08) : 0)
+    + (hasSemiBoost ? (1.4 + techRound * 0.1) : 0);
+  const heatLoadGrowth = Math.max(0, socLabScoreForHeat - 120) / 120;
+  const coolingFollowScale = 1 + coolingFollowFactor * heatLoadGrowth;
+  const socHeatScoreEffective = socLabScoreForHeat / Math.max(1, coolingFollowScale);
+  const socOverheatSec = estimateSocOverheatSeconds(thermalPressure, socHeatScoreEffective);
   // If overheat occurs before 6s, SoC score linearly drops up to 50%.
   const socThermalPenaltyRatio = socOverheatSec < 6
     ? clamp(1 - ((6 - socOverheatSec) / 6) * 0.5, 0.5, 1)
     : 1;
-  const socLabScore = clamp(socLabScoreForHeat * socThermalPenaltyRatio, 30, socDynamicUpper);
+  const socLabScore = Math.max(30, socLabScoreForHeat * socThermalPenaltyRatio);
 
   const storageSpeedMap = {
     '64_emmc': { read: 250, write: 125 },
@@ -2867,23 +3189,29 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     '1t_ufs40': { read: 4200, write: 3000 }
   };
   const weightedStorage = v.skuPlans.reduce((acc, sku) => {
-    const io = storageSpeedMap[sku.rom.id] || storageSpeedMap['256_ufs31'];
+    const dynamicIo = sku && sku.rom
+      ? { read: Number(sku.rom.read), write: Number(sku.rom.write) }
+      : null;
+    const baseIo = storageSpeedMap[sku.rom.id] || storageSpeedMap['256_ufs31'];
+    const io = {
+      read: Number.isFinite(dynamicIo && dynamicIo.read) && dynamicIo.read > 0 ? dynamicIo.read : baseIo.read,
+      write: Number.isFinite(dynamicIo && dynamicIo.write) && dynamicIo.write > 0 ? dynamicIo.write : baseIo.write
+    };
     const share = sku.share / 100;
     acc.read += io.read * share;
     acc.write += io.write * share;
     return acc;
   }, { read: 0, write: 0 });
-  const storageLabScore = clamp(
+  const storageLabScore = Math.max(
+    50,
     55
       + weightedStorage.read / 90
       + weightedStorage.write / 120
       + avgRamScore * 0.75
-      + avgRomScore * 0.45,
-    50,
-    180
+      + avgRomScore * 0.45
   );
 
-  const displayLabScore = clamp(64 + displayScore * 1.02, 60, 170);
+  const displayLabScore = Math.max(60, 64 + displayScore * 1.02);
 
   const main = v.cams.main.id === 'none' ? 0 : v.cams.main.score;
   const ultra = v.cams.ultra.id === 'none' ? 0 : v.cams.ultra.score;
@@ -2895,20 +3223,18 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     + parseGenFromId(v.cams.tele.id)
     + parseGenFromId(v.cams.front.id)
   ) / 4;
-  const camEra = clamp(techRound * 0.9 + camGenAvg * 0.9, 0, 24);
-  const cameraDynamicUpper = Math.round(clamp(165 * Math.pow(1.085, camEra), 165, 760));
+  const camEra = Math.max(0, techRound * 0.9 + camGenAvg * 0.9);
   const hasAnyCamera = main > 0 || ultra > 0 || tele > 0 || front > 0;
   const cameraLabScore = hasAnyCamera
-    ? clamp(
+    ? Math.max(
+      35,
       46
         + main * 1.25
         + ultra * 0.65
         + tele * 0.78
         + front * 0.34
         + camEra * 2.8
-        + (main > 0 && ultra > 0 && tele > 0 ? 6 : 0),
-      35,
-      cameraDynamicUpper
+        + (main > 0 && ultra > 0 && tele > 0 ? 6 : 0)
     )
     : 0;
 
@@ -2935,6 +3261,8 @@ function calcVirtualBenchmark(v, avgRamScore, avgRomScore, displayScore, cameraS
     total,
     socLabScore: Math.round(socLabScore),
     socLabScoreForHeat: Math.round(socLabScoreForHeat),
+    socHeatScoreEffective: Math.round(socHeatScoreEffective),
+    coolingFollowScale,
     storageLabScore: Math.round(storageLabScore),
     displayLabScore: Math.round(displayLabScore),
     cameraLabScore: Math.round(cameraLabScore),
@@ -3034,8 +3362,8 @@ function calcBatteryEndurance(v, screenMm, displayFeatureKeys) {
   const hasSemiCooler = Array.isArray(v.chosenExtras) && v.chosenExtras.some((x) => x.id === 'semi_cooler');
   const hoursRaw = BATTERY_BASELINE.hours * (batteryWh / BATTERY_BASELINE.batteryWh) / powerIndex;
   const hours = hasSemiCooler ? hoursRaw * 0.95 : hoursRaw;
-  const endurancePct = clamp((hours / BATTERY_BASELINE.hours) * 100, 45, 200);
-  const batteryLabScore = clamp(20 + endurancePct * 0.8, 35, 165);
+  const endurancePct = Math.max(45, (hours / BATTERY_BASELINE.hours) * 100);
+  const batteryLabScore = Math.max(35, 20 + endurancePct * 0.8);
 
   let onlineDemandMul = 1.0;
   let offlineDemandMul = 1.0;
@@ -3118,7 +3446,9 @@ function evaluateBuild() {
   const bezelCostFactor = clamp(1 + Math.max(0, 2.5 - bezel.sideBezel) * 0.16, 0.92, 1.28);
   const bezelDemandFactor = clamp(1.07 - Math.max(0, bezel.sideBezel - 1.5) * 0.12, 0.68, 1.08);
   const bezelScoreAdj = clamp((2.5 - bezel.sideBezel) * 4.2, -6, 6);
-  const displayScore = v.disp.mat.score + v.disp.vendor.scoreAdj + featureScore + v.disp.form.score + bezelScoreAdj;
+  const displayScoreBase = v.disp.mat.score + v.disp.vendor.scoreAdj + featureScore + v.disp.form.score + bezelScoreAdj;
+  const displayScoreGrowthMul = Math.pow(1.1, Math.max(0, Number(state.displayCycle || 0)));
+  const displayScore = displayScoreBase * displayScoreGrowthMul;
 
 
   const screenMm = getScreenDimensionsMm(v.disp.size, v.disp.ratio);
@@ -3301,23 +3631,24 @@ function evaluateBuild() {
   // Cooling tech also evolves with the component cycle: newer eras are slightly better by default.
   const coolingTechRound = clamp(Number(state.techCycle || 0), 0, 10);
   const baselineCoolingMul = clamp(1 - coolingTechRound * 0.018, 0.82, 1.0);
-  const vcCoolingMul = hasVC ? clamp(0.7 - coolingTechRound * 0.016, 0.5, 0.7) : 1.0;
-  const fanCoolingMul = hasActiveFan ? clamp(0.58 - coolingTechRound * 0.02, 0.4, 0.58) : 1.0;
-  // Semiconductor cooling: starts at ~20% stronger than active fan, and scales with tech rounds.
-  const semiCoolingMul = hasSemiCooler ? clamp(0.46 - coolingTechRound * 0.022, 0.3, 0.46) : 1.0;
-  const thermalPressureRaw = clamp(
+  // VC: reduce thermal pressure by 45%~80%.
+  const vcCoolingMul = hasVC ? clamp(0.55 - coolingTechRound * 0.03, 0.2, 0.55) : 1.0;
+  // Active fan: reduce thermal pressure by 55%~90%.
+  const fanCoolingMul = hasActiveFan ? clamp(0.45 - coolingTechRound * 0.04, 0.1, 0.45) : 1.0;
+  // Semiconductor cooler: target 75%~110% reduction zone.
+  // Multiplier can dip below zero to represent over-cooling headroom; final pressure is floored later.
+  const semiCoolingMul = hasSemiCooler ? clamp(0.25 - coolingTechRound * 0.035, -0.1, 0.25) : 1.0;
+  const thermalPressureRaw = (
     (socThermal + mainCamThermal + (totalCameraCount >= 3 ? 0.08 : 0))
       * vcCoolingMul
       * fanCoolingMul
       * semiCoolingMul
       * baselineCoolingMul
       * bodyThermalFactor
-      * surfaceAreaThermalFactor,
-    0.65,
-    2.2
+      * surfaceAreaThermalFactor
   );
   // Slight global uplift so all SoCs are a bit easier to overheat.
-  const thermalPressure = clamp(thermalPressureRaw * 1.1, 0.65, 2.2);
+  const thermalPressure = clamp(thermalPressureRaw * 1.1, 0.02, 2.2);
   const virtualBench = calcVirtualBenchmark(
     v,
     avgRamScore,
@@ -3327,20 +3658,19 @@ function evaluateBuild() {
     batteryEval.batteryLabScore,
     thermalPressure
   );
-  // Memory space model (discrete tiers):
-  // ROM: 64GB smallest; 128~512GB same mid tier; 1TB slightly larger.
-  // RAM: 4~16GB same; 24GB slightly larger.
+  // Memory space model (dynamic 3-tier by current option ladder):
+  // lowest tier -> small, highest tier -> large, middle three -> mid.
   const weightedRomSpaceTier = v.skuPlans.length
     ? v.skuPlans.reduce((sum, sku) => {
-      let tier = 1.0;
-      if (sku.rom.id === '64_emmc') tier = 0.86;
-      else if (sku.rom.id === '1t_ufs40') tier = 1.14;
+      const rel = getRelativeTierByOptionId(sku && sku.rom && sku.rom.id, romOptions);
+      const tier = rel === 'small' ? 0.86 : rel === 'large' ? 1.14 : 1.0;
       return sum + tier * (sku.share / 100);
     }, 0)
     : 1.0;
   const weightedRamSpaceTier = v.skuPlans.length
     ? v.skuPlans.reduce((sum, sku) => {
-      const tier = sku.ram.id === '24_lp5x' ? 1.12 : 1.0;
+      const rel = getRelativeTierByOptionId(sku && sku.ram && sku.ram.id, ramOptions);
+      const tier = rel === 'small' ? 0.9 : rel === 'large' ? 1.12 : 1.0;
       return sum + tier * (sku.share / 100);
     }, 0)
     : 1.0;
@@ -3578,7 +3908,10 @@ function evaluateBuild() {
   // Multi-lane demand model: online and offline react to different design traits.
   const onlineMarketWeight = clamp(v.marketStats.onlinePenetration, 0.25, 0.92);
   const offlineMarketWeight = 1 - onlineMarketWeight;
-  const hasHighEndMemorySku = skuCosting.some((s) => s && s.ram && s.rom && (s.ram.id === '24_lp5x' || s.ram.id === '16_lp5x') && s.rom.id === '1t_ufs40');
+  const hasHighEndMemorySku = skuCosting.some((s) => {
+    if (!s || !s.ram || !s.rom) return false;
+    return getRamCapacityGb(s.ram) >= 16 && getRomCapacityGb(s.rom) >= 960;
+  });
   const hasProCameraPack = hasOneInchMain || (hasCameraMatrix && hasLargeMain);
   const featureBreadth = clamp(
     0.84
@@ -3916,7 +4249,6 @@ function renderPreview() {
       `基线对照：<strong>${BENCHMARK_BASELINE.name}</strong> = ${BENCHMARK_BASELINE.total}；当前为基线的 ${benchmarkRatioText(e.virtualBench.baselineRatio)}（${e.virtualBench.baselineTag}）`,
       `续航评测：约 <strong>${e.batteryEval.hours.toFixed(1)} 小时</strong>（${BATTERY_BASELINE.name}=100%，当前 ${Math.round(e.batteryEval.endurancePct)}%）｜${e.batteryEval.tag}`,
       `换代新鲜度：${e.noveltyDemandMul < 1 ? `<span class="bad">${e.noveltyTag}</span>（需求系数 x${e.noveltyDemandMul.toFixed(2)}）` : `<span class="good">${e.noveltyTag}</span>`}${e.noveltyWarning ? `｜<span class="bad">${e.noveltyWarning}</span>` : ''}`,
-      `定价可信度：${e.pricingWarningLevel === 'immune' ? `<span class="good">口碑护城河生效（口碑>90），高溢价惩罚免疫</span>` : e.pricingWarningLevel === 'critical' ? `<span class="bad">售价过高（约成本 ${e.priceToCostRatio.toFixed(2)}x），需求指数下滑</span>` : e.pricingWarningLevel === 'warn' ? `<span class="risk-warn">售价偏高（约成本 ${e.priceToCostRatio.toFixed(2)}x），需求线性下滑</span>` : '<span class="good">定价与成本关系合理</span>'}${e.pricingCredibilityMul < 1 ? `（需求系数 x${e.pricingCredibilityMul.toFixed(2)}）` : ''}`,
       `散热评估：${e.thermalPressure <= 1.12 ? '<span class="good">散热压力可控</span>' : e.thermalPressure <= 1.38 ? `<span class="risk-warn">${e.thermalTag}</span>` : `<span class="bad">${e.thermalTag}</span>`}｜${thermalPerfImpact}`,
       `屏幕-机身关系：屏幕约 ${e.screenMm.widthMm.toFixed(1)} x ${e.screenMm.heightMm.toFixed(1)} mm，机身可容纳开口约 ${maxScreenW.toFixed(1)} x ${maxScreenH.toFixed(1)} mm，${screenFit ? '<span class="good">匹配正常</span>' : '<span class="bad">尺寸冲突</span>'}`,
       `影像市场反馈：${e.cameraDemandFactor >= 0.95 ? '<span class="good">影像配置对销量无明显拖累</span>' : e.cameraDemandFactor >= 0.65 ? `<span class="risk-warn">${e.cameraDemandTag}</span>` : `<span class="bad">${e.cameraDemandTag}</span>`}`,
@@ -4056,7 +4388,7 @@ async function runBenchSocTest(e, token) {
     if (temp >= 95 || t >= 8) break;
     await benchSleep(120);
     if (!benchIsAlive(token)) return false;
-    const socHeatScore = Number(e.virtualBench.socLabScoreForHeat || e.virtualBench.socLabScore || 0);
+    const socHeatScore = Number(e.virtualBench.socHeatScoreEffective || e.virtualBench.socLabScoreForHeat || e.virtualBench.socLabScore || 0);
     const baseRise = 0.34 + e.thermalPressure * 0.56 + socHeatScore / 420;
     const heatProgress = clamp((temp - 26) / (95 - 26), 0, 1);
     // Curved climb: fast ramp-up first, then slow near thermal ceiling.
@@ -4271,28 +4603,42 @@ function launch() {
   state.product = e;
   markScreenMaterialProduced(el.dispMat ? el.dispMat.value : '');
   checkScreenCollectorMilestone();
-  checkFoldableAchievement(e);
-  checkEinkAchievement(e);
-  checkFutureEinkAchievement(e);
-  checkEbookAchievement(e);
-  checkUltraFlagshipAchievement(e);
-  checkAdvancedAlloyAchievement(e);
-  checkCeramicAchievement(e);
-  checkNoCameraAchievement(e);
-  checkAramidAchievement(e);
-  checkSelfieAchievement(e);
-  checkTopLcdAchievement(e);
-  checkFlagshipLcdDemonAchievement(e);
-  checkThermalManiacAchievement(e);
-  checkSatelliteAchievement(e);
-  checkBatteryTechAchievement(e);
-  checkMagsafeAchievement(e);
-  checkSmallScreenAchievement(e);
-  checkFlatBackAchievement(e);
-  checkLargeScreenAchievement(e);
-  checkNoRefreshAchievement(e);
-  checkSqueezeToothpasteAchievement(e);
-  checkBrandToneAchievement(e);
+  const safeAchievementChecks = [
+    checkFoldableAchievement,
+    checkEinkAchievement,
+    checkFutureEinkAchievement,
+    checkEbookAchievement,
+    checkUltraFlagshipAchievement,
+    checkAdvancedAlloyAchievement,
+    checkCeramicAchievement,
+    checkNoCameraAchievement,
+    checkAramidAchievement,
+    checkSelfieAchievement,
+    checkTopLcdAchievement,
+    checkFlagshipLcdDemonAchievement,
+    checkThermalManiacAchievement,
+    checkSatelliteAchievement,
+    checkBatteryTechAchievement,
+    checkMagsafeAchievement,
+    checkSmallScreenAchievement,
+    checkFlatBackAchievement,
+    checkLargeScreenAchievement,
+    checkNoRefreshAchievement,
+    checkSqueezeToothpasteAchievement,
+    checkBrandToneAchievement
+  ];
+  safeAchievementChecks.forEach((fn) => {
+    try {
+      fn(e);
+    } catch (err) {
+      try {
+        // eslint-disable-next-line no-console
+        console.error('[LaunchAchievementError]', fn && fn.name ? fn.name : 'unknown', err);
+      } catch {
+        // ignore
+      }
+    }
+  });
   state.product.modelBaseName = e.modelNameCheck.name;
   state.product.modelGeneration = e.modelGeneration;
   state.product.modelName = e.modelName;
@@ -4339,7 +4685,7 @@ function launch() {
   const isFoldableModel = e.input.disp.mat.name === '折叠屏';
   const isFlagshipSoc = e.input.soc.tier.includes('旗舰');
   const isFlagshipCamera = ['gn3_50', 'hp3_200', 'hp2_200', 'lyt900'].includes(e.input.cams.main.id);
-  const hasTopRamSku = (e.skuCosting || []).some((s) => ['16_lp5x', '24_lp5x'].includes(s.ram.id));
+  const hasTopRamSku = (e.skuCosting || []).some((s) => getRamCapacityGb(s && s.ram) >= 16);
   let premiumSignalScore = 0;
   if (isFoldableModel) premiumSignalScore += 1.3;
   if (isFlagshipSoc) premiumSignalScore += 1.0;
@@ -4784,6 +5130,7 @@ function closeAchievementPanel() {
 let gameModalSeq = 0;
 let gameoverCtaLatched = false;
 let celebrateCtaLatched = false;
+let runtimeErrorHandling = false;
 
 function applyRestartCtaState(mode = 'none') {
   const restartBtns = [el.restart, el.restartDesign].filter(Boolean);
@@ -5004,6 +5351,17 @@ function checkEbookAchievement(buildLike) {
   );
 }
 
+function hasMaxMemorySku(skuList) {
+  const list = Array.isArray(skuList) ? skuList : [];
+  const maxRamCap = ramOptions.reduce((m, x) => Math.max(m, getRamCapacityGb(x)), 0);
+  const maxRomCap = romOptions.reduce((m, x) => Math.max(m, getRomCapacityGb(x)), 0);
+  if (maxRamCap <= 0 || maxRomCap <= 0) return false;
+  return list.some((sku) => {
+    if (!sku || !sku.ram || !sku.rom) return false;
+    return getRamCapacityGb(sku.ram) >= maxRamCap && getRomCapacityGb(sku.rom) >= maxRomCap;
+  });
+}
+
 function checkUltraFlagshipAchievement(buildLike) {
   if (state.ended || state.ultraFlagshipAchievedNotified) return;
   const input = buildLike && buildLike.input ? buildLike.input : null;
@@ -5011,13 +5369,12 @@ function checkUltraFlagshipAchievement(buildLike) {
   const isUltraSoc = socTier.includes('旗舰+');
   if (!isUltraSoc) return;
   const skuList = Array.isArray(buildLike && buildLike.skuCosting) ? buildLike.skuCosting : [];
-  const has24G1T = skuList.some((sku) => sku && sku.ram && sku.rom && sku.ram.id === '24_lp5x' && sku.rom.id === '1t_ufs40');
-  if (!has24G1T) return;
+  if (!hasMaxMemorySku(skuList)) return;
   state.ultraFlagshipAchievedNotified = true;
-  addAchievementCard('ultra_flagship', '旗舰中的旗舰', '旗舰+SoC并含24G+1TB SKU成功发售。');
+  addAchievementCard('ultra_flagship', '旗舰中的旗舰', '旗舰+SoC并含满配内存+满配存储 SKU成功发售。');
   openGameModal(
     '成就解锁',
-    '你把旗舰+ SoC 和 24G+1TB 同时端上来了，恭喜达成 <strong>旗舰中的旗舰</strong> 成就！<br>这波属于“参数表先发言，发布会后补充”。'
+    '你把旗舰+ SoC 和满配内存+满配存储同时端上来了，恭喜达成 <strong>旗舰中的旗舰</strong> 成就！<br>这波属于“参数表先发言，发布会后补充”。'
   );
 }
 
@@ -5130,17 +5487,16 @@ function checkFlagshipLcdDemonAchievement(buildLike) {
   if (!socTier.includes('旗舰+')) return;
 
   const skuList = Array.isArray(buildLike && buildLike.skuCosting) ? buildLike.skuCosting : [];
-  const has24G1T = skuList.some((sku) => sku && sku.ram && sku.rom && sku.ram.id === '24_lp5x' && sku.rom.id === '1t_ufs40');
-  if (!has24G1T) return;
+  if (!hasMaxMemorySku(skuList)) return;
 
   const extraCount = Array.isArray(input.chosenExtras) ? input.chosenExtras.length : 0;
   if (extraCount < 4) return;
 
   state.flagshipLcdDemonAchievedNotified = true;
-  addAchievementCard('flagship_lcd_demon', '旗舰LCD魔王', 'LCD全特性+旗舰+SoC+24G1TB+4项额外功能成功发售。');
+  addAchievementCard('flagship_lcd_demon', '旗舰LCD魔王', 'LCD全特性+旗舰+SoC+满配内存存储+4项额外功能成功发售。');
   openGameModal(
     '成就解锁',
-    '你把 LCD 全特性、旗舰+芯片、24G+1TB、以及一堆额外功能塞进同一台机子，恭喜达成 <strong>旗舰LCD魔王</strong> 成就！<br>这波是“配置单像战书，友商看完先沉默”。'
+    '你把 LCD 全特性、旗舰+芯片、满配内存存储、以及一堆额外功能塞进同一台机子，恭喜达成 <strong>旗舰LCD魔王</strong> 成就！<br>这波是“配置单像战书，友商看完先沉默”。'
   );
 }
 
@@ -5589,6 +5945,9 @@ function nextMonth() {
   state.month += 1;
   state.companyMonthsTotal += 1;
   maybeRefreshTechComponentPool('time');
+  maybeRefreshMemoryPools('time');
+  maybeRefreshDisplayScoreProgress('time');
+  maybeRefreshExtraCosts('time');
   resetRestockButtonState();
   const p = state.product;
   const dueLoans = state.loans.filter((x) => !x.settled && x.dueCompanyMonth <= state.companyMonthsTotal);
@@ -6420,8 +6779,17 @@ function restart() {
   state.loans = [];
   state.eventRerollUsed = false;
   state.techCycle = 0;
+  state.memoryCycle = 0;
+  state.displayCycle = 0;
+  state.extraCostCycle = 0;
   state.lastTechRefreshMonth = 0;
   state.lastTechRefreshGeneration = 1;
+  state.lastMemoryRefreshMonth = 0;
+  state.lastMemoryRefreshGeneration = 1;
+  state.lastDisplayRefreshMonth = 0;
+  state.lastDisplayRefreshGeneration = 1;
+  state.lastExtraRefreshMonth = 0;
+  state.lastExtraRefreshGeneration = 1;
   state.designDeadEndNotified = false;
   state.minDesignLaunchCostCache = null;
   state.rating100Notified = false;
@@ -6543,6 +6911,15 @@ function enableButtonPressFeedback() {
 }
 
 function bind() {
+  if (!window.__startPhoneRuntimeGuardInstalled) {
+    window.__startPhoneRuntimeGuardInstalled = true;
+    window.addEventListener('error', (evt) => {
+      reportRuntimeError('window.error', evt && evt.error ? evt.error : (evt && evt.message ? evt.message : 'unknown'));
+    });
+    window.addEventListener('unhandledrejection', (evt) => {
+      reportRuntimeError('unhandledrejection', evt && evt.reason ? evt.reason : 'promise rejected');
+    });
+  }
   enableButtonPressFeedback();
   renderAchievementPanel();
   refreshOverlayLockState();
@@ -6610,6 +6987,9 @@ function bind() {
       el.reportBox.innerHTML = `已进入下一代机型研发阶段。现金与口碑会继承，本代市场记忆也会延续。<br>当前存储行情：${state.memoryMarket.name}。`;
       renderRunBrief('本月重点：等待推进月份。');
       maybeRefreshTechComponentPool('generation');
+      maybeRefreshMemoryPools('generation');
+      maybeRefreshDisplayScoreProgress('generation');
+      maybeRefreshExtraCosts('generation');
       setStep(2);
       updateModelNameHint();
       updateDisplayMaterialOptions();
