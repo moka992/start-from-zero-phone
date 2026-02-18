@@ -97,7 +97,11 @@
           <strong id="cash">¥10,000,000</strong>
           <button id="takeLoan" class="cash-loan-btn">使用本代贷款</button>
         </div>
-        <div><span>库存</span><strong id="inv">0</strong></div>
+        <div class="inv-card">
+          <span>库存</span>
+          <strong id="inv">0</strong>
+          <small id="invTransit" class="stats-subline">在途 0</small>
+        </div>
         <div><span>口碑</span><strong id="rating">50</strong></div>
         <div><span>月数</span><strong id="month">0</strong></div>
       </div>
@@ -131,7 +135,7 @@
       <div class="row">
         <button id="quickGuideBtn" class="quick-guide-btn" type="button">玩法说明（新手必看）</button>
       </div>
-      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v1.0.1</span></div>
+      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v1.0.2</span></div>
     </section>
 
     <section id="stageConfig" class="panel hidden">
@@ -344,6 +348,7 @@
   <div id="runMobileDock" class="run-mobile-dock hidden" aria-live="polite">
     <div class="run-mobile-dock-row">
       <span class="run-mobile-dock-label">补货预估</span>
+      <span id="runMobileDockInv" class="run-mobile-dock-inv">库存 0</span>
       <strong id="runMobileDockQuote">等待开售</strong>
     </div>
     <div id="runMobileDockAction" class="run-mobile-dock-action">等待操作</div>
@@ -354,6 +359,15 @@
       <div class="achieve-panel-head">
         <h3>已达成成就</h3>
         <button id="achieveClose" type="button" class="low-freq-btn">关闭</button>
+      </div>
+      <div class="achieve-progress" aria-label="成就进度">
+        <div class="achieve-progress-top">
+          <span>成就进度</span>
+          <strong id="achieveProgressText">0/0</strong>
+        </div>
+        <div class="achieve-progress-track">
+          <div id="achieveProgressFill" class="achieve-progress-fill"></div>
+        </div>
       </div>
       <div id="achieveList" class="achieve-list"></div>
     </div>

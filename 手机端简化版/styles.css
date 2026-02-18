@@ -225,6 +225,46 @@ h1 {
   gap: 8px;
 }
 
+.achieve-progress {
+  margin: 0 0 8px;
+  border: 1px solid rgba(156, 202, 242, 0.24);
+  border-radius: 10px;
+  padding: 7px 8px;
+  background: rgba(10, 22, 36, 0.56);
+}
+
+.achieve-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #bcd3ea;
+}
+
+.achieve-progress-top strong {
+  font-family: "JetBrains Mono", monospace;
+  color: #d8fff2;
+  letter-spacing: 0.01em;
+}
+
+.achieve-progress-track {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(101, 139, 176, 0.32);
+  overflow: hidden;
+}
+
+.achieve-progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(110, 231, 255, 0.9), rgba(124, 255, 210, 0.95));
+  box-shadow: 0 0 10px rgba(106, 247, 217, 0.32);
+  transition: width .28s ease;
+}
+
 .achieve-item {
   border: 1px solid rgba(163, 205, 244, 0.24);
   border-radius: 12px;
@@ -279,6 +319,20 @@ h1 {
 .stats strong {
   font-family: "JetBrains Mono", monospace;
   font-size: 1rem;
+}
+
+.inv-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-subline {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.72rem;
+  color: #8fa7c2;
+  letter-spacing: 0.01em;
 }
 
 .cash-card {
@@ -1832,6 +1886,24 @@ button.accent {
   background: rgba(21, 39, 60, 0.6);
 }
 
+.run-mobile-dock-inv {
+  flex: 0 0 auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.74rem;
+  color: #b8cde3;
+  border: 1px solid rgba(146, 182, 214, 0.26);
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: rgba(17, 33, 52, 0.58);
+  white-space: nowrap;
+}
+
+.run-mobile-dock-inv.is-empty {
+  color: #ffb8c4;
+  border-color: rgba(255, 140, 162, 0.44);
+  background: rgba(63, 22, 33, 0.52);
+}
+
 .run-mobile-dock strong {
   font-family: "JetBrains Mono", monospace;
   font-size: 0.83rem;
@@ -1930,6 +2002,22 @@ button.accent {
     max-height: calc(100dvh - 18px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     border-radius: 12px;
     padding: 9px;
+  }
+  .achieve-panel-head {
+    padding-bottom: 6px;
+  }
+  .achieve-progress {
+    position: sticky;
+    top: 42px;
+    z-index: 1;
+    margin-bottom: 7px;
+    backdrop-filter: blur(6px);
+  }
+  .achieve-progress-top {
+    font-size: 0.78rem;
+  }
+  .achieve-progress-track {
+    height: 7px;
   }
   .achieve-panel-head .low-freq-btn {
     min-height: 36px;
@@ -2514,6 +2602,10 @@ button.accent {
   }
   .run-mobile-dock-label {
     font-size: 0.72rem;
+  }
+  .run-mobile-dock-inv {
+    font-size: 0.71rem;
+    padding: 2px 7px;
   }
   .run-mobile-dock strong {
     font-size: 0.79rem;

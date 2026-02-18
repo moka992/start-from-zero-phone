@@ -1,7 +1,7 @@
 const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
-const GAME_VERSION = '1.0.1';
+const GAME_VERSION = '1.0.2';
 const BENCHMARK_NAME = 'GeekBeak G6';
 const FIXED_COMPANY_NAME = 'StartPhone';
 const FIXED_MODEL_BASE_NAME = 'Neo';
@@ -566,6 +566,7 @@ const el = {
   statsBar: document.querySelector('.stats'),
   cash: document.getElementById('cash'),
   inv: document.getElementById('inv'),
+  invTransit: document.getElementById('invTransit'),
   rating: document.getElementById('rating'),
   month: document.getElementById('month'),
   stageEvent: document.getElementById('stageEvent'),
@@ -576,6 +577,8 @@ const el = {
   achieveCount: document.getElementById('achieveCount'),
   achievePanel: document.getElementById('achievePanel'),
   achieveList: document.getElementById('achieveList'),
+  achieveProgressText: document.getElementById('achieveProgressText'),
+  achieveProgressFill: document.getElementById('achieveProgressFill'),
   rollEvents: document.getElementById('rollEvents'),
   eventCards: document.getElementById('eventCards'),
   eventHint: document.getElementById('eventHint'),
@@ -637,6 +640,7 @@ const el = {
   restockSku: document.getElementById('restockSku'),
   restockUnits: document.getElementById('restockUnits'),
   runMobileDock: document.getElementById('runMobileDock'),
+  runMobileDockInv: document.getElementById('runMobileDockInv'),
   runMobileDockQuote: document.getElementById('runMobileDockQuote'),
   runMobileDockAction: document.getElementById('runMobileDockAction'),
   runBriefBox: document.getElementById('runBriefBox'),
@@ -696,6 +700,21 @@ const runQuizPool = [
   '运营拷问：现金发抖时，是 <strong>开贷款续命</strong>，还是 <strong>咬牙硬扛</strong>？',
   '运营拷问：口碑掉线但还能赚，你是 <strong>降价冲榜</strong>，还是 <strong>守价修碑</strong>？'
 ];
+
+const ACHIEVEMENT_IDS = [
+  'rating_100', 'cash_1b', 'ten_year_veteran', 'screen_collector', 'foldable', 'eink', 'future_eink', 'ebook',
+  'ultra_flagship', 'advanced_alloy', 'ceramic', 'no_camera', 'aramid', 'selfie', 'top_lcd', 'flagship_lcd_demon',
+  'thermal_maniac', 'satellite', 'battery_tech', 'magsafe', 'small_screen', 'flat_back', 'large_screen',
+  'good_luck', 'no_refresh_shell', 'squeeze_toothpaste', 'brand_tone', 'grand_slam'
+];
+
+// Hard block: game-over / restart-required events are never considered achievements.
+const NON_ACHIEVEMENT_IDS = new Set([
+  'gameover_bankrupt',
+  'gameover_reputation',
+  'gameover_blackswan',
+  'gameover_design_dead_end'
+]);
 
 const QUICK_GUIDE_HTML = [
   '目标：活得久、赚得多、口碑高；可持续做多代机，也可企业结算看总成绩。',
@@ -1470,9 +1489,16 @@ function updateHeader() {
   syncInventoryTotal();
   el.cash.textContent = RMB(state.cash);
   el.inv.textContent = state.inventory.toLocaleString('zh-CN');
+  if (el.invTransit) {
+    const inTransit = state.product && Array.isArray(state.product.pipeline)
+      ? state.product.pipeline.reduce((sum, x) => sum + (Number(x && x.units) || 0), 0)
+      : 0;
+    el.invTransit.textContent = `在途 ${inTransit.toLocaleString('zh-CN')}`;
+  }
   el.rating.textContent = Math.round(state.rating).toString();
   el.month.textContent = String(state.month);
   renderOpsChart();
+  renderMobileRunDockInventory();
   renderMobileRunDockQuote();
 }
 
@@ -5134,6 +5160,18 @@ function renderAchievementPanel() {
   }
   if (!el.achieveList) return;
   const list = Array.isArray(state.achievements) ? state.achievements : [];
+  const total = ACHIEVEMENT_IDS.length;
+  const validAchieved = new Set(
+    list
+      .map((x) => (x && x.id ? x.id : ''))
+      .filter((id) => ACHIEVEMENT_IDS.includes(id))
+  );
+  const n = Math.min(validAchieved.size, total);
+  if (el.achieveProgressText) el.achieveProgressText.textContent = `${n}/${total}`;
+  if (el.achieveProgressFill) {
+    const pct = total > 0 ? (n / total) * 100 : 0;
+    el.achieveProgressFill.style.width = `${pct.toFixed(2)}%`;
+  }
   if (!list.length) {
     el.achieveList.innerHTML = '<div class="achieve-empty">暂无已达成成就，继续推进看看会解锁什么。</div>';
     return;
@@ -5145,6 +5183,7 @@ function renderAchievementPanel() {
 
 function addAchievementCard(id, name, desc) {
   if (!id) return;
+  if (NON_ACHIEVEMENT_IDS.has(id) || String(id).startsWith('gameover_')) return;
   if (!Array.isArray(state.achievements)) state.achievements = [];
   if (state.achievements.some((x) => x.id === id)) return;
   state.achievements.push({
@@ -5154,6 +5193,25 @@ function addAchievementCard(id, name, desc) {
     companyMonth: state.companyMonthsTotal || 0
   });
   renderAchievementPanel();
+  maybeUnlockGrandSlamAchievement();
+}
+
+function maybeUnlockGrandSlamAchievement() {
+  if (!Array.isArray(state.achievements)) return;
+  const grandSlamId = 'grand_slam';
+  if (!ACHIEVEMENT_IDS.includes(grandSlamId)) return;
+  const hasGrandSlam = state.achievements.some((x) => x.id === grandSlamId);
+  if (hasGrandSlam) return;
+  const achieved = new Set(state.achievements.map((x) => x.id));
+  const others = ACHIEVEMENT_IDS.filter((id) => id !== grandSlamId);
+  const allOthersDone = others.every((id) => achieved.has(id));
+  if (!allOthersDone) return;
+  addAchievementCard('grand_slam', '大满贯！', '已收集除“大满贯”外的全部成就，达成全成就收集。');
+  openGameModal(
+    '成就解锁',
+    '你已经把其余成就全部拿下，恭喜达成 <strong>大满贯！</strong><br>这波属于“成就列表已被你清空”。',
+    'celebrate'
+  );
 }
 
 function openAchievementPanel() {
@@ -5944,6 +6002,13 @@ function renderMobileRunDockQuote(options = {}) {
   }
 }
 
+function renderMobileRunDockInventory() {
+  if (!el.runMobileDockInv) return;
+  const inv = Number(state.inventory || 0);
+  el.runMobileDockInv.textContent = `库存 ${inv.toLocaleString('zh-CN')}`;
+  el.runMobileDockInv.classList.toggle('is-empty', inv <= 0);
+}
+
 function isMobileViewportForRunDock() {
   try {
     return window.matchMedia('(max-width: 760px)').matches;
@@ -5988,6 +6053,7 @@ function refreshMobileRunDock() {
   el.runMobileDock.classList.toggle('hidden', !shouldShow);
   if (!shouldShow) return;
   updateRunDockViewportAnchor();
+  renderMobileRunDockInventory();
   renderMobileRunDockQuote();
 }
 
