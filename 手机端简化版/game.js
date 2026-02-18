@@ -5943,6 +5943,19 @@ function isMobileViewportForRunDock() {
   }
 }
 
+function updateRunDockViewportAnchor() {
+  if (!el.runMobileDock) return;
+  const base = 8;
+  let extra = 0;
+  if (isMobileViewportForRunDock() && window.visualViewport) {
+    const vv = window.visualViewport;
+    const layoutHeight = window.innerHeight || 0;
+    const visualBottom = (vv.offsetTop || 0) + (vv.height || 0);
+    extra = Math.max(0, layoutHeight - visualBottom);
+  }
+  el.runMobileDock.style.setProperty('--run-dock-bottom', `calc(${Math.round(base + extra)}px + env(safe-area-inset-bottom, 0px))`);
+}
+
 function showMobileRunDockAction(message, type = 'neutral') {
   if (!el.runMobileDockAction) return;
   el.runMobileDockAction.textContent = message;
@@ -5961,6 +5974,7 @@ function refreshMobileRunDock() {
   const shouldShow = isMobileViewportForRunDock() && !el.stageRun.classList.contains('hidden');
   el.runMobileDock.classList.toggle('hidden', !shouldShow);
   if (!shouldShow) return;
+  updateRunDockViewportAnchor();
   renderMobileRunDockQuote();
 }
 
@@ -7203,9 +7217,22 @@ function bind() {
   }
   window.addEventListener('resize', () => {
     renderOpsChart();
+    updateRunDockViewportAnchor();
     refreshMobileRunDock();
     refreshDesignPanelsLive();
   });
+  window.addEventListener('orientationchange', () => {
+    updateRunDockViewportAnchor();
+    refreshMobileRunDock();
+  });
+  if (window.visualViewport) {
+    const handleVisualViewportChange = () => {
+      updateRunDockViewportAnchor();
+      refreshMobileRunDock();
+    };
+    window.visualViewport.addEventListener('resize', handleVisualViewportChange);
+    window.visualViewport.addEventListener('scroll', handleVisualViewportChange);
+  }
 
   [
     el.soc, el.price, el.dispMat, el.dispVendor, el.dispSize, el.dispRatio, el.dispForm,

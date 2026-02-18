@@ -2221,7 +2221,7 @@ button.accent {
     display: block;
     position: fixed;
     left: 50%;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    bottom: var(--run-dock-bottom, calc(8px + env(safe-area-inset-bottom, 0px)));
     transform: translateX(-50%);
     width: min(94vw, 680px);
     z-index: 12;
