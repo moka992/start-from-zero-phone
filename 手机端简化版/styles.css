@@ -806,6 +806,12 @@ button.accent {
   opacity: 0.72;
 }
 
+.quick-guide-version {
+  color: #8fa5bc;
+  opacity: 0.72;
+  font-size: 0.82rem;
+}
+
 @keyframes confirmPulse {
   0%, 100% {
     box-shadow:

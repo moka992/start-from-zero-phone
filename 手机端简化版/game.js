@@ -1,6 +1,7 @@
 const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
+const GAME_VERSION = '1.0.1';
 const BENCHMARK_NAME = 'GeekBeak G6';
 const FIXED_COMPANY_NAME = 'StartPhone';
 const FIXED_MODEL_BASE_NAME = 'Neo';
@@ -701,7 +702,8 @@ const QUICK_GUIDE_HTML = [
   '经营本质：企业经营是“客观机制 + 主观判断”的组合。市场与周期按规则运行，但你的定价、补货、换代与资源取舍，才是决定结局的关键。',
   '关键：体积能装下、现金别断、定价别离谱、库存别失控；缺货会伤生命周期，压货会拖现金流。',
   '进阶：换代要有变化（屏幕/摄像头/SKU/机身/额外功能），否则会有换代疲劳惩罚。',
-  '彩蛋：游戏内有成就系统，欢迎自行探索解锁。'
+  '彩蛋：游戏内有成就系统，欢迎自行探索解锁。',
+  `<span class="quick-guide-version">版本：v${GAME_VERSION}</span>`
 ].join('<br>');
 
 const QUICK_GUIDE_SEEN_KEY = 'start_phone_quick_guide_seen_v1';
