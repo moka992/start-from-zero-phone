@@ -1543,10 +1543,18 @@ button.accent {
 
 .game-modal-card.modal-celebrate {
   border-color: rgba(120, 245, 206, 0.7);
+  background:
+    radial-gradient(130% 100% at 12% -18%, rgba(128, 255, 218, 0.16), rgba(9, 19, 32, 0) 52%),
+    rgba(9, 19, 32, 0.96);
   box-shadow:
     0 0 0 1px rgba(165, 255, 224, 0.2) inset,
     0 14px 34px rgba(0, 0, 0, 0.38),
-    0 0 22px rgba(95, 239, 190, 0.2);
+    0 0 24px rgba(95, 239, 190, 0.24);
+}
+
+.game-modal-card.modal-celebrate h3 {
+  color: #d8ffe9;
+  text-shadow: 0 0 12px rgba(102, 243, 187, 0.26);
 }
 
 .game-modal-card h3 {

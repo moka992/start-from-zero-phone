@@ -559,7 +559,8 @@ const state = {
   achievements: [],
   premiumPriceToleranceCarry: 1.0,
   premiumOnlineDemandCarry: 1.0,
-  premiumOfflineDemandCarry: 1.0
+  premiumOfflineDemandCarry: 1.0,
+  socPriceCapEnded: false
 };
 
 const el = {
@@ -3000,6 +3001,35 @@ function maybeRefreshExtraCosts(trigger = 'time') {
   return true;
 }
 
+function maybeTriggerSocPriceCapEnding() {
+  if (state.ended || state.socPriceCapEnded) return false;
+  const SOC_PRICE_CAP = 3000;
+  const activeSocs = socs.filter((s) => !s.retired);
+  if (!activeSocs.length) return false;
+  const maxSocCost = Math.max(...activeSocs.map((s) => Number(s.cost || 0)));
+  if (maxSocCost <= SOC_PRICE_CAP) return false;
+  state.socPriceCapEnded = true;
+  endGame(`SoC 价格达到 ${RMB(maxSocCost)}，企业进入阶段性毕业结局。`);
+  if (el.reportBox) {
+    el.reportBox.innerHTML = `SoC 单价突破 <strong>${RMB(SOC_PRICE_CAP)}</strong>，你已成长为超大体量企业。<br>当前建议：重开新局再出发。`;
+  }
+  openGameModal(
+    '游戏结束',
+    `您已经拥有了庞大的手机企业（当前 SoC 价格 ${RMB(maxSocCost)}），现在是时候再出发了。`,
+    'celebrate'
+  );
+  showMobileRunDockAction('阶段通关：SoC 价格突破 3000', 'good');
+  applyRestartCtaState('celebrate');
+  if (window.matchMedia('(max-width: 760px)').matches) {
+    if (el.stageRun && !el.stageRun.classList.contains('hidden')) {
+      el.stageRun.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+  return true;
+}
+
 function maybeRefreshTechComponentPool(trigger = 'time') {
   const nextGen = getNextGenerationIndex();
   const unlocked = nextGen >= 3 || state.companyMonthsTotal >= 30;
@@ -3032,6 +3062,7 @@ function maybeRefreshTechComponentPool(trigger = 'time') {
 
   state.lastTechRefreshMonth = state.companyMonthsTotal;
   state.lastTechRefreshGeneration = nextGen;
+  if (maybeTriggerSocPriceCapEnding()) return true;
 
   openGameModal(
     '代际更新',
@@ -6165,6 +6196,10 @@ function nextMonth() {
   maybeRefreshMemoryPools('time');
   maybeRefreshDisplayScoreProgress('time');
   maybeRefreshExtraCosts('time');
+  if (state.ended || !state.product) {
+    updateHeader();
+    return;
+  }
   resetRestockButtonState();
   const p = state.product;
   const dueLoans = state.loans.filter((x) => !x.settled && x.dueCompanyMonth <= state.companyMonthsTotal);
@@ -7062,6 +7097,7 @@ function restart() {
   state.squeezeToothpasteAchievedNotified = false;
   state.brandToneAchievedNotified = false;
   state.achievements = [];
+  state.socPriceCapEnded = false;
   state.premiumPriceToleranceCarry = 1.0;
   state.premiumOnlineDemandCarry = 1.0;
   state.premiumOfflineDemandCarry = 1.0;
@@ -7243,6 +7279,10 @@ function bind() {
       maybeRefreshMemoryPools('generation');
       maybeRefreshDisplayScoreProgress('generation');
       maybeRefreshExtraCosts('generation');
+      if (state.ended) {
+        updateHeader();
+        return;
+      }
       setStep(2);
       showMobileRunDockAction('进入下一代机型研发', 'neutral');
       renderMobileRunDockQuote();
