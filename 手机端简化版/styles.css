@@ -1054,6 +1054,19 @@ button.accent {
   border: 1px solid rgba(255, 127, 151, 0.52);
 }
 
+.int-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #ff9fb0;
+}
+
+input.input-int-invalid {
+  border-color: rgba(255, 121, 145, 0.88) !important;
+  box-shadow: 0 0 0 1px rgba(255, 121, 145, 0.26) inset, 0 0 0 1px rgba(255, 96, 128, 0.16);
+}
+
 .sku-row .sku-remove {
   grid-column: 1 / -1;
   justify-self: end;

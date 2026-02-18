@@ -287,6 +287,7 @@
         <button id="launch" class="accent">立项并开售</button>
         <label class="units-inline">首批产量（台）
           <input id="units" type="number" min="1000" max="150000" step="1000" value="2000" />
+          <small id="unitsIntHint" class="int-hint hidden">请仅输入整数</small>
         </label>
         <label class="procurement-inline">供应链采购方案
           <select id="procurementPlan"></select>
@@ -312,6 +313,7 @@
         </label>
         <label>补货数量（台）
           <input id="restockUnits" type="number" min="1000" max="200000" step="1000" value="1000" />
+          <small id="restockIntHint" class="int-hint hidden">请仅输入整数</small>
         </label>
       </div>
       <div class="row">

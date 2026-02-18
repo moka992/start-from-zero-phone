@@ -623,6 +623,7 @@ const el = {
   marketingFocus: document.getElementById('marketingFocus'),
   campaignLevel: document.getElementById('campaignLevel'),
   units: document.getElementById('units'),
+  unitsIntHint: document.getElementById('unitsIntHint'),
   phoneH: document.getElementById('phoneH'),
   phoneW: document.getElementById('phoneW'),
   phoneT: document.getElementById('phoneT'),
@@ -640,6 +641,7 @@ const el = {
   runStopRow: document.getElementById('runStopRow'),
   restockSku: document.getElementById('restockSku'),
   restockUnits: document.getElementById('restockUnits'),
+  restockIntHint: document.getElementById('restockIntHint'),
   runMobileDock: document.getElementById('runMobileDock'),
   runMobileDockInv: document.getElementById('runMobileDockInv'),
   runMobileDockQuote: document.getElementById('runMobileDockQuote'),
@@ -1488,10 +1490,11 @@ function renderPhoneFrontPreview(buildEval) {
 function updateHeader() {
   pushTimelinePoint();
   syncInventoryTotal();
+  const onHand = getOnHandInventoryUnits();
+  const inTransit = calcInTransitUnits();
   el.cash.textContent = RMB(state.cash);
-  el.inv.textContent = state.inventory.toLocaleString('zh-CN');
+  el.inv.textContent = onHand.toLocaleString('zh-CN');
   if (el.invTransit) {
-    const inTransit = calcInTransitUnits();
     el.invTransit.textContent = `在途 ${inTransit.toLocaleString('zh-CN')}`;
   }
   el.rating.textContent = Math.round(state.rating).toString();
@@ -1522,17 +1525,31 @@ function computeTotalInventory() {
   return Object.values(state.inventoryBySku || {}).reduce((s, n) => s + (Number(n) || 0), 0);
 }
 
+function getOnHandInventoryUnits() {
+  const bySku = computeTotalInventory();
+  const fromState = Number(state.inventory || 0);
+  const hasSkuMap = state.inventoryBySku && Object.keys(state.inventoryBySku).length > 0;
+  const onHand = hasSkuMap ? bySku : Math.max(0, fromState);
+  state.inventory = onHand;
+  return onHand;
+}
+
 function syncInventoryTotal() {
-  state.inventory = computeTotalInventory();
+  state.inventory = getOnHandInventoryUnits();
 }
 
 function calcInTransitUnits() {
   if (!state.product || !Array.isArray(state.product.pipeline)) return 0;
   return state.product.pipeline.reduce((sum, x) => {
-    const units = Number(
-      (x && (x.units ?? x.add ?? x.qty)) || 0
-    ) || 0;
-    return sum + Math.max(0, Math.round(units));
+    if (!x) return sum;
+    const directUnits = Number(x.units ?? x.add ?? x.qty ?? x.count ?? 0) || 0;
+    if (directUnits > 0) return sum + Math.max(0, Math.round(directUnits));
+    const bySkuMap = x.unitsBySku || x.qtyBySku || null;
+    if (bySkuMap && typeof bySkuMap === 'object') {
+      const nested = Object.values(bySkuMap).reduce((acc, n) => acc + (Number(n) || 0), 0);
+      return sum + Math.max(0, Math.round(nested));
+    }
+    return sum;
   }, 0);
 }
 
@@ -1804,6 +1821,25 @@ function getRegionMarketStats(regionKey) {
   const population = rows.reduce((s, x) => s + x.pop, 0);
   const onlinePenetration = rows.reduce((s, x) => s + x.pop * x.online, 0) / population;
   return { population, onlinePenetration };
+}
+
+function isStrictIntegerText(raw) {
+  return /^[0-9]+$/.test(String(raw ?? '').trim());
+}
+
+function validateIntegerInput(inputEl, hintEl, { showHint = true } = {}) {
+  if (!inputEl) return true;
+  const raw = String(inputEl.value ?? '').trim();
+  const valid = isStrictIntegerText(raw);
+  inputEl.classList.toggle('input-int-invalid', !valid);
+  if (hintEl) {
+    if (!showHint) {
+      hintEl.classList.add('hidden');
+    } else {
+      hintEl.classList.toggle('hidden', valid);
+    }
+  }
+  return valid;
 }
 
 function getScreenDimensionsMm(diagonalInch, ratioText) {
@@ -4691,6 +4727,12 @@ function updateDisplayQuickBox() {
 }
 
 function launch() {
+  if (!validateIntegerInput(el.units, el.unitsIntHint, { showHint: true })) {
+    const msg = '<span class="bad">首批产量仅支持整数，请调整后再开售。</span>';
+    if (el.previewBox) el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
+    return;
+  }
   const e = evaluateBuild();
   if (e.issues.length) {
     const msg = `<span class="bad">${e.issues.join('<br>')}</span>`;
@@ -5996,7 +6038,9 @@ function applyRatingDeltaByDifficulty(delta, diffName) {
 function calcRestockQuote() {
   const p = state.product;
   if (!p || !state.launched || state.phaseEnded || state.ended) return null;
-  const add = Math.round(Number(el.restockUnits ? el.restockUnits.value : 0) || 0);
+  const restockRaw = String(el.restockUnits ? el.restockUnits.value : '').trim();
+  if (!isStrictIntegerText(restockRaw)) return null;
+  const add = Number(restockRaw);
   const skuId = el.restockSku ? el.restockSku.value : '';
   const sku = (p.skuStats || []).find((x) => x.id === skuId);
   if (!sku || add < 1000 || add > 200000) return null;
@@ -6021,6 +6065,13 @@ function calcRestockQuote() {
 
 function renderMobileRunDockQuote(options = {}) {
   if (!el.runMobileDockQuote) return;
+  const restockUnitsIsInteger = validateIntegerInput(el.restockUnits, el.restockIntHint, { showHint: true });
+  if (!restockUnitsIsInteger) {
+    el.runMobileDockQuote.textContent = '补货数量仅支持整数';
+    el.runMobileDockQuote.classList.remove('is-good', 'is-bad', 'is-bump');
+    el.runMobileDockQuote.classList.add('is-bad');
+    return;
+  }
   const quote = calcRestockQuote();
   if (!quote) {
     el.runMobileDockQuote.textContent = state.launched ? '请选择补货 SKU 与数量' : '等待开售';
@@ -6043,7 +6094,7 @@ function renderMobileRunDockQuote(options = {}) {
 
 function renderMobileRunDockInventory() {
   if (!el.runMobileDockInv) return;
-  const inv = Number(state.inventory || 0);
+  const inv = getOnHandInventoryUnits();
   el.runMobileDockInv.textContent = `库存 ${inv.toLocaleString('zh-CN')}`;
 }
 
@@ -6781,6 +6832,14 @@ function restock() {
     renderMobileRunDockQuote({ bump: true });
     return;
   }
+  const restockUnitsIsInteger = validateIntegerInput(el.restockUnits, el.restockIntHint, { showHint: true });
+  if (!restockUnitsIsInteger) {
+    markRestockFailed();
+    el.reportBox.innerHTML = '<span class="bad">补货数量仅支持整数，请调整后重试。</span>';
+    showMobileRunDockAction('补货失败（仅支持整数）', 'bad');
+    renderMobileRunDockQuote({ bump: true });
+    return;
+  }
   const p = state.product;
   const quote = calcRestockQuote();
   if (!quote) {
@@ -7117,6 +7176,8 @@ function restart() {
   if (el.restart) el.restart.classList.remove('gameover-cta', 'celebrate-cta');
   if (el.restartDesign) el.restartDesign.classList.remove('gameover-cta', 'celebrate-cta');
   fillOptions();
+  validateIntegerInput(el.units, el.unitsIntHint, { showHint: false });
+  validateIntegerInput(el.restockUnits, el.restockIntHint, { showHint: false });
   updateModelNameHint();
   assignRandomRegion();
   if (el.restockSku) el.restockSku.innerHTML = '';
@@ -7133,7 +7194,17 @@ function restart() {
 function refreshDesignPanelsLive() {
   refreshBackColorControl();
   if (!el.stageConfig || el.stageConfig.classList.contains('hidden')) return;
-  updateSkuShareValidation(false);
+  const skuValidation = updateSkuShareValidation(false);
+  const unitsIsInteger = validateIntegerInput(el.units, el.unitsIntHint, { showHint: true });
+  if (el.launch && (!skuValidation.valid || !unitsIsInteger)) {
+    el.launch.disabled = true;
+  }
+  if (!unitsIsInteger) {
+    const msg = '<span class="bad">首批产量仅支持整数，请调整输入。</span>';
+    if (el.previewBox) el.previewBox.innerHTML = msg;
+    if (el.previewDetailBox) el.previewDetailBox.innerHTML = msg;
+    return;
+  }
   updateDisplayQuickBox();
   try {
     renderPreview();
@@ -7251,9 +7322,20 @@ function bind() {
     el.restockSku.addEventListener('change', () => renderMobileRunDockQuote({ bump: true }));
   }
   if (el.restockUnits) {
-    const onRestockUnitsInput = () => renderMobileRunDockQuote({ bump: true });
+    const onRestockUnitsInput = () => {
+      validateIntegerInput(el.restockUnits, el.restockIntHint, { showHint: true });
+      renderMobileRunDockQuote({ bump: true });
+    };
     el.restockUnits.addEventListener('input', onRestockUnitsInput);
     el.restockUnits.addEventListener('change', onRestockUnitsInput);
+  }
+  if (el.units) {
+    const onUnitsInput = () => {
+      validateIntegerInput(el.units, el.unitsIntHint, { showHint: true });
+      refreshDesignPanelsLive();
+    };
+    el.units.addEventListener('input', onUnitsInput);
+    el.units.addEventListener('change', onUnitsInput);
   }
   if (el.restartDesign) el.restartDesign.addEventListener('click', restart);
   if (el.takeLoan) el.takeLoan.addEventListener('click', takeGenerationLoan);
@@ -7486,6 +7568,8 @@ async function boot() {
     await loadForbiddenNameDictionary();
     setBootLoading('正在构建设计与运营面板…', false, 4, totalSteps);
     fillOptions();
+    validateIntegerInput(el.units, el.unitsIntHint, { showHint: false });
+    validateIntegerInput(el.restockUnits, el.restockIntHint, { showHint: false });
     assignRandomRegion();
     bind();
     renderGameVersionUI();
