@@ -1,7 +1,7 @@
 const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
-const GAME_VERSION = '1.0.2';
+const GAME_VERSION = '1.0.3';
 const BENCHMARK_NAME = 'GeekBeak G6';
 const FIXED_COMPANY_NAME = 'StartPhone';
 const FIXED_MODEL_BASE_NAME = 'Neo';
@@ -691,6 +691,7 @@ const el = {
 
 let benchRunToken = 0;
 let skuShareValidTimer = 0;
+let inventoryUiSyncTimer = 0;
 
 const designQuizPool = [
   '设计拷问：这代是要做 <strong>跑分战神</strong>，还是 <strong>屏幕卷王</strong>？',
@@ -1490,18 +1491,22 @@ function renderPhoneFrontPreview(buildEval) {
 function updateHeader() {
   pushTimelinePoint();
   syncInventoryTotal();
-  const onHand = getOnHandInventoryUnits();
-  const inTransit = calcInTransitUnits();
   el.cash.textContent = RMB(state.cash);
-  el.inv.textContent = onHand.toLocaleString('zh-CN');
-  if (el.invTransit) {
-    el.invTransit.textContent = `在途 ${inTransit.toLocaleString('zh-CN')}`;
-  }
+  refreshInventoryUiOnly();
   el.rating.textContent = Math.round(state.rating).toString();
   el.month.textContent = String(state.month);
   renderOpsChart();
-  renderMobileRunDockInventory();
   renderMobileRunDockQuote();
+}
+
+function refreshInventoryUiOnly() {
+  const onHand = getOnHandInventoryUnits();
+  const inTransit = calcInTransitUnits();
+  if (el.inv) el.inv.textContent = onHand.toLocaleString('zh-CN');
+  if (el.invTransit) {
+    el.invTransit.textContent = `在途 ${inTransit.toLocaleString('zh-CN')}`;
+  }
+  renderMobileRunDockInventory();
 }
 
 function setStep(step) {
@@ -6098,6 +6103,14 @@ function renderMobileRunDockInventory() {
   el.runMobileDockInv.textContent = `库存 ${inv.toLocaleString('zh-CN')}`;
 }
 
+function ensureInventoryUiSyncTimer() {
+  if (inventoryUiSyncTimer) return;
+  inventoryUiSyncTimer = window.setInterval(() => {
+    if (!el.stageRun || el.stageRun.classList.contains('hidden')) return;
+    refreshInventoryUiOnly();
+  }, 1000);
+}
+
 function isMobileViewportForRunDock() {
   try {
     return window.matchMedia('(max-width: 760px)').matches;
@@ -7270,6 +7283,7 @@ function bind() {
     });
   }
   enableButtonPressFeedback();
+  ensureInventoryUiSyncTimer();
   renderAchievementPanel();
   refreshOverlayLockState();
   refreshBackColorControl();
