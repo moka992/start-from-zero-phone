@@ -706,7 +706,7 @@ const runQuizPool = [
 ];
 
 const ACHIEVEMENT_IDS = [
-  'the_beginning', 'bench_first', 'budget_friend', 'thin_margin', 'premium_push',
+  'the_beginning', 'bench_first', 'first_launch', 'budget_friend', 'thin_margin', 'premium_push',
   'rating_100', 'cash_1b', 'ten_year_veteran', 'screen_collector', 'foldable', 'eink', 'future_eink', 'ebook',
   'ultra_flagship', 'advanced_alloy', 'ceramic', 'no_camera', 'aramid', 'selfie', 'top_lcd', 'flagship_lcd_demon',
   'thermal_maniac', 'satellite', 'battery_tech', 'magsafe', 'small_screen', 'flat_back', 'large_screen',
@@ -4764,6 +4764,7 @@ function launch() {
   markScreenMaterialProduced(el.dispMat ? el.dispMat.value : '');
   checkScreenCollectorMilestone();
   const safeAchievementChecks = [
+    checkFirstLaunchAchievement,
     checkFoldableAchievement,
     checkEinkAchievement,
     checkFutureEinkAchievement,
@@ -5855,6 +5856,15 @@ function checkBrandToneAchievement(buildLike) {
   openGameModal(
     '成就解锁',
     '你成功发售了“换代改动偏保守”机型，恭喜达成 <strong>打造品牌调性</strong> 成就！<br>这波是“变化不大，但味道要对，用户一眼就认得你”。'
+  );
+}
+
+function checkFirstLaunchAchievement() {
+  if (state.ended || hasAchievement('first_launch')) return;
+  addAchievementCard('first_launch', '运营的本当上手', '第一次完成立项并开售。');
+  openGameModal(
+    '成就解锁',
+    '你完成了第一次立项并开售，恭喜达成 <strong>运营的本当上手</strong> 成就！'
   );
 }
 
