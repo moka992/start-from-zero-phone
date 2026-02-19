@@ -47,6 +47,8 @@ main() {
   deploy_tag "$TAG_V2" "$WEB_V2"
 
   echo "[4/5] 部署版本选择页"
+  # 选择页模板仅在 main 分支维护，不在历史 tag 中，先切回 main 再同步。
+  git -C "$SRC" checkout -f origin/main
   mkdir -p "$WEB_SELECTOR"
   rsync -av --delete "$SRC/deploy/selector/" "$WEB_SELECTOR/"
 
