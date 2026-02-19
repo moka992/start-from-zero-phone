@@ -1,7 +1,7 @@
 const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
-const GAME_VERSION = '1.0.3';
+const GAME_VERSION = '1.0.4';
 const BENCHMARK_NAME = 'GeekBeak G6';
 const FIXED_COMPANY_NAME = 'StartPhone';
 const FIXED_MODEL_BASE_NAME = 'Neo';
@@ -706,6 +706,7 @@ const runQuizPool = [
 ];
 
 const ACHIEVEMENT_IDS = [
+  'the_beginning', 'bench_first', 'budget_friend', 'thin_margin', 'premium_push',
   'rating_100', 'cash_1b', 'ten_year_veteran', 'screen_collector', 'foldable', 'eink', 'future_eink', 'ebook',
   'ultra_flagship', 'advanced_alloy', 'ceramic', 'no_camera', 'aramid', 'selfie', 'top_lcd', 'flagship_lcd_demon',
   'thermal_maniac', 'satellite', 'battery_tech', 'magsafe', 'small_screen', 'flat_back', 'large_screen',
@@ -4656,6 +4657,13 @@ function closeBenchPage() {
 }
 
 async function openBenchPage() {
+  if (!hasAchievement('bench_first')) {
+    addAchievementCard('bench_first', '不服就跑个分', '首次进入跑分页面。');
+    openGameModal(
+      '成就解锁',
+      '第一次点开跑分页，恭喜达成 <strong>不服就跑个分</strong> 成就！'
+    );
+  }
   let e = null;
   try {
     e = evaluateBuild();
@@ -4777,7 +4785,10 @@ function launch() {
     checkLargeScreenAchievement,
     checkNoRefreshAchievement,
     checkSqueezeToothpasteAchievement,
-    checkBrandToneAchievement
+    checkBrandToneAchievement,
+    checkBudgetFriendAchievement,
+    checkThinMarginAchievement,
+    checkPremiumPushAchievement
   ];
   safeAchievementChecks.forEach((fn) => {
     try {
@@ -5280,6 +5291,11 @@ function addAchievementCard(id, name, desc) {
   });
   renderAchievementPanel();
   maybeUnlockGrandSlamAchievement();
+}
+
+function hasAchievement(id) {
+  if (!id || !Array.isArray(state.achievements)) return false;
+  return state.achievements.some((x) => x && x.id === id);
 }
 
 function maybeUnlockGrandSlamAchievement() {
@@ -5839,6 +5855,58 @@ function checkBrandToneAchievement(buildLike) {
   openGameModal(
     '成就解锁',
     '你成功发售了“换代改动偏保守”机型，恭喜达成 <strong>打造品牌调性</strong> 成就！<br>这波是“变化不大，但味道要对，用户一眼就认得你”。'
+  );
+}
+
+function checkBudgetFriendAchievement(buildLike) {
+  if (state.ended || hasAchievement('budget_friend')) return;
+  const input = buildLike && buildLike.input ? buildLike.input : null;
+  const skuList = Array.isArray(buildLike && buildLike.skuCosting) ? buildLike.skuCosting : [];
+  if (!input || !input.soc || !skuList.length) return;
+
+  const activeSocs = (Array.isArray(socs) ? socs : []).filter((s) => s && !s.retired);
+  if (!activeSocs.length) return;
+  const cheapestSocCost = Math.min(...activeSocs.map((s) => Number(s.cost || 0)));
+  if (Number(input.soc.cost || 0) !== cheapestSocCost) return;
+
+  const minRam = getCheapestByCost(ramOptions);
+  const minRom = getCheapestByCost(romOptions);
+  if (!minRam || !minRom) return;
+  const hasMinSku = skuList.some((s) => s && s.ram && s.rom && s.ram.id === minRam.id && s.rom.id === minRom.id);
+  if (!hasMinSku) return;
+
+  addAchievementCard('budget_friend', '用低价交个朋友', '最便宜 SoC + 最低内存存储 SKU 成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你成功发售了“最便宜 SoC + 最低内存存储 SKU”机型，恭喜达成 <strong>用低价交个朋友</strong> 成就！'
+  );
+}
+
+function checkThinMarginAchievement(buildLike) {
+  if (state.ended || hasAchievement('thin_margin')) return;
+  const unitCost = Number(buildLike && buildLike.unitCost ? buildLike.unitCost : 0);
+  const weightedPrice = Number(buildLike && buildLike.weightedSkuPrice ? buildLike.weightedSkuPrice : 0);
+  if (!(unitCost > 0 && weightedPrice > 0)) return;
+  const ratio = weightedPrice / unitCost;
+  if (!(ratio > 1 && ratio <= 1.3)) return;
+  addAchievementCard('thin_margin', '薄利多销', '定价高于成本且在成本+30%以内成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你以“薄利策略”成功发售机型，恭喜达成 <strong>薄利多销</strong> 成就！'
+  );
+}
+
+function checkPremiumPushAchievement(buildLike) {
+  if (state.ended || hasAchievement('premium_push')) return;
+  const unitCost = Number(buildLike && buildLike.unitCost ? buildLike.unitCost : 0);
+  const weightedPrice = Number(buildLike && buildLike.weightedSkuPrice ? buildLike.weightedSkuPrice : 0);
+  if (!(unitCost > 0 && weightedPrice > 0)) return;
+  const ratio = weightedPrice / unitCost;
+  if (!(ratio > 3)) return;
+  addAchievementCard('premium_push', '冲高之路', '定价高于生产成本200%以上成功发售。');
+  openGameModal(
+    '成就解锁',
+    '你把定价拉到成本 3 倍以上并成功发售，恭喜达成 <strong>冲高之路</strong> 成就！'
   );
 }
 
@@ -7326,6 +7394,13 @@ function bind() {
     el.eventHint.textContent = `已选环境：${state.marketPick.name}`;
     setStep(2);
     refreshDesignPanelsLive();
+    if (!hasAchievement('the_beginning')) {
+      addAchievementCard('the_beginning', '一切的开始', '首次进入手机设计阶段。');
+      openGameModal(
+        '成就解锁',
+        '你已从市场阶段正式进入设计阶段，恭喜达成 <strong>一切的开始</strong> 成就！'
+      );
+    }
   });
 
   el.preview.addEventListener('click', openBenchPage);
