@@ -3648,8 +3648,17 @@ function sanitizeForbiddenDictionary(raw) {
 }
 
 async function loadForbiddenNameDictionary() {
+  let timer = 0;
   try {
-    const resp = await fetch('dict/forbidden_names.json', { cache: 'no-store' });
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutMs = 1800;
+    timer = window.setTimeout(() => {
+      if (controller) controller.abort();
+    }, timeoutMs);
+    const resp = await fetch('dict/forbidden_names.json', {
+      cache: 'no-store',
+      ...(controller ? { signal: controller.signal } : {})
+    });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const payload = await resp.json();
     const dict = sanitizeForbiddenDictionary(payload);
@@ -3659,6 +3668,8 @@ async function loadForbiddenNameDictionary() {
   } catch (err) {
     forbiddenNameDictionary = JSON.parse(JSON.stringify(defaultForbiddenNameDictionary));
     console.warn('[forbidden-dict] 加载失败，已使用内置兜底词典：', err);
+  } finally {
+    if (timer) window.clearTimeout(timer);
   }
 }
 
@@ -10900,7 +10911,9 @@ async function boot() {
     updateEventGateState();
     refreshQuickGuideButtonState();
     setBootLoading('加载完成，准备开玩…', false, 5, totalSteps);
+    // Safari/低性能机上偶发“最后一步看似卡住”，这里做一次双兜底收起。
     window.setTimeout(hideBootLoading, 180);
+    window.setTimeout(hideBootLoading, 2200);
     registerServiceWorkerDeferred();
   } catch (err) {
     reportRuntimeError('boot', err);
