@@ -63,8 +63,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
-  <link rel="preload" href="styles.css?v=1.0.5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="styles.css?v=1.0.5"></noscript>
+  <link rel="preload" href="styles.css?v=2.0.0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="styles.css?v=2.0.0"></noscript>
 </head>
 <body>
   <div id="instantWelcome" class="instant-welcome" role="status" aria-live="polite">
@@ -87,10 +87,26 @@
   <main class="app">
     <header class="top">
       <div class="top-head">
-        <h1>从零开始做手机</h1>
+        <h1>从零开始做手机 <span id="endlessBadge" class="endless-badge hidden">无尽模式</span></h1>
         <button id="achieveEntry" class="achieve-entry" type="button">成就 <span id="achieveCount">0</span></button>
       </div>
-      <p>选市场、做手机、每月推进，做大做强！</p>
+      <div id="techMuseum" class="tech-museum" aria-label="2014-2025 科技树">
+        <div class="tech-museum-head">
+          <strong>手机科技发展博物馆（2014-2025）</strong>
+          <span id="techMuseumYear">2014 年</span>
+        </div>
+        <div class="tech-museum-progress">
+          <div class="tech-museum-progress-track">
+            <div id="techMuseumProgressFill" class="tech-museum-progress-fill"></div>
+          </div>
+        </div>
+        <div id="techMuseumTree" class="tech-museum-tree"></div>
+        <div id="techMuseumDone" class="tech-museum-done hidden">科技树已爬完，欢迎进入无尽模式。</div>
+      </div>
+      <div class="top-subline">
+        <p>选市场、做手机、每月推进，做大做强！</p>
+        <span id="currentYearTag" class="current-year-tag">2014 年</span>
+      </div>
       <div class="stats">
         <div class="cash-card">
           <span>现金</span>
@@ -103,7 +119,11 @@
           <small id="invTransit" class="stats-subline">在途 0</small>
         </div>
         <div><span>口碑</span><strong id="rating">50</strong></div>
-        <div><span>月数</span><strong id="month">0</strong></div>
+        <div class="month-card">
+          <span>月数</span>
+          <strong id="month">0</strong>
+          <small id="monthTotal" class="stats-subline month-total">累计 0 月</small>
+        </div>
       </div>
     </header>
 
@@ -135,7 +155,7 @@
       <div class="row">
         <button id="quickGuideBtn" class="quick-guide-btn" type="button">玩法说明（新手必看）</button>
       </div>
-      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v1.0.2</span></div>
+      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v2.0.0</span></div>
     </section>
 
     <section id="stageConfig" class="panel hidden">
@@ -152,7 +172,7 @@
           <input type="text" value="Neo（自动 Gen）" disabled />
         </label>
         <label>定价（元）
-          <input id="price" type="number" min="999" max="19999" step="100" value="3999" />
+          <input id="price" type="number" min="200" max="19999" step="100" value="3999" />
         </label>
       </div>
 
@@ -161,6 +181,7 @@
         <label>材质
           <select id="dispMat">
             <option value="lcd">LCD</option>
+            <option value="amoled">AMOLED</option>
             <option value="oled" selected>OLED</option>
             <option value="dual_oled">双层 OLED</option>
             <option value="eink">墨水屏</option>
@@ -171,7 +192,7 @@
           <select id="dispVendor"></select>
         </label>
         <label>尺寸（英寸）
-          <input id="dispSize" type="number" min="3.0" max="9.0" step="0.1" value="6.67" />
+          <input id="dispSize" type="text" inputmode="decimal" pattern="[0-9]+([\\.,][0-9]+)?" value="6.67" />
         </label>
         <label>比例
           <select id="dispRatio">
@@ -208,23 +229,36 @@
       </div>
 
       <h3>摄像头系统（可选数量）</h3>
-      <div class="grid4 cfg-grid-4">
-        <label>主摄
-          <select id="camMain"></select>
-        </label>
-        <label>超广角
-          <select id="camUltra"></select>
-        </label>
-        <label>长焦/潜望
-          <select id="camTele"></select>
-        </label>
-        <label>前摄
-          <select id="camFront"></select>
-        </label>
+      <div id="cameraGrid" class="camera-grid">
+        <div class="camera-item">
+          <div class="camera-item-title">主摄</div>
+          <select id="camMain" aria-label="主摄"></select>
+        </div>
+        <div class="camera-item">
+          <div class="camera-item-title">超广角</div>
+          <select id="camUltra" aria-label="超广角"></select>
+        </div>
+        <div class="camera-item">
+          <div class="camera-item-title">黑白镜头</div>
+          <select id="camMono" aria-label="黑白镜头"></select>
+        </div>
+        <div class="camera-item">
+          <div class="camera-item-title">长焦/潜望</div>
+          <select id="camTele" aria-label="长焦或潜望"></select>
+        </div>
+        <div class="camera-item camera-item-front">
+          <div class="camera-item-title">前摄</div>
+          <select id="camFront" aria-label="前摄"></select>
+        </div>
       </div>
 
-      <h3>额外特色（影响成本/重量/销量）</h3>
-      <div class="checks" id="extras"></div>
+      <details id="extrasDetails" class="extras-details">
+        <summary class="extras-summary">
+          额外特色（影响成本/重量/销量）
+          <span id="extrasCount" class="extras-count">已选 0 项</span>
+        </summary>
+        <div class="checks extras-compact" id="extras"></div>
+      </details>
 
       <h3>存储 SKU 配置</h3>
       <div class="box" id="skuBox">
@@ -248,13 +282,13 @@
 
       <div class="grid4 cfg-grid-4">
         <label>机身高度（mm）
-          <input id="phoneH" type="number" min="80" max="260" step="0.1" value="169.0" />
+          <input id="phoneH" type="text" inputmode="decimal" pattern="[0-9]+([\\.,][0-9]+)?" value="135.0" />
         </label>
         <label>机身宽度（mm）
-          <input id="phoneW" type="number" min="35" max="180" step="0.1" value="78.0" />
+          <input id="phoneW" type="text" inputmode="decimal" pattern="[0-9]+([\\.,][0-9]+)?" value="78.0" />
         </label>
         <label>机身厚度（mm）
-          <input id="phoneT" type="number" min="6.5" max="14.0" step="0.1" value="10.2" />
+          <input id="phoneT" type="text" inputmode="decimal" pattern="[0-9]+([\\.,][0-9]+)?" value="10.2" />
         </label>
       </div>
 
@@ -275,7 +309,15 @@
               <canvas id="phoneRenderCanvas" class="phone-preview-canvas" height="280"></canvas>
             </div>
             <div class="phone-preview-item">
-              <div class="tiny">正面屏幕</div>
+              <div class="preview-head">
+                <div class="tiny">正面屏幕</div>
+                <label class="preview-color-control" title="前框颜色">
+                  <span>前框色</span>
+                  <span class="preview-color-dot">
+                    <input id="frontFrameColor" type="color" value="#1a232f" aria-label="前框颜色" />
+                  </span>
+                </label>
+              </div>
               <canvas id="phoneFrontCanvas" class="phone-preview-canvas" height="280"></canvas>
             </div>
           </div>
@@ -332,7 +374,8 @@
           <span class="ops-legend-item"><i class="ops-dot sold"></i>累计销量</span>
           <span class="ops-legend-item"><i class="ops-dot rating"></i>口碑</span>
         </div>
-        <div class="tiny ops-chart-tip">默认显示最近 6 个月，点击图表查看完整企业周期。</div>
+        <div id="opsChartProbe" class="tiny ops-chart-probe">点图看该月指标；长按看完整周期。</div>
+        <div class="tiny ops-chart-tip">默认显示最近 6 个月；点按图表看详情，长按或点击可看完整周期。</div>
       </div>
       <div id="runStopRow" class="row">
         <button id="stop">产品停产结算</button>
@@ -479,6 +522,6 @@
       window.addEventListener('load', switchToBoot, { once: true });
     })();
   </script>
-  <script src="game.js?v=1.0.5"></script>
+  <script src="game.js?v=2.0.0"></script>
 </body>
 </html>
