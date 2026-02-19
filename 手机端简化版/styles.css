@@ -1073,6 +1073,28 @@ button.accent {
   z-index: 1;
 }
 
+.quick-guide-detail-entry {
+  margin-top: 4px;
+  min-height: 22px;
+  height: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(132, 220, 255, 0.14);
+  background: transparent;
+  color: rgba(188, 225, 244, 0.62);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.72;
+  cursor: pointer;
+}
+
+.quick-guide-detail-entry:hover {
+  border-color: rgba(155, 231, 255, 0.24);
+  color: rgba(214, 240, 252, 0.8);
+  opacity: 0.9;
+}
+
 .quick-guide-inline-version {
   margin-top: 4px;
   text-align: center;
@@ -2384,8 +2406,11 @@ input.input-int-invalid {
   h1 { font-size: clamp(1.45rem, 7.2vw, 2rem); }
   .endless-badge {
     margin-left: 5px;
-    padding: 1px 5px;
-    font-size: 0.35rem;
+    min-height: 30px;
+    height: 30px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+    font-weight: 700;
     letter-spacing: 0.02em;
   }
   .top p { font-size: 0.92rem; }
@@ -2502,6 +2527,15 @@ input.input-int-invalid {
     font-size: 0.95rem;
     letter-spacing: 0.005em;
     justify-content: center;
+  }
+  .quick-guide-detail-entry {
+    min-height: 21px;
+    height: 21px;
+    padding: 1px 6px;
+    font-size: 0.64rem;
+    opacity: 0.9;
+    border-color: rgba(132, 220, 255, 0.24);
+    color: rgba(198, 232, 248, 0.9);
   }
   .row > button {
     flex: 1 1 calc(50% - 8px);
