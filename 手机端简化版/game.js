@@ -1,7 +1,7 @@
 const RMB = (v) => `¥${Math.round(v).toLocaleString('zh-CN')}`;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const rnd = (a, b) => Math.random() * (b - a) + a;
-const GAME_VERSION = '1.0.4';
+const GAME_VERSION = '1.0.5';
 const BENCHMARK_NAME = 'GeekBeak G6';
 const FIXED_COMPANY_NAME = 'StartPhone';
 const FIXED_MODEL_BASE_NAME = 'Neo';
