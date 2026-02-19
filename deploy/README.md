@@ -27,6 +27,16 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo bash deploy/scripts/deploy-multiversion.sh
 ```
 
+## HTTPS 说明（首次或证书丢失时）
+
+模板默认包含 `443` 与 Let's Encrypt 证书路径。若你首次部署或证书未安装，请执行：
+
+```bash
+sudo certbot --nginx -d start-from-zero-phone.top -d www.start-from-zero-phone.top --redirect
+```
+
+若提示已有证书，选择 `1`（reinstall existing certificate）即可。
+
 ## 日常更新
 
 只需在服务器执行：
