@@ -1200,6 +1200,7 @@ function setBootLoading(text, isError = false, step = 0, total = 0) {
 
 function hideBootLoading() {
   if (!el.bootLoading) return;
+  window.__startPhoneBootFinished = true;
   el.bootLoading.classList.add('hidden');
 }
 
@@ -7849,6 +7850,7 @@ function fillSources() {
 }
 
 async function boot() {
+  window.__startPhoneBootFinished = false;
   const preSeed = document.getElementById('preSeed');
   if (preSeed) preSeed.remove();
   const instantWelcome = document.getElementById('instantWelcome');
