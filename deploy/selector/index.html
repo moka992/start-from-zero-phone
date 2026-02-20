@@ -39,15 +39,21 @@
     a {
       flex: 1;
       min-width: 200px;
-      text-align: center;
-      padding: 12px 14px;
+      text-align: left;
+      padding: 13px 14px;
       border-radius: 12px;
       text-decoration: none;
       font-weight: 700;
-      transition: transform .12s ease, opacity .12s ease;
+      transition: transform .12s ease, opacity .12s ease, box-shadow .12s ease;
     }
     a:hover { transform: translateY(-1px); opacity: 0.96; }
-    .v2 { background: var(--v2); color: #00121f; }
+    .btn-title { display: block; font-size: 16px; line-height: 1.2; }
+    .btn-sub { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; opacity: 0.88; }
+    .v2 {
+      background: var(--v2);
+      color: #00121f;
+      box-shadow: 0 6px 16px rgba(14, 165, 233, 0.34);
+    }
     .v1 { background: var(--v1); color: #d7e9f8; border: 1px solid #33506a; }
     .tip { margin-top: 12px; font-size: 13px; color: #8ea8bf; }
   </style>
@@ -57,8 +63,13 @@
     <h1>从零开始做手机</h1>
     <p>请选择要进入的版本：</p>
     <div class="row">
-      <a class="v2" href="/v2/">进入 v2.0.1（最新）</a>
-      <a class="v1" href="/v1/">进入 v1.0.5（经典）</a>
+      <a class="v2" href="/v2/">
+        <span class="btn-title">生涯模式</span>
+        <span class="btn-sub">v2.0.1 · 推荐</span>
+      </a>
+      <a class="v1" href="/v1/">
+        <span class="btn-title">无尽模式</span>
+      </a>
     </div>
     <div class="tip">两个版本互不影响，玩家可自由选择。</div>
   </div>
