@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>从零开始做手机</title>
+  <script>
+    (function (d) {
+      var s = d.createElement('style');
+      s.textContent = '#preSeed{position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;background:#07111e;color:#dff2ff;font:600 14px/1.2 sans-serif}#preSeed i{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:#79e7ff;animation:preSeedDot .9s infinite alternate}@keyframes preSeedDot{to{opacity:.25;transform:translateY(-2px)}}';
+      d.head.appendChild(s);
+      var n = d.createElement('div');
+      n.id = 'preSeed';
+      n.innerHTML = '正在进入游戏<i></i>';
+      d.documentElement.appendChild(n);
+    })(document);
+  </script>
+  <style>
+    /* Critical boot styles: render loading UI immediately before external CSS arrives */
+    html, body { margin: 0; min-height: 100%; background: #07111e; color: #edf4ff; }
+    .hidden { display: none !important; }
+    .instant-welcome {
+      position: fixed; inset: 0; z-index: 130;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      background:
+        radial-gradient(120% 150% at 0% 50%, rgba(9, 75, 141, 0.18), rgba(7, 17, 30, 0)),
+        #07111e;
+    }
+    .instant-welcome-card {
+      width: min(380px, 92vw);
+      border: 1px solid rgba(154, 206, 244, 0.28);
+      border-radius: 16px;
+      background: rgba(8, 20, 34, 0.9);
+      padding: 14px 14px 12px;
+      text-align: center;
+    }
+    .instant-welcome-title { font-size: 1.03rem; font-weight: 800; color: #e6f6ff; }
+    .instant-welcome-sub { margin-top: 6px; font-size: 0.86rem; color: #b8d1ea; }
+    .boot-loading {
+      position: fixed; inset: 0; z-index: 120;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; background: rgba(4, 11, 19, 0.9);
+    }
+    .boot-loading-card {
+      width: min(420px, 92vw); border: 1px solid rgba(161, 207, 248, 0.34);
+      border-radius: 16px; background: rgba(9, 19, 32, 0.96); padding: 14px 14px 12px;
+      text-align: center;
+    }
+    .boot-loading-spinner {
+      width: 34px; height: 34px; margin: 0 auto 8px; border-radius: 999px;
+      border: 3px solid rgba(129, 188, 235, 0.3); border-top-color: rgba(116, 232, 255, 0.95);
+      animation: bootspin .9s linear infinite;
+    }
+    .boot-loading-title { font-size: 1rem; font-weight: 800; color: #def4ff; }
+    .boot-loading-text { margin-top: 4px; font-size: .88rem; color: #bdd3ea; line-height: 1.55; }
+    .boot-loading-progress { margin-top: 6px; font-size: .82rem; color: #8fd9ff; font-family: "JetBrains Mono", monospace; }
+    .boot-loading-track { margin-top: 8px; height: 7px; border-radius: 999px; background: rgba(120, 156, 188, 0.35); overflow: hidden; }
+    .boot-loading-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, rgba(110,231,255,.95), rgba(124,255,210,.95)); transition: width .22s ease; }
+    @keyframes bootspin { to { transform: rotate(360deg); } }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
+  <link rel="preload" href="styles.css?v=1.0.5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="styles.css?v=1.0.5"></noscript>
+</head>
+<body>
+  <div id="instantWelcome" class="instant-welcome" role="status" aria-live="polite">
+    <div class="instant-welcome-card">
+      <div class="instant-welcome-title">欢迎来到《从零开始做手机》</div>
+      <div class="instant-welcome-sub">正在极速进入，请稍候…</div>
+    </div>
+  </div>
+  <div class="bg"></div>
+  <div id="bootLoading" class="boot-loading hidden" role="status" aria-live="polite">
+    <div class="boot-loading-card">
+      <div class="boot-loading-spinner"></div>
+      <div class="boot-loading-title">已进入游戏</div>
+      <div id="bootLoadingText" class="boot-loading-text">正在加载中，请稍候…</div>
+      <div id="bootLoadingProgress" class="boot-loading-progress">1/5</div>
+      <div class="boot-loading-track"><div id="bootLoadingFill" class="boot-loading-fill"></div></div>
+      <button id="bootReload" class="boot-reload hidden" type="button">刷新重试</button>
+    </div>
+  </div>
+  <main class="app">
+    <header class="top">
+      <div class="top-head">
+        <h1>从零开始做手机</h1>
+        <button id="achieveEntry" class="achieve-entry" type="button">成就 <span id="achieveCount">0</span></button>
+      </div>
+      <p>选市场、做手机、每月推进，做大做强！</p>
+      <div class="stats">
+        <div class="cash-card">
+          <span>现金</span>
+          <strong id="cash">¥10,000,000</strong>
+          <button id="takeLoan" class="cash-loan-btn">使用本代贷款</button>
+        </div>
+        <div class="inv-card">
+          <span>库存</span>
+          <strong id="inv">0</strong>
+          <small id="invTransit" class="stats-subline">在途 0</small>
+        </div>
+        <div><span>口碑</span><strong id="rating">50</strong></div>
+        <div><span>月数</span><strong id="month">0</strong></div>
+      </div>
+    </header>
+
+    <section id="stageEvent" class="panel">
+      <h2>随机市场区域</h2>
+      <div class="grid3 cfg-grid-3">
+        <label>随机企业成立区域
+          <input id="regionFixed" type="text" value="随机中..." disabled />
+          <select id="region" class="hidden"></select>
+        </label>
+        <label>企业名称（固定）
+          <input type="text" value="StartPhone" disabled />
+        </label>
+        <label>启动难度
+          <select id="startupDifficulty">
+            <option value="real" selected>真实</option>
+            <option value="hard">困难</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <button id="rollEvents" class="accent">刷新随机情况</button>
+        <div id="eventHint" class="muted">请选择 1 个，它将影响整局。</div>
+      </div>
+      <div id="eventCards" class="cards"></div>
+      <div class="row">
+        <button id="confirmEvent" disabled>产品经理请提需求</button>
+      </div>
+      <div class="row">
+        <button id="quickGuideBtn" class="quick-guide-btn" type="button">玩法说明（新手必看）</button>
+      </div>
+      <div class="tiny quick-guide-inline-version">版本 <span id="inlineGuideVersion">v1.0.6</span></div>
+    </section>
+
+    <section id="stageConfig" class="panel hidden">
+      <div class="design-head">
+        <h2>设计你的手机</h2>
+        <button id="restartDesign" class="low-freq-btn">重开新局</button>
+      </div>
+      <div id="designQuiz" class="quiz-box"></div>
+      <div class="grid3">
+        <label>SoC
+          <select id="soc"></select>
+        </label>
+        <label>机型命名（固定）
+          <input type="text" value="Neo（自动 Gen）" disabled />
+        </label>
+        <label>定价（元）
+          <input id="price" type="number" min="999" max="19999" step="100" value="3999" />
+        </label>
+      </div>
+
+      <h3>屏幕系统</h3>
+      <div class="grid4 cfg-grid-screen">
+        <label>材质
+          <select id="dispMat">
+            <option value="lcd">LCD</option>
+            <option value="oled" selected>OLED</option>
+            <option value="dual_oled">双层 OLED</option>
+            <option value="eink">墨水屏</option>
+            <option value="foldable">折叠屏</option>
+          </select>
+        </label>
+        <label>供应商
+          <select id="dispVendor"></select>
+        </label>
+        <label>尺寸（英寸）
+          <input id="dispSize" type="number" min="3.0" max="9.0" step="0.1" value="6.67" />
+        </label>
+        <label>比例
+          <select id="dispRatio">
+            <option value="16:9">16:9</option>
+            <option value="18:9">18:9</option>
+            <option value="19.5:9" selected>19.5:9</option>
+            <option value="20:9">20:9</option>
+            <option value="21:9">21:9</option>
+            <option value="16:10">16:10</option>
+            <option value="4:3">4:3</option>
+          </select>
+        </label>
+        <label>屏幕形态
+          <select id="dispForm"></select>
+        </label>
+      </div>
+      <div class="checks" id="displayFeatures">
+        <label><input type="checkbox" value="high_refresh" checked /> 高刷新率</label>
+        <label><input type="checkbox" value="high_res" checked /> 高分辨率</label>
+        <label><input type="checkbox" value="p3" checked /> P3 高色域</label>
+        <label><input type="checkbox" value="eye" /> 护眼认证</label>
+        <label><input type="checkbox" value="ltpo" /> LTPO 自适应刷新</label>
+        <label><input type="checkbox" value="high_pwm" /> 高频 PWM 调光</label>
+      </div>
+      <div id="displayQuickBox" class="box">屏幕预览：等待计算。</div>
+
+      <div class="grid4 cfg-grid-2">
+        <label>机身材质
+          <select id="body"></select>
+        </label>
+        <label>电池容量（mAh）
+          <input id="battery" type="number" min="1500" max="10000" step="100" value="5000" />
+        </label>
+      </div>
+
+      <h3>摄像头系统（可选数量）</h3>
+      <div class="grid4 cfg-grid-4">
+        <label>主摄
+          <select id="camMain"></select>
+        </label>
+        <label>超广角
+          <select id="camUltra"></select>
+        </label>
+        <label>长焦/潜望
+          <select id="camTele"></select>
+        </label>
+        <label>前摄
+          <select id="camFront"></select>
+        </label>
+      </div>
+
+      <h3>额外特色（影响成本/重量/销量）</h3>
+      <div class="checks" id="extras"></div>
+
+      <h3>存储 SKU 配置</h3>
+      <div class="box" id="skuBox">
+        <div class="row">
+          <div class="tiny">默认 1 个 SKU，可手动新增。首发配比总和需为 100%。</div>
+          <button type="button" id="addSku">新增 SKU</button>
+        </div>
+        <div id="skuShareHint" class="sku-share-hint hidden">请保证配额和是100%</div>
+        <div id="skuList"></div>
+      </div>
+
+      <h3>营销策略（影响线上/爱好者转化）</h3>
+      <div class="grid3 cfg-grid-2">
+        <label>营销主打法
+          <select id="marketingFocus"></select>
+        </label>
+        <label>首发营销预算
+          <select id="campaignLevel"></select>
+        </label>
+      </div>
+
+      <div class="grid4 cfg-grid-4">
+        <label>机身高度（mm）
+          <input id="phoneH" type="number" min="80" max="260" step="0.1" value="169.0" />
+        </label>
+        <label>机身宽度（mm）
+          <input id="phoneW" type="number" min="35" max="180" step="0.1" value="78.0" />
+        </label>
+        <label>机身厚度（mm）
+          <input id="phoneT" type="number" min="6.5" max="14.0" step="0.1" value="10.2" />
+        </label>
+      </div>
+
+      <div class="design-eval-grid">
+        <div class="box">
+          <div class="tiny">机型预览（背面 45° + 正面屏幕形态，点击可放大）</div>
+          <div class="phone-preview-grid">
+            <div class="phone-preview-item is-back">
+              <div class="preview-head">
+                <div class="tiny">背面 45°</div>
+                <label class="preview-color-control" title="后盖颜色">
+                  <span>后盖色</span>
+                  <span class="preview-color-dot">
+                    <input id="backColor" type="color" value="#2e4a66" aria-label="后盖颜色" />
+                  </span>
+                </label>
+              </div>
+              <canvas id="phoneRenderCanvas" class="phone-preview-canvas" height="280"></canvas>
+            </div>
+            <div class="phone-preview-item">
+              <div class="preview-head">
+                <div class="tiny">正面屏幕</div>
+                <label class="preview-color-control" title="前框颜色">
+                  <span>前框色</span>
+                  <span class="preview-color-dot">
+                    <input id="frontFrameColor" type="color" value="#1a232f" aria-label="前框颜色" />
+                  </span>
+                </label>
+              </div>
+              <canvas id="phoneFrontCanvas" class="phone-preview-canvas" height="280"></canvas>
+            </div>
+          </div>
+        </div>
+        <div id="previewBox" class="box design-health-box">等待计算。</div>
+      </div>
+      <div class="row action-row">
+        <button id="preview">跑个分吧</button>
+        <button id="launch" class="accent">立项并开售</button>
+        <label class="units-inline">首批产量（台）
+          <input id="units" type="number" min="1000" max="150000" step="1000" value="2000" />
+          <small id="unitsIntHint" class="int-hint hidden">请仅输入整数</small>
+        </label>
+        <label class="procurement-inline">供应链采购方案
+          <select id="procurementPlan"></select>
+        </label>
+      </div>
+      <div id="previewDetailBox" class="box">详细评估：等待计算。</div>
+    </section>
+
+    <section id="stageRun" class="panel hidden">
+      <div class="run-head">
+        <h2>运营与生存</h2>
+        <button id="restart" class="low-freq-btn">重开新局</button>
+      </div>
+      <div id="runQuiz" class="quiz-box"></div>
+      <div id="runPrimaryRow" class="row">
+        <button id="nextMonth" class="accent">推进 1 个月</button>
+        <button id="continueNext" class="hidden">进入下一代机型</button>
+      </div>
+      <div id="runBriefBox" class="box month-brief">本月重点：等待推进月份。</div>
+      <div class="grid3">
+        <label>补货 SKU
+          <select id="restockSku"></select>
+        </label>
+        <label>补货数量（台）
+          <input id="restockUnits" type="number" min="1000" max="200000" step="1000" value="1000" />
+          <small id="restockIntHint" class="int-hint hidden">请仅输入整数</small>
+        </label>
+      </div>
+      <div class="row">
+        <button id="restock">追加生产</button>
+      </div>
+      <div id="marketBox" class="box">等待开售。</div>
+      <div class="row">
+        <button id="endCompany">企业结算</button>
+      </div>
+      <div class="box">
+        <div class="tiny">公司趋势图（横轴：公司经营月）</div>
+        <canvas id="opsChart" class="ops-chart" height="260"></canvas>
+        <div class="ops-legend" aria-label="企业趋势图例">
+          <span class="ops-legend-item"><i class="ops-dot cash"></i>现金</span>
+          <span class="ops-legend-item"><i class="ops-dot inv"></i>SKU库存</span>
+          <span class="ops-legend-item"><i class="ops-dot sold"></i>累计销量</span>
+          <span class="ops-legend-item"><i class="ops-dot rating"></i>口碑</span>
+        </div>
+        <div class="tiny ops-chart-tip">默认显示最近 6 个月，点击图表查看完整企业周期。</div>
+      </div>
+      <div id="runStopRow" class="row">
+        <button id="stop">产品停产结算</button>
+      </div>
+      <div id="reportBox" class="box">等待月报。</div>
+      <div id="finalBox" class="box">结算后显示最终表现。</div>
+    </section>
+
+    <section class="panel source hidden">
+      <h2>数据依据（用于估算，不是精确采购合同价）</h2>
+      <div class="tiny" id="sourceNote"></div>
+    </section>
+  </main>
+
+  <div id="runMobileDock" class="run-mobile-dock hidden" aria-live="polite">
+    <div class="run-mobile-dock-row">
+      <span class="run-mobile-dock-label">补货预估</span>
+      <strong id="runMobileDockQuote">等待开售</strong>
+    </div>
+    <div id="runMobileDockInv" class="run-mobile-dock-meta">库存 0</div>
+    <div id="runMobileDockAction" class="run-mobile-dock-action">等待操作</div>
+  </div>
+
+  <div id="achievePanel" class="achieve-panel hidden" role="dialog" aria-modal="true" aria-label="已达成成就">
+    <div class="achieve-panel-card">
+      <div class="achieve-panel-head">
+        <h3>已达成成就</h3>
+        <button id="achieveClose" type="button" class="low-freq-btn">关闭</button>
+      </div>
+      <div class="achieve-progress" aria-label="成就进度">
+        <div class="achieve-progress-top">
+          <span>成就进度</span>
+          <strong id="achieveProgressText">0/0</strong>
+        </div>
+        <div class="achieve-progress-track">
+          <div id="achieveProgressFill" class="achieve-progress-fill"></div>
+        </div>
+      </div>
+      <div id="achieveList" class="achieve-list"></div>
+    </div>
+  </div>
+
+  <div id="gameModal" class="game-modal hidden" role="dialog" aria-modal="true" aria-label="游戏提示">
+    <div id="gameModalStack" class="game-modal-stack"></div>
+  </div>
+
+  <div id="benchPage" class="bench-page hidden" role="dialog" aria-modal="true" aria-label="虚拟跑分">
+    <div class="bench-wrap">
+      <div class="bench-head">
+        <h2>GeekBeak G6 虚拟跑分</h2>
+        <button id="benchClose" type="button" class="bench-close-btn">关闭跑分</button>
+      </div>
+      <div class="bench-sub tiny">跑分图一乐</div>
+      <div class="bench-progress" aria-label="跑分进度">
+        <div class="bench-progress-top">
+          <span>当前进度</span>
+          <strong id="benchProgressText">0/5</strong>
+        </div>
+        <div class="bench-progress-track">
+          <div id="benchProgressFill" class="bench-progress-fill"></div>
+        </div>
+      </div>
+
+      <div id="benchSocCard" class="bench-card">
+        <div class="bench-card-title">SoC 性能测试</div>
+        <div class="bench-soc-grid">
+          <canvas id="benchSocGameCanvas" class="bench-soc-canvas" width="320" height="120"></canvas>
+          <div class="bench-soc-right">
+            <canvas id="benchSocTempCanvas" class="bench-temp-canvas" width="320" height="120"></canvas>
+            <div id="benchSocMeta" class="bench-meta">温度：26.0°C｜进行中...</div>
+          </div>
+          <div id="benchSocScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchDispCard" class="bench-card">
+        <div class="bench-card-title">屏幕测试</div>
+        <div class="bench-row-grid">
+          <div class="bench-visuals">
+            <div class="bench-chip color">色阶图</div>
+            <div class="bench-chip gray">灰阶图</div>
+            <div class="bench-chip ufo">UFO 刷新率</div>
+          </div>
+          <div id="benchDispScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchCamCard" class="bench-card">
+        <div class="bench-card-title">影像测试</div>
+        <div class="bench-row-grid">
+          <div id="benchCamInfo" class="bench-info">读取摄像头配置中...</div>
+          <div id="benchCamScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchStorageCard" class="bench-card">
+        <div class="bench-card-title">存储测试</div>
+        <div class="bench-row-grid">
+          <div>
+            <div id="benchStorageInfo" class="bench-info">读取 SKU 配置中...</div>
+            <div id="benchStorageBits" class="bench-bits">0101 0101 0101 ...</div>
+          </div>
+          <div id="benchStorageScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchBatteryCard" class="bench-card">
+        <div class="bench-card-title">续航测试</div>
+        <div class="bench-row-grid">
+          <div id="benchBatterySlide" class="bench-slide">模拟视频播放场景</div>
+          <div id="benchBatteryScore" class="bench-score pending">等待测试</div>
+        </div>
+      </div>
+
+      <div id="benchFinal" class="bench-final hidden">
+        综合总分：<strong id="benchFinalScore">0</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="previewLightbox" class="preview-lightbox hidden" role="dialog" aria-modal="true" aria-label="机型预览放大图">
+    <div class="preview-lightbox-inner">
+      <button id="previewLightboxClose" class="preview-lightbox-close" type="button">关闭</button>
+      <div id="previewLightboxTitle" class="tiny">预览</div>
+      <img id="previewLightboxImage" alt="预览放大图" />
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var preSeed = document.getElementById('preSeed');
+      var welcome = document.getElementById('instantWelcome');
+      var boot = document.getElementById('bootLoading');
+      if (!welcome || !boot) return;
+      var switched = false;
+      function switchToBoot() {
+        if (switched) return;
+        switched = true;
+        if (preSeed) preSeed.remove();
+        welcome.classList.add('hidden');
+        boot.classList.remove('hidden');
+      }
+      window.setTimeout(switchToBoot, 420);
+      window.addEventListener('load', switchToBoot, { once: true });
+    })();
+  </script>
+  <script src="game.js?v=1.0.5"></script>
+</body>
+</html>
